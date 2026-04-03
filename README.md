@@ -1,4 +1,4 @@
-<h1 align="center"><img src="https://github.com/Keerthivasan-Venkitajalam/SIOF/blob/main/branding/sioflogo.png" width="300"></h1><br>
+<h1 align="center"><img src="https://raw.githubusercontent.com/Keerthivasan-Venkitajalam/SIOF/main/branding/sioflogo.png" width="300"></h1><br>
 
 [![PyPI version](https://img.shields.io/pypi/v/siof.svg)](https://pypi.org/project/siof/)
 [![Python Version](https://img.shields.io/pypi/pyversions/siof.svg)](https://pypi.org/project/siof/)
