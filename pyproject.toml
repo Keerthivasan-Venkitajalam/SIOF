@@ -23,6 +23,12 @@ classifiers = [
 ]
 dependencies = []
 
+[project.urls]
+Homepage = "https://github.com/Keerthivasan-Venkitajalam/SIOF"
+Documentation = "https://github.com/Keerthivasan-Venkitajalam/SIOF#readme"
+Repository = "https://github.com/Keerthivasan-Venkitajalam/SIOF"
+"Bug Tracker" = "https://github.com/Keerthivasan-Venkitajalam/SIOF/issues"
+
 [project.optional-dependencies]
 green = ["psutil>=5.9"]
 test = ["pytest>=8.0", "pytest-cov>=4.0"]
