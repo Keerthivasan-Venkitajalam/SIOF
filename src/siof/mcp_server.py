@@ -227,7 +227,7 @@ class MCPGraphServer:
         self.policy = PolicyEngine()
         self.validator = SchemaValidator()
         self.tracer = Tracer()
-        self.metrics = {
+        self.metrics: dict[str, Any] = {
             "total_requests": 0,
             "total_errors": 0,
             "total_latency_ms": 0.0,
@@ -347,13 +347,13 @@ class MCPGraphServer:
         if tool == "find_data_lineage":
             symbol = str(args["node_or_symbol"])
             depth = int(args.get("depth", 3))
-            result = self.repo.find_data_lineage(symbol, depth)
-            return asdict(result)
+            lineage_result = self.repo.find_data_lineage(symbol, depth)
+            return asdict(lineage_result)
 
         if tool == "impact_of_change":
             item = str(args["file_or_symbol"])
-            result = self.repo.impact_of_change(item)
-            return asdict(result)
+            impact_result = self.repo.impact_of_change(item)
+            return asdict(impact_result)
 
         if tool == "validate_relationship":
             source = str(args["source"])
@@ -368,8 +368,8 @@ class MCPGraphServer:
             }
 
         if tool == "get_dead_paths":
-            result = self.repo.get_dead_paths()
-            return asdict(result)
+            dead_paths_result = self.repo.get_dead_paths()
+            return asdict(dead_paths_result)
 
         if tool == "find_unhandled_exceptions":
             scope = str(args.get("scope", ""))
@@ -377,8 +377,8 @@ class MCPGraphServer:
 
         if tool == "get_intent_history":
             query = str(args["symbol_or_area"])
-            result = self.repo.get_intent_history(query)
-            return asdict(result)
+            intent_result = self.repo.get_intent_history(query)
+            return asdict(intent_result)
 
         if tool == "get_run_energy":
             run_id = str(args["run_id"])

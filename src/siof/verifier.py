@@ -232,7 +232,7 @@ class GraphVerifier:
             List of cycles (each cycle is a list of symbols)
         """
         # Build adjacency list
-        graph = {}
+        graph: dict[str, list[str]] = {}
         for n in nodes:
             graph[n["symbol"]] = []
 
@@ -280,12 +280,12 @@ class GraphVerifier:
         edges = self._fetch_edges()
 
         # Calculate statistics
-        node_kinds = {}
+        node_kinds: dict[str, int] = {}
         for n in nodes:
             kind = n["kind"]
             node_kinds[kind] = node_kinds.get(kind, 0) + 1
 
-        edge_kinds = {}
+        edge_kinds: dict[str, int] = {}
         for e in edges:
             kind = e["transform_kind"]
             edge_kinds[kind] = edge_kinds.get(kind, 0) + 1

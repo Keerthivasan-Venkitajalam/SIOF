@@ -243,6 +243,12 @@ class JSONReporter:
             by_severity[finding.severity].append(finding_dict)
 
         # Summary statistics
+        by_rule: dict[str, int] = {}
+        for finding in findings:
+            if finding.rule_id not in by_rule:
+                by_rule[finding.rule_id] = 0
+            by_rule[finding.rule_id] += 1
+
         summary = {
             "total": len(findings),
             "by_severity": {
@@ -251,14 +257,8 @@ class JSONReporter:
                 "medium": len(by_severity["medium"]),
                 "low": len(by_severity["low"]),
             },
-            "by_rule": {},
+            "by_rule": by_rule,
         }
-
-        # Count by rule
-        for finding in findings:
-            if finding.rule_id not in summary["by_rule"]:
-                summary["by_rule"][finding.rule_id] = 0
-            summary["by_rule"][finding.rule_id] += 1
 
         report = {
             "summary": summary,

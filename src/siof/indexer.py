@@ -950,13 +950,13 @@ class PythonIndexer:
             if isinstance(node, ast.Assign):
                 for target in node.targets:
                     if isinstance(target, ast.Name):
-                        symbol = f"{mod}.{target.id}"
+                        target_symbol = f"{mod}.{target.id}"
                         if isinstance(node.value, ast.Call):
                             fn_name = _call_name(node.value)
                             if fn_name:
                                 builder.add_assignment_transform_edge(
                                     fn_name,
-                                    symbol,
+                                    target_symbol,
                                     location=f"{rel}:{node.lineno}",
                                     confidence=0.8,
                                 )
