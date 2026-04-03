@@ -465,14 +465,21 @@ class FileDiscovery:
 
         for entry in entries:
             # Skip irrelevant directories
-            if entry.is_dir(follow_symlinks=self.follow_symlinks):
+            # Note: follow_symlinks parameter for is_dir() requires Python 3.13+
+            # For Python 3.11-3.12, we check symlinks separately
+            try:
+                is_directory = entry.is_dir()
+            except OSError:
+                continue
+                
+            if is_directory:
                 if entry.name in self.SKIP_DIRS:
                     continue
-                
+
                 # Handle symlinks safely
                 if entry.is_symlink() and not self.follow_symlinks:
                     continue
-                
+
                 # Detect circular references via inode tracking
                 try:
                     stat = entry.stat(follow_symlinks=False)
@@ -484,16 +491,25 @@ class FileDiscovery:
                 except (OSError, ValueError):
                     logger.debug(f"Cannot stat {entry}, skipping")
                     continue
-                
+
                 self._walk_directory(entry, files)
-            
+
             # Collect Python files
-            elif entry.is_file(follow_symlinks=self.follow_symlinks) and entry.suffix == ".py":
+            else:
                 try:
-                    metadata = self._extract_file_metadata(entry)
-                    files.append(metadata)
-                except Exception as exc:
-                    logger.warning(f"Error extracting metadata for {entry}: {exc}")
+                    is_python_file = entry.is_file() and entry.suffix == ".py"
+                except OSError:
+                    continue
+                    
+                if is_python_file:
+                    # Handle symlinks for files
+                    if entry.is_symlink() and not self.follow_symlinks:
+                        continue
+                    try:
+                        metadata = self._extract_file_metadata(entry)
+                        files.append(metadata)
+                    except Exception as exc:
+                        logger.warning(f"Error extracting metadata for {entry}: {exc}")
 
     def _extract_file_metadata(self, file_path: Path) -> FileMetadata:
         """Extract metadata for a Python file.
