@@ -17,10 +17,10 @@ class TestGraphVerifier:
         db_path = tmp_path / "test.db"
         storage = Storage(db_path)
         storage.init_schema()
-        
+
         verifier = GraphVerifier(storage)
         assert verifier.storage is storage
-        
+
         storage.close()
 
     def test_verify_empty_graph(self, tmp_path: Path):
@@ -28,15 +28,15 @@ class TestGraphVerifier:
         db_path = tmp_path / "test.db"
         storage = Storage(db_path)
         storage.init_schema()
-        
+
         verifier = GraphVerifier(storage)
         result = verifier.verify()
-        
+
         assert result.valid is True
         assert result.total_nodes == 0
         assert result.total_edges == 0
         assert len(result.violations) == 0
-        
+
         storage.close()
 
     def test_verify_valid_graph(self, tmp_path: Path):
@@ -44,7 +44,7 @@ class TestGraphVerifier:
         db_path = tmp_path / "test.db"
         storage = Storage(db_path)
         storage.init_schema()
-        
+
         nodes = [
             DataNode(symbol="a.f", module="a", kind="function", location="a.py:1"),
             DataNode(symbol="a.g", module="a", kind="function", location="a.py:5"),
@@ -68,17 +68,17 @@ class TestGraphVerifier:
                 confidence=0.85,
             ),
         ]
-        
+
         storage.replace_nodes_edges(nodes, edges)
-        
+
         verifier = GraphVerifier(storage)
         result = verifier.verify()
-        
+
         assert result.valid is True
         assert result.total_nodes == 3
         assert result.total_edges == 2
         assert len(result.violations) == 0
-        
+
         storage.close()
 
     def test_detect_self_loops(self, tmp_path: Path):
@@ -86,7 +86,7 @@ class TestGraphVerifier:
         db_path = tmp_path / "test.db"
         storage = Storage(db_path)
         storage.init_schema()
-        
+
         nodes = [
             DataNode(symbol="a.f", module="a", kind="function", location="a.py:1"),
         ]
@@ -100,16 +100,16 @@ class TestGraphVerifier:
                 confidence=0.9,
             ),
         ]
-        
+
         storage.replace_nodes_edges(nodes, edges)
-        
+
         verifier = GraphVerifier(storage)
         result = verifier.verify()
-        
+
         assert result.valid is False
         assert len(result.self_loops) == 1
         assert "self-loops" in result.violations[0]
-        
+
         storage.close()
 
     def test_detect_invalid_confidence(self, tmp_path: Path):
@@ -117,7 +117,7 @@ class TestGraphVerifier:
         db_path = tmp_path / "test.db"
         storage = Storage(db_path)
         storage.init_schema()
-        
+
         nodes = [
             DataNode(symbol="a.f", module="a", kind="function", location="a.py:1"),
             DataNode(symbol="a.g", module="a", kind="function", location="a.py:5"),
@@ -132,16 +132,16 @@ class TestGraphVerifier:
                 confidence=1.5,  # Invalid: > 1.0
             ),
         ]
-        
+
         storage.replace_nodes_edges(nodes, edges)
-        
+
         verifier = GraphVerifier(storage)
         result = verifier.verify()
-        
+
         assert result.valid is False
         assert len(result.invalid_confidence) == 1
         assert "invalid confidence" in result.violations[0]
-        
+
         storage.close()
 
     def test_find_dead_nodes(self, tmp_path: Path):
@@ -149,7 +149,7 @@ class TestGraphVerifier:
         db_path = tmp_path / "test.db"
         storage = Storage(db_path)
         storage.init_schema()
-        
+
         nodes = [
             DataNode(symbol="a.f", module="a", kind="function", location="a.py:1"),
             DataNode(symbol="a.g", module="a", kind="function", location="a.py:5"),
@@ -165,17 +165,17 @@ class TestGraphVerifier:
                 confidence=0.9,
             ),
         ]
-        
+
         storage.replace_nodes_edges(nodes, edges)
-        
+
         verifier = GraphVerifier(storage)
         result = verifier.verify()
-        
+
         assert result.valid is False
         assert len(result.dead_nodes) == 1
         assert result.dead_nodes[0]["symbol"] == "a.unused"
         assert "dead nodes" in result.violations[0]
-        
+
         storage.close()
 
     def test_find_orphaned_nodes(self, tmp_path: Path):
@@ -183,7 +183,7 @@ class TestGraphVerifier:
         db_path = tmp_path / "test.db"
         storage = Storage(db_path)
         storage.init_schema()
-        
+
         nodes = [
             DataNode(symbol="a.f", module="a", kind="function", location="a.py:1"),
             DataNode(symbol="a.g", module="a", kind="function", location="a.py:5"),
@@ -209,17 +209,17 @@ class TestGraphVerifier:
                 confidence=0.9,
             ),
         ]
-        
+
         storage.replace_nodes_edges(nodes, edges)
-        
+
         verifier = GraphVerifier(storage)
         result = verifier.verify()
-        
+
         # Both components are valid (no violations)
         # b.h and b.i form their own entry point
         assert result.valid is True
         assert len(result.orphaned_nodes) == 0
-        
+
         storage.close()
 
     def test_detect_cycles(self, tmp_path: Path):
@@ -227,7 +227,7 @@ class TestGraphVerifier:
         db_path = tmp_path / "test.db"
         storage = Storage(db_path)
         storage.init_schema()
-        
+
         nodes = [
             DataNode(symbol="a.f", module="a", kind="function", location="a.py:1"),
             DataNode(symbol="a.g", module="a", kind="function", location="a.py:5"),
@@ -259,17 +259,17 @@ class TestGraphVerifier:
                 confidence=0.9,
             ),
         ]
-        
+
         storage.replace_nodes_edges(nodes, edges)
-        
+
         verifier = GraphVerifier(storage)
         result = verifier.verify()
-        
+
         assert result.valid is False
         assert len(result.cycles) >= 1
         # Check that cycles are detected (may also have orphaned nodes)
         assert any("cycles" in v for v in result.violations)
-        
+
         storage.close()
 
     def test_get_statistics(self, tmp_path: Path):
@@ -277,7 +277,7 @@ class TestGraphVerifier:
         db_path = tmp_path / "test.db"
         storage = Storage(db_path)
         storage.init_schema()
-        
+
         nodes = [
             DataNode(symbol="a.f", module="a", kind="function", location="a.py:1"),
             DataNode(symbol="a.C", module="a", kind="class", location="a.py:5"),
@@ -301,12 +301,12 @@ class TestGraphVerifier:
                 confidence=1.0,
             ),
         ]
-        
+
         storage.replace_nodes_edges(nodes, edges)
-        
+
         verifier = GraphVerifier(storage)
         stats = verifier.get_statistics()
-        
+
         assert stats["total_nodes"] == 3
         assert stats["total_edges"] == 2
         assert stats["node_kinds"]["function"] == 2
@@ -316,7 +316,7 @@ class TestGraphVerifier:
         assert stats["avg_confidence"] == 0.95
         assert stats["min_confidence"] == 0.9
         assert stats["max_confidence"] == 1.0
-        
+
         storage.close()
 
     def test_multiple_violations(self, tmp_path: Path):
@@ -324,7 +324,7 @@ class TestGraphVerifier:
         db_path = tmp_path / "test.db"
         storage = Storage(db_path)
         storage.init_schema()
-        
+
         nodes = [
             DataNode(symbol="a.f", module="a", kind="function", location="a.py:1"),
             DataNode(symbol="a.unused", module="a", kind="function", location="a.py:5"),
@@ -339,18 +339,18 @@ class TestGraphVerifier:
                 confidence=1.5,  # Invalid confidence
             ),
         ]
-        
+
         storage.replace_nodes_edges(nodes, edges)
-        
+
         verifier = GraphVerifier(storage)
         result = verifier.verify()
-        
+
         assert result.valid is False
         assert len(result.violations) >= 2
         assert len(result.self_loops) == 1
         assert len(result.invalid_confidence) == 1
         assert len(result.dead_nodes) == 1
-        
+
         storage.close()
 
     def test_complex_graph_verification(self, tmp_path: Path):
@@ -358,7 +358,7 @@ class TestGraphVerifier:
         db_path = tmp_path / "test.db"
         storage = Storage(db_path)
         storage.init_schema()
-        
+
         # Create a more complex graph
         nodes = [
             DataNode(symbol="main.run", module="main", kind="function", location="main.py:1"),
@@ -401,20 +401,20 @@ class TestGraphVerifier:
                 confidence=0.8,
             ),
         ]
-        
+
         storage.replace_nodes_edges(nodes, edges)
-        
+
         verifier = GraphVerifier(storage)
         result = verifier.verify()
-        
+
         assert result.valid is True
         assert result.total_nodes == 5
         assert result.total_edges == 4
         assert len(result.violations) == 0
-        
+
         stats = verifier.get_statistics()
         assert stats["total_nodes"] == 5
         assert stats["total_edges"] == 4
         assert stats["avg_confidence"] == 0.875
-        
+
         storage.close()
