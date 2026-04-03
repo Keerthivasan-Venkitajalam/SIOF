@@ -1,0 +1,52 @@
+# SIOF v2.0 Development Configuration
+# For local development and testing
+
+storage:
+  backend: sqlite
+  connection_string: siof.db
+  pool_size: 5
+  timeout_seconds: 30
+  retry_attempts: 3
+
+cache:
+  enabled: true
+  backend: memory
+  ttl_seconds: 300
+  max_size_mb: 100
+
+auth:
+  enabled: false  # Disabled for development
+  provider: jwt
+  jwt_secret: dev-secret-change-in-production
+  jwt_algorithm: HS256
+  token_expiry_seconds: 3600
+  refresh_enabled: true
+
+semantic_search:
+  enabled: false  # Disabled by default (requires model download)
+  embedder: transformer
+  model_name: sentence-transformers/all-MiniLM-L6-v2
+  vector_store: faiss  # In-memory for development
+  dimension: 384
+
+parallel:
+  enabled: true
+  executor: thread
+  max_workers: 0  # Auto-detect CPU count
+  queue_size: 1000
+  batch_size: 100
+
+observability:
+  metrics_enabled: false
+  metrics_port: 9090
+  tracing_enabled: false
+  tracing_endpoint: ""
+  logging_level: DEBUG
+  export_interval_seconds: 60
+
+deployment:
+  mode: standalone
+  region: local
+  replicas: 1
+  health_check_port: 8080
+  graceful_shutdown_seconds: 10

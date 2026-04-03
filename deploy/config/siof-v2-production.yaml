@@ -1,0 +1,88 @@
+# SIOF v2.0 Production Configuration
+# For production deployment with all enterprise features
+
+storage:
+  backend: neo4j
+  connection_string: bolt://neo4j:7687
+  pool_size: 50
+  timeout_seconds: 60
+  retry_attempts: 5
+  options:
+    username: ${NEO4J_USERNAME}
+    password: ${NEO4J_PASSWORD}
+    encrypted: true
+    trust: TRUST_SYSTEM_CA_SIGNED_CERTIFICATES
+
+cache:
+  enabled: true
+  backend: redis
+  connection_string: redis://redis:6379/0
+  ttl_seconds: 600
+  max_size_mb: 1000
+  options:
+    password: ${REDIS_PASSWORD}
+    ssl: true
+    max_connections: 100
+
+auth:
+  enabled: true
+  provider: jwt
+  jwt_secret: ${JWT_SECRET}  # Must be set via environment
+  jwt_algorithm: RS256  # Use asymmetric encryption in production
+  token_expiry_seconds: 1800  # 30 minutes
+  refresh_enabled: true
+  options:
+    public_key_path: /etc/siof/keys/public.pem
+    private_key_path: /etc/siof/keys/private.pem
+
+semantic_search:
+  enabled: true
+  embedder: transformer
+  model_name: sentence-transformers/all-MiniLM-L6-v2
+  vector_store: milvus
+  connection_string: http://milvus:19530
+  dimension: 384
+  options:
+    collection_name: siof_embeddings
+    index_type: IVF_FLAT
+    metric_type: L2
+    nlist: 1024
+
+parallel:
+  enabled: true
+  executor: thread
+  max_workers: 32  # Adjust based on instance size
+  queue_size: 10000
+  batch_size: 500
+  options:
+    priority_enabled: true
+    backpressure_threshold: 0.8
+
+observability:
+  metrics_enabled: true
+  metrics_port: 9090
+  tracing_enabled: true
+  tracing_endpoint: http://jaeger:14268/api/traces
+  logging_level: INFO
+  export_interval_seconds: 15
+  options:
+    service_name: siof-v2
+    environment: production
+    prometheus_namespace: siof
+    trace_sample_rate: 0.1  # Sample 10% of traces
+
+deployment:
+  mode: distributed
+  region: us-east-1
+  replicas: 3
+  health_check_port: 8080
+  graceful_shutdown_seconds: 30
+  options:
+    load_balancer: round_robin
+    session_affinity: true
+    auto_scaling:
+      enabled: true
+      min_replicas: 3
+      max_replicas: 20
+      target_cpu_percent: 70
+      target_memory_percent: 80
