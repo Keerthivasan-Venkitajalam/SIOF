@@ -185,8 +185,8 @@ class TestGreenGuardIntegration:
             result2 = guard.run_command(["python", "-c", "print('test2')"])
 
             # Get reports
-            report1 = guard.report(result1["run_id"])
-            report2 = guard.report(result2["run_id"])
+            guard.report(result1["run_id"])
+            guard.report(result2["run_id"])
 
             # Get sustainability report
             sustainability = guard.sustainability_report()
@@ -241,8 +241,8 @@ class TestGreenGuardIntegration:
             guard1 = GreenGuard(db_path)
             guard2 = GreenGuard(db_path)
 
-            result1 = guard1.run_command(["python", "-c", "print('test1')"])
-            result2 = guard2.run_command(["python", "-c", "print('test2')"])
+            guard1.run_command(["python", "-c", "print('test1')"])
+            guard2.run_command(["python", "-c", "print('test2')"])
 
             report1 = guard1.sustainability_report()
             report2 = guard2.sustainability_report()

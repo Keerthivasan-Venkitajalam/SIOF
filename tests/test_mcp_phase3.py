@@ -18,7 +18,6 @@ import pytest
 from siof.mcp_server import (
     MCPGraphServer,
     MCPRequest,
-    MCPResponse,
     SchemaValidator,
     Tracer,
 )

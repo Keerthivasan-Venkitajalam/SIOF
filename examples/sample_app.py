@@ -12,5 +12,5 @@ def pipeline(v):
 def run():
     try:
         return pipeline(2)
-    except:
+    except Exception:
         pass

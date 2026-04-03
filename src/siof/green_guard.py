@@ -34,7 +34,7 @@ class EnergyMetrics:
 
 class GreenGuard:
     """Tracks and enforces energy/CO2 budgets for command execution.
-    
+
     Features:
     - Per-run energy tracking
     - CO2 emissions calculation
@@ -55,7 +55,7 @@ class GreenGuard:
         cpu_watts: float = DEFAULT_CPU_WATTS,
     ):
         """Initialize GreenGuard.
-        
+
         Args:
             db_path: Path to SQLite database
             co2_kg_per_kwh: CO2 emissions factor (kg CO2 per kWh)
@@ -80,12 +80,12 @@ class GreenGuard:
         soft_co2_kg: float | None = None,
     ) -> dict[str, Any]:
         """Run a command with energy tracking and optional CO2 limit enforcement.
-        
+
         Args:
             command: Command to run
             hard_co2_kg: Hard CO2 limit (terminates if exceeded)
             soft_co2_kg: Soft CO2 limit (warning if exceeded)
-            
+
         Returns:
             Dictionary with run metrics and status
         """
@@ -159,10 +159,10 @@ class GreenGuard:
 
     def report(self, run_id: str) -> dict[str, Any]:
         """Get energy report for a run.
-        
+
         Args:
             run_id: Run identifier
-            
+
         Returns:
             Dictionary with run metrics
         """
@@ -175,12 +175,12 @@ class GreenGuard:
 
     def sustainability_report(self) -> dict[str, Any]:
         """Generate sustainability report for all runs.
-        
+
         Returns:
             Dictionary with aggregated metrics
         """
         conn = self.db.conn
-        
+
         # Get all runs
         rows = conn.execute(
             "SELECT duration_s, estimated_wh, estimated_co2_kg, status FROM energy_runs"

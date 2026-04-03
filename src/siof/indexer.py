@@ -4,14 +4,14 @@ import ast
 import hashlib
 import logging
 import os
+from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable
+from typing import ClassVar
 
 from .models import Artifact, DataNode, TransformEdge, module_name
 from .repository import Repository
-from .storage import Storage
 from .verifier import GraphVerifier
 
 logger = logging.getLogger(__name__)
@@ -60,7 +60,7 @@ class SymbolTable:
 
     def __init__(self, module: str):
         """Initialize symbol table for a module.
-        
+
         Args:
             module: Module name (e.g., 'package.module')
         """
@@ -71,11 +71,11 @@ class SymbolTable:
 
     def push_scope(self, name: str, kind: str) -> ScopeLevel:
         """Enter a new scope (class or function).
-        
+
         Args:
             name: Scope name
             kind: Scope kind ('class' or 'function')
-            
+
         Returns:
             New ScopeLevel
         """
@@ -91,7 +91,7 @@ class SymbolTable:
 
     def add_symbol(self, symbol: SymbolInfo) -> None:
         """Add symbol to current scope.
-        
+
         Args:
             symbol: SymbolInfo to add
         """
@@ -102,10 +102,10 @@ class SymbolTable:
 
     def _get_qualified_name(self, name: str) -> str:
         """Get fully qualified name for symbol in current scope.
-        
+
         Args:
             name: Symbol name
-            
+
         Returns:
             Fully qualified name (e.g., 'module.Class.method')
         """
@@ -119,7 +119,7 @@ class SymbolTable:
 
     def get_scope_path(self) -> str:
         """Get current scope path.
-        
+
         Returns:
             Scope path (e.g., 'module.Class.method')
         """
@@ -132,7 +132,7 @@ class SymbolTable:
 
     def get_all_symbols(self) -> dict[str, SymbolInfo]:
         """Get all symbols in table.
-        
+
         Returns:
             Dictionary of all symbols
         """
@@ -144,7 +144,7 @@ class SymbolExtractor(ast.NodeVisitor):
 
     def __init__(self, module: str, file_path: str):
         """Initialize extractor.
-        
+
         Args:
             module: Module name
             file_path: File path for location tracking
@@ -157,10 +157,10 @@ class SymbolExtractor(ast.NodeVisitor):
 
     def extract(self, tree: ast.AST) -> dict[str, SymbolInfo]:
         """Extract all symbols from AST.
-        
+
         Args:
             tree: AST tree to extract from
-            
+
         Returns:
             Dictionary of extracted symbols
         """
@@ -177,17 +177,17 @@ class SymbolExtractor(ast.NodeVisitor):
 
     def _visit_function(self, node: ast.FunctionDef | ast.AsyncFunctionDef, is_async: bool) -> None:
         """Process function definition.
-        
+
         Args:
             node: Function node
             is_async: Whether function is async
         """
         # Extract decorators
         decorators = [self._get_decorator_name(d) for d in node.decorator_list]
-        
+
         # Extract parameters
         parameters = [arg.arg for arg in node.args.args]
-        
+
         # Extract type hints
         type_hints = {}
         for arg in node.args.args:
@@ -195,18 +195,18 @@ class SymbolExtractor(ast.NodeVisitor):
                 type_hints[arg.arg] = ast.unparse(arg.annotation)
         if node.returns:
             type_hints["return"] = ast.unparse(node.returns)
-        
+
         # Extract docstring
         docstring = ast.get_docstring(node)
-        
+
         # Build signature
         signature = self._build_function_signature(node)
-        
+
         # Determine if generator or property
         is_generator = self._is_generator(node)
         is_property = any(d == "property" for d in decorators)
         is_abstract = any(d in ("abstractmethod", "abstractproperty") for d in decorators)
-        
+
         # Create symbol
         symbol = SymbolInfo(
             name=node.name,
@@ -225,9 +225,9 @@ class SymbolExtractor(ast.NodeVisitor):
             is_abstract=is_abstract,
             parameters=parameters,
         )
-        
+
         self.symbol_table.add_symbol(symbol)
-        
+
         # Push scope for nested definitions
         old_function = self.current_function
         self.current_function = node.name
@@ -240,16 +240,16 @@ class SymbolExtractor(ast.NodeVisitor):
         """Visit class definition."""
         # Extract decorators
         decorators = [self._get_decorator_name(d) for d in node.decorator_list]
-        
+
         # Extract base classes
         bases = [ast.unparse(base) for base in node.bases]
-        
+
         # Extract docstring
         docstring = ast.get_docstring(node)
-        
+
         # Determine if abstract (check decorators and base classes)
         is_abstract = any(d in ("abstractmethod", "ABC") for d in decorators) or any(b in ("ABC", "ABCMeta") for b in bases)
-        
+
         # Create symbol
         symbol = SymbolInfo(
             name=node.name,
@@ -262,9 +262,9 @@ class SymbolExtractor(ast.NodeVisitor):
             is_abstract=is_abstract,
             bases=bases,
         )
-        
+
         self.symbol_table.add_symbol(symbol)
-        
+
         # Push scope for class members
         old_class = self.current_class
         self.current_class = node.name
@@ -279,14 +279,14 @@ class SymbolExtractor(ast.NodeVisitor):
         if self.current_function:
             self.generic_visit(node)
             return
-        
+
         for target in node.targets:
             if isinstance(target, ast.Name):
                 # Extract type hint if available
                 type_hints = {}
                 if isinstance(node.value, ast.Call):
                     type_hints["inferred"] = ast.unparse(node.value.func)
-                
+
                 symbol = SymbolInfo(
                     name=target.id,
                     kind="variable",
@@ -296,7 +296,7 @@ class SymbolExtractor(ast.NodeVisitor):
                     scope=self.symbol_table.get_scope_path(),
                 )
                 self.symbol_table.add_symbol(symbol)
-        
+
         self.generic_visit(node)
 
     def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
@@ -304,10 +304,10 @@ class SymbolExtractor(ast.NodeVisitor):
         if self.current_function:
             self.generic_visit(node)
             return
-        
+
         if isinstance(node.target, ast.Name):
             type_hints = {"type": ast.unparse(node.annotation)}
-            
+
             symbol = SymbolInfo(
                 name=node.target.id,
                 kind="variable",
@@ -317,15 +317,15 @@ class SymbolExtractor(ast.NodeVisitor):
                 scope=self.symbol_table.get_scope_path(),
             )
             self.symbol_table.add_symbol(symbol)
-        
+
         self.generic_visit(node)
 
     def _get_decorator_name(self, decorator: ast.expr) -> str:
         """Extract decorator name from decorator node.
-        
+
         Args:
             decorator: Decorator AST node
-            
+
         Returns:
             Decorator name
         """
@@ -342,10 +342,10 @@ class SymbolExtractor(ast.NodeVisitor):
 
     def _build_function_signature(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> str:
         """Build function signature string.
-        
+
         Args:
             node: Function node
-            
+
         Returns:
             Function signature
         """
@@ -355,25 +355,25 @@ class SymbolExtractor(ast.NodeVisitor):
                 args.append(f"{arg.arg}: {ast.unparse(arg.annotation)}")
             else:
                 args.append(arg.arg)
-        
+
         # Handle *args and **kwargs
         if node.args.vararg:
             args.append(f"*{node.args.vararg.arg}")
         if node.args.kwarg:
             args.append(f"**{node.args.kwarg.arg}")
-        
+
         return_type = ""
         if node.returns:
             return_type = f" -> {ast.unparse(node.returns)}"
-        
+
         return f"({', '.join(args)}){return_type}"
 
     def _is_generator(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
         """Check if function is a generator.
-        
+
         Args:
             node: Function node
-            
+
         Returns:
             True if function contains yield
         """
@@ -409,7 +409,7 @@ class FileDiscovery:
     """Recursively discover Python files in repository with metadata extraction."""
 
     # Directories to skip during traversal
-    SKIP_DIRS = {
+    SKIP_DIRS: ClassVar[set[str]] = {
         ".venv", "venv", "env",
         "__pycache__",
         ".egg-info", ".eggs",
@@ -424,7 +424,7 @@ class FileDiscovery:
 
     def __init__(self, repo: Path, follow_symlinks: bool = False):
         """Initialize file discovery.
-        
+
         Args:
             repo: Repository root path
             follow_symlinks: Whether to follow symbolic links (default: False for safety)
@@ -435,24 +435,24 @@ class FileDiscovery:
 
     def discover(self) -> list[FileMetadata]:
         """Discover all Python files in repository.
-        
+
         Returns:
             List of FileMetadata for discovered Python files
         """
         files: list[FileMetadata] = []
         self._visited_inodes.clear()
-        
+
         try:
             self._walk_directory(self.repo, files)
         except Exception as exc:
             logger.error(f"Error during file discovery: {exc}")
-        
+
         logger.info(f"Discovered {len(files)} Python files")
         return files
 
     def _walk_directory(self, directory: Path, files: list[FileMetadata]) -> None:
         """Recursively walk directory tree, skipping irrelevant directories.
-        
+
         Args:
             directory: Current directory to walk
             files: Accumulator list for discovered files
@@ -471,7 +471,7 @@ class FileDiscovery:
                 is_directory = entry.is_dir()
             except OSError:
                 continue
-                
+
             if is_directory:
                 if entry.name in self.SKIP_DIRS:
                     continue
@@ -500,7 +500,7 @@ class FileDiscovery:
                     is_python_file = entry.is_file() and entry.suffix == ".py"
                 except OSError:
                     continue
-                    
+
                 if is_python_file:
                     # Handle symlinks for files
                     if entry.is_symlink() and not self.follow_symlinks:
@@ -513,10 +513,10 @@ class FileDiscovery:
 
     def _extract_file_metadata(self, file_path: Path) -> FileMetadata:
         """Extract metadata for a Python file.
-        
+
         Args:
             file_path: Path to Python file
-            
+
         Returns:
             FileMetadata with size and hash
         """
@@ -535,7 +535,7 @@ class DependencySeedExtractor:
 
     def __init__(self, repo: Path):
         """Initialize extractor.
-        
+
         Args:
             repo: Repository root path
         """
@@ -543,10 +543,10 @@ class DependencySeedExtractor:
 
     def extract(self, file_path: Path) -> DependencySeed | None:
         """Extract dependency seed from a Python file.
-        
+
         Args:
             file_path: Path to Python file
-            
+
         Returns:
             DependencySeed with imports and local symbols, or None on error
         """
@@ -570,7 +570,7 @@ class DependencySeedExtractor:
             if isinstance(node, ast.Import):
                 for alias in node.names:
                     imports.append(alias.name)
-            
+
             # Extract from...import statements
             elif isinstance(node, ast.ImportFrom):
                 module = node.module or ""
@@ -578,7 +578,7 @@ class DependencySeedExtractor:
                 if module not in from_imports:
                     from_imports[module] = []
                 from_imports[module].extend(names)
-            
+
             # Extract top-level function and class definitions
             elif isinstance(node, (ast.FunctionDef, ast.ClassDef)):
                 if isinstance(node, ast.FunctionDef):
@@ -595,10 +595,10 @@ class DependencySeedExtractor:
 
     def extract_batch(self, file_paths: Iterable[Path]) -> dict[str, DependencySeed]:
         """Extract dependency seeds from multiple files.
-        
+
         Args:
             file_paths: Iterable of file paths
-            
+
         Returns:
             Dictionary mapping module name to DependencySeed
         """
@@ -640,7 +640,7 @@ class PythonIndexer:
 
     def discover_files(self) -> list[FileMetadata]:
         """Discover Python files in repository.
-        
+
         Returns:
             List of FileMetadata for discovered files
         """
@@ -648,10 +648,10 @@ class PythonIndexer:
 
     def extract_dependency_seeds(self, files: list[Path]) -> dict[str, DependencySeed]:
         """Extract dependency seeds from files.
-        
+
         Args:
             files: List of file paths
-            
+
         Returns:
             Dictionary mapping module name to DependencySeed
         """
@@ -660,12 +660,12 @@ class PythonIndexer:
     def build(self) -> dict:
         """Build complete DTG index from scratch."""
         logger.info(f"Starting full index build for {self.repo}")
-        
+
         # Phase 1: File discovery
         file_metadata = self.discover_files()
         files = [m.path for m in file_metadata]
         logger.info(f"Discovered {len(files)} Python files")
-        
+
         # Phase 2: Dependency seed extraction
         seeds = self.extract_dependency_seeds(files)
         logger.info(f"Extracted {len(seeds)} dependency seeds")
@@ -686,30 +686,30 @@ class PythonIndexer:
         result["parse_errors"] = parse_errors
         result["dependency_seeds"] = len(seeds)
         result["files"] = len(files)
-        
+
         logger.info(f"Index build complete: {result}")
         return result
 
     def update(self, changed_files: Iterable[Path] | None = None) -> dict:
         """Update index for changed files.
-        
+
         If changed_files is not provided, detects changes using git diff.
         Otherwise, processes the specified files.
-        
+
         Args:
             changed_files: List of changed file paths (optional)
-            
+
         Returns:
             Dictionary with update statistics
         """
         logger.info("Starting incremental index update")
-        
+
         # Detect changed files if not provided
         if changed_files is None:
             changed_files = self._detect_changed_files()
         else:
             changed_files = list(changed_files)
-        
+
         if not changed_files:
             logger.info("No changed files detected")
             # Return current statistics
@@ -723,29 +723,29 @@ class PythonIndexer:
                 "files": stats["artifacts"],
                 "updated": False,
             }
-        
+
         logger.info(f"Detected {len(changed_files)} changed files")
-        
+
         # Parse changed files
         results = self._parse_parallel(changed_files)
-        
+
         artifacts = [r.artifact for r in results]
         nodes = [n for r in results for n in r.nodes]
         edges = [e for r in results for e in r.edges]
-        
+
         parse_errors = sum(1 for a in artifacts if not a.parse_ok)
         if parse_errors > 0:
             logger.warning(f"{parse_errors} files had parse errors")
-        
+
         # Update artifacts in storage (upsert)
         self.repository.storage.upsert_artifacts(artifacts)
-        
+
         # For incremental updates, we need to:
         # 1. Remove old nodes/edges for changed files
         # 2. Add new nodes/edges
         # For v1, we'll do a full rebuild for determinism
         # TODO: Implement true incremental updates in v2
-        
+
         # Get all current data
         all_artifacts_result = self.repository.storage.conn.execute(
             "SELECT path, hash, parse_ok, error FROM artifacts"
@@ -754,7 +754,7 @@ class PythonIndexer:
             Artifact(path=r["path"], hash=r["hash"], parse_ok=bool(r["parse_ok"]), error=r["error"])
             for r in all_artifacts_result
         ]
-        
+
         all_nodes_result = self.repository.storage.conn.execute(
             "SELECT symbol, module, kind, location FROM nodes"
         ).fetchall()
@@ -762,7 +762,7 @@ class PythonIndexer:
             DataNode(symbol=r["symbol"], module=r["module"], kind=r["kind"], location=r["location"])
             for r in all_nodes_result
         ]
-        
+
         all_edges_result = self.repository.storage.conn.execute(
             "SELECT source, target, transform_symbol, transform_kind, location, confidence FROM edges"
         ).fetchall()
@@ -777,19 +777,19 @@ class PythonIndexer:
             )
             for r in all_edges_result
         ]
-        
+
         # Remove old nodes/edges for changed files
         changed_paths = {str(f.relative_to(self.repo)) for f in changed_files}
         all_nodes = [n for n in all_nodes if not any(p in n.location for p in changed_paths)]
         all_edges = [e for e in all_edges if not any(p in e.location for p in changed_paths)]
-        
+
         # Add new nodes/edges
         all_nodes.extend(nodes)
         all_edges.extend(edges)
-        
+
         # Update repository
         self.repository.storage.replace_nodes_edges(all_nodes, all_edges)
-        
+
         # Return total statistics after update
         result = {
             "artifacts": len(all_artifacts),
@@ -802,16 +802,16 @@ class PythonIndexer:
         }
         logger.info(f"Index update complete: {result}")
         return result
-    
+
     def _detect_changed_files(self) -> list[Path]:
         """Detect changed Python files using git diff.
-        
+
         Returns:
             List of changed Python file paths
         """
         try:
             import subprocess
-            
+
             # Get list of changed files from git
             result = subprocess.run(
                 ["git", "diff", "--name-only", "HEAD"],
@@ -820,45 +820,45 @@ class PythonIndexer:
                 text=True,
                 timeout=10,
             )
-            
+
             if result.returncode != 0:
                 logger.warning(f"git diff failed: {result.stderr}")
                 return []
-            
+
             changed_files = []
             for line in result.stdout.strip().split("\n"):
                 if line.endswith(".py"):
                     file_path = self.repo / line
                     if file_path.exists():
                         changed_files.append(file_path)
-            
+
             logger.info(f"Detected {len(changed_files)} changed Python files via git")
             return changed_files
-            
+
         except Exception as exc:
             logger.warning(f"Failed to detect changed files: {exc}")
             return []
 
     def verify(self) -> dict:
         """Verify graph integrity and detect anomalies.
-        
+
         Checks:
         1. No self-loops
         2. Valid confidence bounds
         3. Dead nodes
         4. Orphaned nodes
         5. Cycles in transformation graph
-        
+
         Returns:
             Dictionary with verification results
         """
         logger.info("Starting graph integrity verification")
         verifier = GraphVerifier(self.repository.storage)
         result = verifier.verify()
-        
+
         # Get statistics
         stats = verifier.get_statistics()
-        
+
         return {
             "valid": result.valid,
             "total_nodes": result.total_nodes,
@@ -882,7 +882,7 @@ class PythonIndexer:
         out: list[ParseResult] = []
         total = len(files)
         processed = 0
-        
+
         with ThreadPoolExecutor(max_workers=self.workers) as ex:
             futs = [ex.submit(self._parse_file, p) for p in files]
             for fut in as_completed(futs):
@@ -921,10 +921,10 @@ class PythonIndexer:
         # Extract comprehensive symbols using SymbolExtractor
         extractor = SymbolExtractor(mod, rel)
         symbols = extractor.extract(tree)
-        
+
         # Build DTG using dedicated builder
         builder = DTGBuilder(mod, rel)
-        
+
         # Add symbol nodes and their relationships
         for qualified_name, symbol in symbols.items():
             builder.add_symbol_node(qualified_name, symbol)
@@ -961,7 +961,7 @@ class PythonIndexer:
 
 class DTGBuilder:
     """Builds DTG nodes and edges from parsed symbols and AST analysis.
-    
+
     Responsible for:
     - Creating DataNode instances from symbols
     - Creating TransformEdge instances for relationships
@@ -971,7 +971,7 @@ class DTGBuilder:
 
     def __init__(self, module: str, file_path: str):
         """Initialize DTG builder for a specific module.
-        
+
         Args:
             module: Fully qualified module name (e.g., 'myapp.core.models')
             file_path: Relative file path for location tracking
@@ -984,18 +984,18 @@ class DTGBuilder:
 
     def add_symbol_node(self, qualified_name: str, symbol: SymbolInfo) -> str:
         """Create a DataNode from a SymbolInfo and add to graph.
-        
+
         Args:
             qualified_name: Fully qualified symbol name (from SymbolExtractor.extract() keys)
             symbol: SymbolInfo containing symbol metadata
-            
+
         Returns:
             Fully qualified symbol name for reference in edges
         """
         # Prevent duplicate nodes
         if qualified_name in self._node_symbols:
             return qualified_name
-        
+
         self.nodes.append(
             DataNode(
                 symbol=qualified_name,
@@ -1009,20 +1009,20 @@ class DTGBuilder:
 
     def add_parameter_edges(self, qualified_name: str, symbol: SymbolInfo) -> None:
         """Create edges for function/method parameters.
-        
+
         Args:
             qualified_name: Fully qualified symbol name
             symbol: SymbolInfo for a function or method
         """
         if symbol.kind not in ("function", "method"):
             return
-        
+
         if not symbol.parameters:
             return
-        
+
         for param in symbol.parameters:
             param_symbol = f"{qualified_name}:{param}"
-            
+
             # Create parameter node if not already present
             if param_symbol not in self._node_symbols:
                 self.nodes.append(
@@ -1034,7 +1034,7 @@ class DTGBuilder:
                     )
                 )
                 self._node_symbols.add(param_symbol)
-            
+
             # Create edge from parameter to function
             self.edges.append(
                 TransformEdge(
@@ -1049,17 +1049,17 @@ class DTGBuilder:
 
     def add_inheritance_edges(self, qualified_name: str, symbol: SymbolInfo) -> None:
         """Create edges for class inheritance relationships.
-        
+
         Args:
             qualified_name: Fully qualified symbol name
             symbol: SymbolInfo for a class
         """
         if symbol.kind != "class":
             return
-        
+
         if not symbol.bases:
             return
-        
+
         for base in symbol.bases:
             self.edges.append(
                 TransformEdge(
@@ -1074,14 +1074,14 @@ class DTGBuilder:
 
     def add_decorator_edges(self, qualified_name: str, symbol: SymbolInfo) -> None:
         """Create edges for decorator relationships.
-        
+
         Args:
             qualified_name: Fully qualified symbol name
             symbol: SymbolInfo with decorators
         """
         if not symbol.decorators:
             return
-        
+
         for decorator in symbol.decorators:
             self.edges.append(
                 TransformEdge(
@@ -1103,7 +1103,7 @@ class DTGBuilder:
         confidence: float = 0.8,
     ) -> None:
         """Create an edge for a function call or transformation.
-        
+
         Args:
             source_symbol: Source symbol name
             target_symbol: Target symbol name
@@ -1113,7 +1113,7 @@ class DTGBuilder:
         """
         if not location:
             location = self.file_path
-        
+
         self.edges.append(
             TransformEdge(
                 source=source_symbol,
@@ -1133,7 +1133,7 @@ class DTGBuilder:
         confidence: float = 0.8,
     ) -> None:
         """Create an edge for an assignment transformation.
-        
+
         Args:
             source_symbol: Source function/expression
             target_symbol: Target variable
@@ -1150,7 +1150,7 @@ class DTGBuilder:
 
     def build(self) -> tuple[list[DataNode], list[TransformEdge]]:
         """Return the built DTG nodes and edges.
-        
+
         Returns:
             Tuple of (nodes, edges)
         """
@@ -1158,12 +1158,12 @@ class DTGBuilder:
 
     def verify_integrity(self) -> list[str]:
         """Verify graph integrity constraints.
-        
+
         Returns:
             List of integrity violation messages (empty if valid)
         """
         violations: list[str] = []
-        
+
         # Check for self-loops (except allowed cases)
         for edge in self.edges:
             if edge.source == edge.target and edge.transform_kind not in ("parameter",):
@@ -1171,7 +1171,7 @@ class DTGBuilder:
                     f"Self-loop detected: {edge.source} -> {edge.target} "
                     f"(kind={edge.transform_kind})"
                 )
-        
+
         # Check for dangling edges (edges referencing non-existent nodes)
         node_symbols = self._node_symbols
         for edge in self.edges:
@@ -1180,7 +1180,7 @@ class DTGBuilder:
             if edge.source.startswith(f"{self.module}.") and edge.source not in node_symbols:
                 # This is a local symbol that should exist
                 pass  # Allow for now - may be external reference
-        
+
         # Check confidence scores are valid
         for edge in self.edges:
             if not (0.0 <= edge.confidence <= 1.0):
@@ -1188,7 +1188,7 @@ class DTGBuilder:
                     f"Invalid confidence score: {edge.confidence} "
                     f"(must be in [0.0, 1.0])"
                 )
-        
+
         return violations
 
 

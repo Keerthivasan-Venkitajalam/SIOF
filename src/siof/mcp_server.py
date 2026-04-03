@@ -11,9 +11,9 @@ import logging
 import sys
 import time
 import uuid
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 from .policy import PolicyContext, PolicyEngine
 from .repository import Repository
@@ -51,7 +51,7 @@ class MCPResponse:
 class SchemaValidator:
     """JSON schema validator for MCP tool arguments."""
 
-    TOOL_SCHEMAS = {
+    TOOL_SCHEMAS: ClassVar[dict[str, dict]] = {
         "find_data_lineage": {
             "required": ["node_or_symbol"],
             "properties": {
@@ -109,11 +109,11 @@ class SchemaValidator:
     @classmethod
     def validate(cls, tool: str, args: dict[str, Any]) -> tuple[bool, str | None]:
         """Validate tool arguments against schema.
-        
+
         Args:
             tool: Tool name
             args: Tool arguments
-            
+
         Returns:
             Tuple of (is_valid, error_message)
         """
@@ -162,7 +162,7 @@ class Tracer:
 
     def start_span(self, trace_id: str, span_name: str) -> None:
         """Start a trace span.
-        
+
         Args:
             trace_id: Trace identifier
             span_name: Span name
@@ -180,7 +180,7 @@ class Tracer:
 
     def end_span(self, trace_id: str) -> None:
         """End the current trace span.
-        
+
         Args:
             trace_id: Trace identifier
         """
@@ -191,10 +191,10 @@ class Tracer:
 
     def get_trace(self, trace_id: str) -> dict[str, Any] | None:
         """Get trace data.
-        
+
         Args:
             trace_id: Trace identifier
-            
+
         Returns:
             Trace data or None
         """
@@ -203,7 +203,7 @@ class Tracer:
 
 class MCPGraphServer:
     """MCP server exposing graph query tools with full enterprise features.
-    
+
     Features:
     - Schema validation for all tool arguments
     - RBAC with role hierarchy and rate limiting
@@ -213,7 +213,7 @@ class MCPGraphServer:
 
     def __init__(self, db_path: Path | str):
         """Initialize MCP server.
-        
+
         Args:
             db_path: Path to SQLite database
         """
@@ -238,10 +238,10 @@ class MCPGraphServer:
 
     def handle(self, request: MCPRequest) -> MCPResponse:
         """Handle a single MCP request with full validation and tracing.
-        
+
         Args:
             request: MCP request
-            
+
         Returns:
             MCP response
         """
@@ -336,11 +336,11 @@ class MCPGraphServer:
 
     def _execute_tool(self, tool: str, args: dict[str, Any]) -> dict[str, Any]:
         """Execute a specific tool.
-        
+
         Args:
             tool: Tool name
             args: Tool arguments
-            
+
         Returns:
             Tool result
         """
@@ -388,7 +388,7 @@ class MCPGraphServer:
 
     def get_metrics(self) -> dict[str, Any]:
         """Get server metrics.
-        
+
         Returns:
             Dictionary with metrics
         """
@@ -406,7 +406,7 @@ class MCPGraphServer:
 
     def serve_stdio(self) -> None:
         """Serve MCP protocol over stdio.
-        
+
         Protocol: line-delimited JSON
         Input:  {"tool":"find_data_lineage","args":{...},"role":"reader"}
         Output: {"ok":true,"result":{...},"request_id":"...","latency_ms":...}

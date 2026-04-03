@@ -36,7 +36,7 @@ class OrchestrationResult:
 
 class SIOFOrchestrator:
     """Orchestrates complete SIOF workflow.
-    
+
     Wires together all phases:
     - Phase 1: DTG Indexer
     - Phase 2: De-Slopper
@@ -47,7 +47,7 @@ class SIOFOrchestrator:
 
     def __init__(self, repo: Path | str, db_path: Path | str):
         """Initialize orchestrator.
-        
+
         Args:
             repo: Repository path
             db_path: Database path
@@ -65,22 +65,22 @@ class SIOFOrchestrator:
         hard_co2_kg: float | None = None,
     ) -> OrchestrationResult:
         """Run complete SIOF pipeline.
-        
+
         Args:
             index_mode: "build" or "update"
             slop_mode: "audit", "fix", or "strict"
             enable_memex: Enable Memex intent extraction
             enable_green_guard: Enable Green Guard energy tracking
             hard_co2_kg: Hard CO2 limit for Green Guard
-            
+
         Returns:
             OrchestrationResult with all phase results
         """
         import time
-        
+
         start_time = time.time()
         phase_results: dict[str, Any] = {}
-        
+
         try:
             # Phase 1: Index
             logger.info("Phase 1: DTG Indexer")
@@ -159,7 +159,7 @@ class SIOFOrchestrator:
 
     def get_repository_stats(self) -> dict[str, Any]:
         """Get comprehensive repository statistics.
-        
+
         Returns:
             Dictionary with all repository metrics
         """
@@ -170,7 +170,7 @@ class SIOFOrchestrator:
 
     def validate_kpis(self) -> dict[str, Any]:
         """Validate key performance indicators.
-        
+
         Returns:
             Dictionary with KPI validation results
         """

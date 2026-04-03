@@ -101,7 +101,7 @@ def test_deslopper_fix_mode(tmp_path: Path):
 
     db = tmp_path / "siof.db"
     d = DeSlopper(repo=repo, db_path=db)
-    result = d.run(mode="fix")
+    d.run(mode="fix")
     d.close()
 
     # File should be modified
@@ -117,7 +117,7 @@ def test_deslopper_strict_mode_pass(tmp_path: Path):
 
     db = tmp_path / "siof.db"
     d = DeSlopper(repo=repo, db_path=db)
-    result = d.run(mode="strict")
+    d.run(mode="strict")
     d.close()
 
     # Should not raise
@@ -131,7 +131,7 @@ def test_deslopper_strict_mode_fail(tmp_path: Path):
 
     db = tmp_path / "siof.db"
     d = DeSlopper(repo=repo, db_path=db)
-    
+
     with pytest.raises(RuntimeError, match="strict mode failed"):
         d.run(mode="strict")
     d.close()
@@ -213,15 +213,15 @@ def test_deslopper_autofix_idempotent(tmp_path: Path):
 
     db = tmp_path / "siof.db"
     d = DeSlopper(repo=repo, db_path=db)
-    
+
     # First fix
-    result1 = d.run(mode="fix")
+    d.run(mode="fix")
     content1 = bad_file.read_text()
-    
+
     # Second fix (should not change)
-    result2 = d.run(mode="fix")
+    d.run(mode="fix")
     content2 = bad_file.read_text()
-    
+
     d.close()
 
     assert content1 == content2

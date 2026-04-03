@@ -44,7 +44,7 @@ class DeSlopper:
 
     def run(self, mode: str = "audit") -> SlopResult:
         """Run slop detection and optionally fix issues.
-        
+
         Modes:
         - audit: detect only, no mutations
         - fix: apply safe fixes
@@ -256,7 +256,6 @@ class DeSlopper:
             "hashlib",
             "uuid",
             "argparse",
-            "pathlib",
         }:
             return False
         # Suspicious if very long or has many x's (common in hallucinated names)

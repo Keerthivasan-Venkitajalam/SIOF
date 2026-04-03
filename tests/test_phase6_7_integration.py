@@ -18,7 +18,7 @@ class TestOrchestrator:
         """Create test repository."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create sample code
             (repo / "auth.py").write_text(
                 "def login(user, password):\n"
@@ -30,7 +30,7 @@ class TestOrchestrator:
                 "    except:\n"
                 "        pass\n"
             )
-            
+
             (repo / "cache.py").write_text(
                 "def get_cached(key):\n"
                 "    return cache.get(key)\n"
@@ -38,7 +38,7 @@ class TestOrchestrator:
                 "def set_cached(key, value):\n"
                 "    cache.set(key, value)\n"
             )
-            
+
             # Create intent sources
             siof_dir = repo / ".siof"
             siof_dir.mkdir()
@@ -46,7 +46,7 @@ class TestOrchestrator:
                 "Add authentication module\n"
                 "Implement caching layer\n"
             )
-            
+
             yield repo
 
     @pytest.fixture
@@ -176,7 +176,7 @@ class TestE2EWorkflow:
         """Test complete workflow from scratch."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create realistic repository
             (repo / "main.py").write_text(
                 "from auth import login\n"
@@ -187,7 +187,7 @@ class TestE2EWorkflow:
                 "    data = get_cached('key')\n"
                 "    return user, data\n"
             )
-            
+
             (repo / "auth.py").write_text(
                 "def login(user, pwd):\n"
                 "    try:\n"
@@ -198,7 +198,7 @@ class TestE2EWorkflow:
                 "def authenticate(u, p):\n"
                 "    return True\n"
             )
-            
+
             (repo / "cache.py").write_text(
                 "cache = {}\n"
                 "\n"
@@ -208,7 +208,7 @@ class TestE2EWorkflow:
                 "def set_cached(key, value):\n"
                 "    cache[key] = value\n"
             )
-            
+
             # Create intent sources
             siof_dir = repo / ".siof"
             siof_dir.mkdir()
@@ -216,10 +216,10 @@ class TestE2EWorkflow:
                 "Implement user authentication\n"
                 "Add caching for performance\n"
             )
-            
+
             db_path = Path(tmpdir) / "siof.db"
             orch = SIOFOrchestrator(repo, db_path)
-            
+
             # Run full pipeline
             result = orch.run_full_pipeline(
                 index_mode="build",
@@ -227,11 +227,11 @@ class TestE2EWorkflow:
                 enable_memex=True,
                 enable_green_guard=True,
             )
-            
+
             # Verify success
             assert result.success
             assert result.total_duration_s > 0
-            
+
             # Verify all phases completed
             assert result.phase_results["phase1_index"]["files"] >= 3
             assert result.phase_results["phase1_index"]["nodes"] > 0
@@ -240,7 +240,7 @@ class TestE2EWorkflow:
             assert result.phase_results["phase3_mcp"]["status"] == "ready"
             assert result.phase_results["phase4_memex"]["ingested"] >= 2
             assert result.phase_results["phase5_green_guard"]["total_runs"] >= 0
-            
+
             # Verify KPIs
             kpis = orch.validate_kpis()
             assert kpis["nodes_indexed"]
@@ -252,10 +252,10 @@ class TestE2EWorkflow:
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
             (repo / "code.py").write_text("def f(): pass\n")
-            
+
             db_path = Path(tmpdir) / "siof.db"
             orch = SIOFOrchestrator(repo, db_path)
-            
+
             # Run 1
             result1 = orch.run_full_pipeline(
                 index_mode="build",
@@ -264,7 +264,7 @@ class TestE2EWorkflow:
                 enable_green_guard=True,
             )
             assert result1.success
-            
+
             # Run 2 (update mode)
             result2 = orch.run_full_pipeline(
                 index_mode="update",
@@ -279,7 +279,7 @@ class TestE2EWorkflow:
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
             (repo / "code.py").write_text("def f(x): return x + 1\n")
-            
+
             # Run 1
             db_path1 = Path(tmpdir) / "siof1.db"
             orch1 = SIOFOrchestrator(repo, db_path1)
@@ -289,7 +289,7 @@ class TestE2EWorkflow:
                 enable_memex=False,
                 enable_green_guard=False,
             )
-            
+
             # Run 2
             db_path2 = Path(tmpdir) / "siof2.db"
             orch2 = SIOFOrchestrator(repo, db_path2)
@@ -299,7 +299,7 @@ class TestE2EWorkflow:
                 enable_memex=False,
                 enable_green_guard=False,
             )
-            
+
             # Results should be identical
             assert result1.phase_results["phase1_index"]["files"] == result2.phase_results["phase1_index"]["files"]
             assert result1.phase_results["phase1_index"]["nodes"] == result2.phase_results["phase1_index"]["nodes"]
@@ -309,13 +309,13 @@ class TestE2EWorkflow:
         """Test workflow error handling."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create file with syntax error
             (repo / "bad.py").write_text("def f(\n    invalid syntax")
-            
+
             db_path = Path(tmpdir) / "siof.db"
             orch = SIOFOrchestrator(repo, db_path)
-            
+
             # Should handle gracefully
             result = orch.run_full_pipeline(
                 index_mode="build",
@@ -323,7 +323,7 @@ class TestE2EWorkflow:
                 enable_memex=False,
                 enable_green_guard=False,
             )
-            
+
             # Should still complete
             assert "phase1_index" in result.phase_results
 
@@ -345,17 +345,17 @@ class TestProductionReadiness:
                 "def transform(x):\n"
                 "    return x * 2\n"
             )
-            
+
             db_path = Path(tmpdir) / "siof.db"
             orch = SIOFOrchestrator(repo, db_path)
-            
+
             result = orch.run_full_pipeline(
                 index_mode="build",
                 slop_mode="audit",
                 enable_memex=True,
                 enable_green_guard=True,
             )
-            
+
             # All phases should be present
             assert result.success
             assert len(result.phase_results) >= 5
@@ -365,24 +365,24 @@ class TestProductionReadiness:
         """Test that performance targets are met."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create moderate-sized repo
             for i in range(10):
                 (repo / f"module{i}.py").write_text(
                     f"def func{i}(x):\n"
                     f"    return x + {i}\n"
                 )
-            
+
             db_path = Path(tmpdir) / "siof.db"
             orch = SIOFOrchestrator(repo, db_path)
-            
+
             result = orch.run_full_pipeline(
                 index_mode="build",
                 slop_mode="audit",
                 enable_memex=False,
                 enable_green_guard=False,
             )
-            
+
             # Should complete in reasonable time
             assert result.success
             assert result.total_duration_s < 30  # 30 second target
@@ -391,7 +391,7 @@ class TestProductionReadiness:
         """Test that KPI targets are met."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create a more realistic repo with multiple files and dependencies
             (repo / "main.py").write_text(
                 "from utils import helper\n"
@@ -402,17 +402,17 @@ class TestProductionReadiness:
                 "    result = helper(user)\n"
                 "    return result\n"
             )
-            
+
             (repo / "utils.py").write_text(
                 "def helper(x):\n"
                 "    return x * 2\n"
             )
-            
+
             (repo / "auth.py").write_text(
                 "def login(user):\n"
                 "    return user\n"
             )
-            
+
             # Initialize git repo so Memex can ingest commits
             import subprocess
             subprocess.run(["git", "init"], cwd=repo, capture_output=True, check=False)
@@ -420,18 +420,18 @@ class TestProductionReadiness:
             subprocess.run(["git", "config", "user.name", "Test User"], cwd=repo, capture_output=True, check=False)
             subprocess.run(["git", "add", "."], cwd=repo, capture_output=True, check=False)
             subprocess.run(["git", "commit", "-m", "Initial commit"], cwd=repo, capture_output=True, check=False)
-            
+
             db_path = Path(tmpdir) / "siof.db"
             orch = SIOFOrchestrator(repo, db_path)
-            
+
             result = orch.run_full_pipeline(
                 index_mode="build",
                 slop_mode="audit",
                 enable_memex=False,  # Disable memex to avoid git issues
                 enable_green_guard=False,
             )
-            
+
             assert result.success
-            
+
             kpis = orch.validate_kpis()
             assert kpis["all_passed"]

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -28,33 +28,33 @@ class SARIFReporter:
     @staticmethod
     def generate(findings: list[Finding], repo_path: Path | str = ".") -> dict[str, Any]:
         """Generate SARIF report from findings.
-        
+
         Args:
             findings: List of findings to report
             repo_path: Repository root path
-            
+
         Returns:
             SARIF report as dictionary
         """
         repo_path = Path(repo_path)
-        
+
         # Group findings by file
         findings_by_file: dict[str, list[Finding]] = {}
         for finding in findings:
             if finding.file_path not in findings_by_file:
                 findings_by_file[finding.file_path] = []
             findings_by_file[finding.file_path].append(finding)
-        
+
         # Build results array
         results = []
         for file_path, file_findings in findings_by_file.items():
             for finding in file_findings:
                 result = SARIFReporter._finding_to_result(finding, file_path)
                 results.append(result)
-        
+
         # Build rules array
         rules = SARIFReporter._build_rules(findings)
-        
+
         # Build SARIF report
         report = {
             "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
@@ -71,23 +71,23 @@ class SARIFReporter:
                     },
                     "results": results,
                     "properties": {
-                        "generatedAt": datetime.now(timezone.utc).isoformat(),
+                        "generatedAt": datetime.now(UTC).isoformat(),
                         "repositoryRoot": str(repo_path.absolute()),
                     },
                 }
             ],
         }
-        
+
         return report
 
     @staticmethod
     def _finding_to_result(finding: Finding, file_path: str) -> dict[str, Any]:
         """Convert a Finding to a SARIF result.
-        
+
         Args:
             finding: Finding to convert
             file_path: File path for the finding
-            
+
         Returns:
             SARIF result object
         """
@@ -99,7 +99,7 @@ class SARIFReporter:
             "low": "note",
         }
         level = level_map.get(finding.severity, "warning")
-        
+
         result = {
             "ruleId": finding.rule_id,
             "level": level,
@@ -122,22 +122,22 @@ class SARIFReporter:
                 "autofix_applied": finding.autofix_applied,
             },
         }
-        
+
         return result
 
     @staticmethod
     def _build_rules(findings: list[Finding]) -> list[dict[str, Any]]:
         """Build SARIF rules array from findings.
-        
+
         Args:
             findings: List of findings
-            
+
         Returns:
             List of SARIF rule objects
         """
         # Collect unique rules
         rules_by_id: dict[str, dict[str, Any]] = {}
-        
+
         rule_descriptions = {
             "NakedExceptionPass": {
                 "shortDescription": "Bare exception with pass detected",
@@ -175,7 +175,7 @@ class SARIFReporter:
                 "help": "Fix syntax errors in the file.",
             },
         }
-        
+
         for finding in findings:
             if finding.rule_id not in rules_by_id:
                 desc = rule_descriptions.get(finding.rule_id, {})
@@ -194,13 +194,13 @@ class SARIFReporter:
                         "level": "warning",
                     },
                 }
-        
+
         return list(rules_by_id.values())
 
     @staticmethod
     def write_sarif(findings: list[Finding], output_path: Path | str, repo_path: Path | str = ".") -> None:
         """Write SARIF report to file.
-        
+
         Args:
             findings: List of findings
             output_path: Path to write SARIF report
@@ -209,7 +209,7 @@ class SARIFReporter:
         report = SARIFReporter.generate(findings, repo_path)
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         with open(output_path, "w") as f:
             json.dump(report, f, indent=2)
 
@@ -220,10 +220,10 @@ class JSONReporter:
     @staticmethod
     def generate(findings: list[Finding]) -> dict[str, Any]:
         """Generate JSON report from findings.
-        
+
         Args:
             findings: List of findings
-            
+
         Returns:
             JSON report as dictionary
         """
@@ -234,11 +234,11 @@ class JSONReporter:
             "medium": [],
             "low": [],
         }
-        
+
         for finding in findings:
             finding_dict = asdict(finding)
             by_severity[finding.severity].append(finding_dict)
-        
+
         # Summary statistics
         summary = {
             "total": len(findings),
@@ -250,13 +250,13 @@ class JSONReporter:
             },
             "by_rule": {},
         }
-        
+
         # Count by rule
         for finding in findings:
             if finding.rule_id not in summary["by_rule"]:
                 summary["by_rule"][finding.rule_id] = 0
             summary["by_rule"][finding.rule_id] += 1
-        
+
         report = {
             "summary": summary,
             "findings": {
@@ -265,15 +265,15 @@ class JSONReporter:
                 "medium": by_severity["medium"],
                 "low": by_severity["low"],
             },
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
         }
-        
+
         return report
 
     @staticmethod
     def write_json(findings: list[Finding], output_path: Path | str) -> None:
         """Write JSON report to file.
-        
+
         Args:
             findings: List of findings
             output_path: Path to write JSON report
@@ -281,6 +281,6 @@ class JSONReporter:
         report = JSONReporter.generate(findings)
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         with open(output_path, "w") as f:
             json.dump(report, f, indent=2)

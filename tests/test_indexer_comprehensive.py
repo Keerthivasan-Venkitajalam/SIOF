@@ -1,10 +1,8 @@
 """Comprehensive tests for the indexer module."""
+import ast
 from pathlib import Path
 
-import pytest
-
-from siof.indexer import PythonIndexer, discover_python_files, _hash_text, _call_name, _expr_name
-import ast
+from siof.indexer import PythonIndexer, _call_name, _expr_name, _hash_text, discover_python_files
 
 
 def test_hash_text():
@@ -27,24 +25,24 @@ def test_discover_python_files(tmp_path: Path):
     """Test file discovery excludes non-source directories."""
     repo = tmp_path / "repo"
     repo.mkdir()
-    
+
     # Create various files
     (repo / "main.py").write_text("print('hello')")
     (repo / "utils.py").write_text("def util(): pass")
-    
+
     # Create excluded directories
     venv = repo / ".venv"
     venv.mkdir()
     (venv / "lib.py").write_text("# should be excluded")
-    
+
     cache = repo / "__pycache__"
     cache.mkdir()
     (cache / "cached.py").write_text("# should be excluded")
-    
+
     egg = repo / "src.egg-info"
     egg.mkdir()
     (egg / "egg.py").write_text("# should be excluded")
-    
+
     files = discover_python_files(repo)
     # Should find main.py and utils.py, but not files in excluded dirs
     assert len(files) >= 2
@@ -214,8 +212,8 @@ def test_index_update(tmp_path: Path):
     db = tmp_path / "siof.db"
     idx = PythonIndexer(repo=repo, db_path=db)
     idx.init()
-    result1 = idx.build()
-    
+    idx.build()
+
     # Update with changed files
     (repo / "b.py").write_text("def g(): pass")
     result2 = idx.update([repo / "b.py"])

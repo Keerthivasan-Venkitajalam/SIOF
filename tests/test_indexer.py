@@ -1,17 +1,8 @@
-from pathlib import Path
 
-import pytest
 
 from siof.indexer import (
-    DependencySeed,
-    DependencySeedExtractor,
     DTGBuilder,
-    FileDiscovery,
-    FileMetadata,
-    PythonIndexer,
-    SymbolExtractor,
     SymbolInfo,
-    SymbolTable,
 )
 
 
@@ -46,9 +37,9 @@ class TestDTGBuilder:
             bases=[],
             parameters=[],
         )
-        
+
         qualified_name = builder.add_symbol_node("myapp.MyClass", symbol)
-        
+
         assert qualified_name == "myapp.MyClass"
         assert len(builder.nodes) == 1
         assert builder.nodes[0].symbol == "myapp.MyClass"
@@ -74,10 +65,10 @@ class TestDTGBuilder:
             bases=[],
             parameters=[],
         )
-        
+
         builder.add_symbol_node("myapp.func", symbol)
         builder.add_symbol_node("myapp.func", symbol)  # Add same symbol again
-        
+
         assert len(builder.nodes) == 1  # Should still be 1
 
     def test_add_parameter_edges(self):
@@ -100,15 +91,15 @@ class TestDTGBuilder:
             bases=[],
             parameters=["x", "y"],
         )
-        
+
         builder.add_symbol_node("myapp.process", symbol)
         builder.add_parameter_edges("myapp.process", symbol)
-        
+
         # Should have 3 nodes: function + 2 parameters
         assert len(builder.nodes) == 3
         # Should have 2 edges: param->func for each param
         assert len(builder.edges) == 2
-        
+
         # Check edge properties
         for edge in builder.edges:
             assert edge.transform_kind == "parameter"
@@ -134,13 +125,13 @@ class TestDTGBuilder:
             bases=["Parent", "Mixin"],
             parameters=[],
         )
-        
+
         builder.add_symbol_node("myapp.Child", symbol)
         builder.add_inheritance_edges("myapp.Child", symbol)
-        
+
         assert len(builder.nodes) == 1
         assert len(builder.edges) == 2  # One edge per base class
-        
+
         for edge in builder.edges:
             assert edge.transform_kind == "inheritance"
             assert edge.confidence == 1.0
@@ -166,13 +157,13 @@ class TestDTGBuilder:
             bases=[],
             parameters=[],
         )
-        
+
         builder.add_symbol_node("myapp.decorated_func", symbol)
         builder.add_decorator_edges("myapp.decorated_func", symbol)
-        
+
         assert len(builder.nodes) == 1
         assert len(builder.edges) == 2  # One edge per decorator
-        
+
         for edge in builder.edges:
             assert edge.transform_kind == "decorator"
             assert edge.confidence == 0.95
@@ -180,7 +171,7 @@ class TestDTGBuilder:
     def test_add_call_edge(self):
         """Test adding a call edge."""
         builder = DTGBuilder("myapp", "module.py")
-        
+
         builder.add_call_edge(
             "myapp.helper",
             "myapp.process",
@@ -188,7 +179,7 @@ class TestDTGBuilder:
             location="module.py:20",
             confidence=0.9,
         )
-        
+
         assert len(builder.edges) == 1
         edge = builder.edges[0]
         assert edge.source == "myapp.helper"
@@ -199,14 +190,14 @@ class TestDTGBuilder:
     def test_add_assignment_transform_edge(self):
         """Test adding an assignment transform edge."""
         builder = DTGBuilder("myapp", "module.py")
-        
+
         builder.add_assignment_transform_edge(
             "myapp.create_obj",
             "myapp.obj_instance",
             location="module.py:25",
             confidence=0.85,
         )
-        
+
         assert len(builder.edges) == 1
         edge = builder.edges[0]
         assert edge.transform_kind == "assignment_transform"
@@ -215,11 +206,11 @@ class TestDTGBuilder:
     def test_confidence_clamping(self):
         """Test that confidence scores are clamped to [0, 1]."""
         builder = DTGBuilder("myapp", "module.py")
-        
+
         # Test over-confidence
         builder.add_call_edge("a", "b", confidence=1.5)
         assert builder.edges[0].confidence == 1.0
-        
+
         # Test negative confidence
         builder.add_call_edge("c", "d", confidence=-0.5)
         assert builder.edges[1].confidence == 0.0
@@ -227,7 +218,7 @@ class TestDTGBuilder:
     def test_build_returns_nodes_and_edges(self):
         """Test that build() returns nodes and edges."""
         builder = DTGBuilder("myapp", "module.py")
-        
+
         symbol = SymbolInfo(
             name="func",
             kind="function",
@@ -245,31 +236,31 @@ class TestDTGBuilder:
             bases=[],
             parameters=["x"],
         )
-        
+
         builder.add_symbol_node("myapp.func", symbol)
         builder.add_parameter_edges("myapp.func", symbol)
-        
+
         nodes, edges = builder.build()
-        
+
         assert len(nodes) == 2  # func + parameter
         assert len(edges) == 1  # parameter edge
 
     def test_verify_integrity_detects_self_loops(self):
         """Test that verify_integrity detects self-loops."""
         builder = DTGBuilder("myapp", "module.py")
-        
+
         # Add a self-loop (not allowed except for parameters)
         builder.add_call_edge("myapp.func", "myapp.func", transform_kind="call")
-        
+
         violations = builder.verify_integrity()
-        
+
         assert len(violations) > 0
         assert any("Self-loop" in v for v in violations)
 
     def test_verify_integrity_checks_confidence_bounds(self):
         """Test that verify_integrity checks confidence bounds."""
         builder = DTGBuilder("myapp", "module.py")
-        
+
         # Manually add an invalid edge (bypassing clamping)
         from siof.models import TransformEdge
         builder.edges.append(
@@ -282,16 +273,16 @@ class TestDTGBuilder:
                 confidence=1.5,  # Invalid
             )
         )
-        
+
         violations = builder.verify_integrity()
-        
+
         assert len(violations) > 0
         assert any("confidence" in v.lower() for v in violations)
 
     def test_complex_graph_building(self):
         """Test building a complex graph with multiple relationships."""
         builder = DTGBuilder("myapp.core", "models.py")
-        
+
         # Add base class
         base_symbol = SymbolInfo(
             name="BaseModel",
@@ -310,7 +301,7 @@ class TestDTGBuilder:
             bases=[],
             parameters=[],
         )
-        
+
         # Add derived class with decorators
         derived_symbol = SymbolInfo(
             name="User",
@@ -329,7 +320,7 @@ class TestDTGBuilder:
             bases=["BaseModel"],
             parameters=[],
         )
-        
+
         # Add method with parameters
         method_symbol = SymbolInfo(
             name="validate",
@@ -348,29 +339,29 @@ class TestDTGBuilder:
             bases=[],
             parameters=["self", "data"],
         )
-        
+
         # Build graph
         builder.add_symbol_node("myapp.core.BaseModel", base_symbol)
         builder.add_symbol_node("myapp.core.User", derived_symbol)
         builder.add_inheritance_edges("myapp.core.User", derived_symbol)
         builder.add_decorator_edges("myapp.core.User", derived_symbol)
-        
+
         builder.add_symbol_node("myapp.core.User.validate", method_symbol)
         builder.add_parameter_edges("myapp.core.User.validate", method_symbol)
-        
+
         # Add a call edge
         builder.add_call_edge(
             "myapp.core.User.validate",
             "myapp.validators.check_data",
             confidence=0.85,
         )
-        
+
         nodes, edges = builder.build()
-        
+
         # Verify structure
         assert len(nodes) >= 5  # base, derived, method, 2 parameters
         assert len(edges) >= 4  # inheritance, decorator, 2 parameters, call
-        
+
         # Verify no integrity violations
         violations = builder.verify_integrity()
         assert len(violations) == 0

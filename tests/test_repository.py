@@ -2,8 +2,6 @@
 
 from pathlib import Path
 
-import pytest
-
 from siof.models import Artifact, DataNode, Finding, IntentRecord, TransformEdge
 from siof.repository import Repository
 
@@ -16,13 +14,13 @@ class TestRepository:
         db_path = tmp_path / "test.db"
         repo = Repository(db_path)
         repo.init()
-        
+
         assert db_path.exists()
         stats = repo.get_statistics()
         assert stats["artifacts"] == 0
         assert stats["nodes"] == 0
         assert stats["edges"] == 0
-        
+
         repo.close()
 
     def test_index_build(self, tmp_path: Path):
@@ -30,7 +28,7 @@ class TestRepository:
         db_path = tmp_path / "test.db"
         repo = Repository(db_path)
         repo.init()
-        
+
         artifacts = [
             Artifact(path="test.py", hash="abc123", parse_ok=True),
         ]
@@ -48,18 +46,18 @@ class TestRepository:
                 confidence=0.9,
             ),
         ]
-        
+
         result = repo.index_build(artifacts, nodes, edges)
-        
+
         assert result["artifacts"] == 1
         assert result["nodes"] == 2
         assert result["edges"] == 1
-        
+
         stats = repo.get_statistics()
         assert stats["artifacts"] == 1
         assert stats["nodes"] == 2
         assert stats["edges"] == 1
-        
+
         repo.close()
 
     def test_find_data_lineage(self, tmp_path: Path):
@@ -67,7 +65,7 @@ class TestRepository:
         db_path = tmp_path / "test.db"
         repo = Repository(db_path)
         repo.init()
-        
+
         nodes = [
             DataNode(symbol="test.input", module="test", kind="variable", location="test.py:1"),
             DataNode(symbol="test.process", module="test", kind="function", location="test.py:5"),
@@ -91,15 +89,15 @@ class TestRepository:
                 confidence=0.9,
             ),
         ]
-        
+
         repo.index_build([], nodes, edges)
-        
+
         lineage = repo.find_data_lineage("test.process")
-        
+
         assert lineage.symbol == "test.process"
         assert lineage.total_edges == 2
         assert len(lineage.edges) == 2
-        
+
         repo.close()
 
     def test_impact_of_change(self, tmp_path: Path):
@@ -107,7 +105,7 @@ class TestRepository:
         db_path = tmp_path / "test.db"
         repo = Repository(db_path)
         repo.init()
-        
+
         nodes = [
             DataNode(symbol="test.base", module="test", kind="class", location="test.py:1"),
             DataNode(symbol="test.derived", module="test", kind="class", location="test.py:10"),
@@ -122,14 +120,14 @@ class TestRepository:
                 confidence=1.0,
             ),
         ]
-        
+
         repo.index_build([], nodes, edges)
-        
+
         impact = repo.impact_of_change("test.base")
-        
+
         assert impact.query == "test.base"
         assert impact.total_impacts >= 1
-        
+
         repo.close()
 
     def test_validate_relationship(self, tmp_path: Path):
@@ -137,7 +135,7 @@ class TestRepository:
         db_path = tmp_path / "test.db"
         repo = Repository(db_path)
         repo.init()
-        
+
         nodes = [
             DataNode(symbol="test.a", module="test", kind="function", location="test.py:1"),
             DataNode(symbol="test.b", module="test", kind="function", location="test.py:5"),
@@ -152,17 +150,17 @@ class TestRepository:
                 confidence=0.9,
             ),
         ]
-        
+
         repo.index_build([], nodes, edges)
-        
+
         # Valid relationship
         assert repo.validate_relationship("test.a", "test.b") is True
         assert repo.validate_relationship("test.a", "test.b", "call") is True
-        
+
         # Invalid relationship
         assert repo.validate_relationship("test.b", "test.a") is False
         assert repo.validate_relationship("test.a", "test.b", "inheritance") is False
-        
+
         repo.close()
 
     def test_get_dead_paths(self, tmp_path: Path):
@@ -170,7 +168,7 @@ class TestRepository:
         db_path = tmp_path / "test.db"
         repo = Repository(db_path)
         repo.init()
-        
+
         nodes = [
             DataNode(symbol="test.used", module="test", kind="function", location="test.py:1"),
             DataNode(symbol="test.unused", module="test", kind="function", location="test.py:5"),
@@ -185,16 +183,16 @@ class TestRepository:
                 confidence=0.9,
             ),
         ]
-        
+
         repo.index_build([], nodes, edges)
-        
+
         dead_paths = repo.get_dead_paths()
-        
+
         assert dead_paths.total_dead >= 1
         # test.unused should be in dead paths
         dead_symbols = [d["symbol"] for d in dead_paths.dead_nodes]
         assert "test.unused" in dead_symbols
-        
+
         repo.close()
 
     def test_get_intent_history(self, tmp_path: Path):
@@ -202,7 +200,7 @@ class TestRepository:
         db_path = tmp_path / "test.db"
         repo = Repository(db_path)
         repo.init()
-        
+
         records = [
             IntentRecord(
                 source="developer@example.com",
@@ -219,14 +217,14 @@ class TestRepository:
                 linked_symbol="cache.redis_cache",
             ),
         ]
-        
+
         repo.add_intent_records(records)
-        
+
         history = repo.get_intent_history("auth.oauth2_handler")
-        
+
         assert history.total_records >= 1
         assert any(r["linked_symbol"] == "auth.oauth2_handler" for r in history.records)
-        
+
         repo.close()
 
     def test_add_findings(self, tmp_path: Path):
@@ -234,7 +232,7 @@ class TestRepository:
         db_path = tmp_path / "test.db"
         repo = Repository(db_path)
         repo.init()
-        
+
         findings = [
             Finding(
                 rule_id="naked_exception",
@@ -253,14 +251,14 @@ class TestRepository:
                 autofix_applied=False,
             ),
         ]
-        
+
         count = repo.add_findings(findings)
-        
+
         assert count == 2
-        
+
         stats = repo.get_statistics()
         assert stats["findings"] == 2
-        
+
         repo.close()
 
     def test_clear_findings(self, tmp_path: Path):
@@ -268,7 +266,7 @@ class TestRepository:
         db_path = tmp_path / "test.db"
         repo = Repository(db_path)
         repo.init()
-        
+
         findings = [
             Finding(
                 rule_id="test_rule",
@@ -279,15 +277,15 @@ class TestRepository:
                 autofix_applied=False,
             ),
         ]
-        
+
         repo.add_findings(findings)
         stats = repo.get_statistics()
         assert stats["findings"] == 1
-        
+
         repo.clear_findings()
         stats = repo.get_statistics()
         assert stats["findings"] == 0
-        
+
         repo.close()
 
     def test_repository_statistics(self, tmp_path: Path):
@@ -295,7 +293,7 @@ class TestRepository:
         db_path = tmp_path / "test.db"
         repo = Repository(db_path)
         repo.init()
-        
+
         artifacts = [
             Artifact(path="test.py", hash="abc123", parse_ok=True),
         ]
@@ -303,11 +301,11 @@ class TestRepository:
             DataNode(symbol="test.func", module="test", kind="function", location="test.py:1"),
         ]
         edges = []
-        
+
         repo.index_build(artifacts, nodes, edges)
-        
+
         stats = repo.get_statistics()
-        
+
         assert "artifacts" in stats
         assert "nodes" in stats
         assert "edges" in stats
@@ -315,11 +313,11 @@ class TestRepository:
         assert "intent_records" in stats
         assert "db_path" in stats
         assert "db_size_mb" in stats
-        
+
         assert stats["artifacts"] == 1
         assert stats["nodes"] == 1
         assert stats["edges"] == 0
-        
+
         repo.close()
 
     def test_repository_clear(self, tmp_path: Path):
@@ -327,7 +325,7 @@ class TestRepository:
         db_path = tmp_path / "test.db"
         repo = Repository(db_path)
         repo.init()
-        
+
         artifacts = [
             Artifact(path="test.py", hash="abc123", parse_ok=True),
         ]
@@ -335,17 +333,17 @@ class TestRepository:
             DataNode(symbol="test.func", module="test", kind="function", location="test.py:1"),
         ]
         edges = []
-        
+
         repo.index_build(artifacts, nodes, edges)
         stats = repo.get_statistics()
         assert stats["artifacts"] == 1
-        
+
         repo.clear()
         stats = repo.get_statistics()
         assert stats["artifacts"] == 0
         assert stats["nodes"] == 0
         assert stats["edges"] == 0
-        
+
         repo.close()
 
     def test_multiple_operations(self, tmp_path: Path):
@@ -353,7 +351,7 @@ class TestRepository:
         db_path = tmp_path / "test.db"
         repo = Repository(db_path)
         repo.init()
-        
+
         # Build index
         artifacts = [
             Artifact(path="module1.py", hash="hash1", parse_ok=True),
@@ -382,17 +380,17 @@ class TestRepository:
                 confidence=0.85,
             ),
         ]
-        
+
         repo.index_build(artifacts, nodes, edges)
-        
+
         # Query lineage
         lineage = repo.find_data_lineage("mod1.func1")
         assert lineage.total_edges >= 1
-        
+
         # Analyze impact
         impact = repo.impact_of_change("mod1.func1")
         assert impact.total_impacts >= 1
-        
+
         # Add findings
         findings = [
             Finding(
@@ -405,12 +403,12 @@ class TestRepository:
             ),
         ]
         repo.add_findings(findings)
-        
+
         # Get statistics
         stats = repo.get_statistics()
         assert stats["artifacts"] == 2
         assert stats["nodes"] == 3
         assert stats["edges"] == 2
         assert stats["findings"] == 1
-        
+
         repo.close()

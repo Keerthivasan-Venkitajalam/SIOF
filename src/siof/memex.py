@@ -37,14 +37,14 @@ class IntentExtractor:
         """Extract objective, constraints, rationale from commit message."""
         lines = message.strip().split('\n')
         objective = lines[0][:180] if lines else ""
-        
+
         # Extract constraints from message body
         constraints = "maintain compatibility and semantic integrity"
         if len(lines) > 1:
             body = '\n'.join(lines[1:])
             if 'constraint' in body.lower() or 'require' in body.lower():
                 constraints = body[:200]
-        
+
         rationale = f"Derived from commit: {objective}"
         return objective, constraints, rationale
 
@@ -79,14 +79,14 @@ class IntentExtractor:
 
 class Memex:
     """Intent extraction and semantic memory index.
-    
+
     Extracts developer intent from commits, PRs, and prompt logs,
     linking intent to DTG entities for architectural decision tracking.
     """
 
     def __init__(self, repo: Path, db_path: Path):
         """Initialize Memex.
-        
+
         Args:
             repo: Repository path
             db_path: Database path
@@ -103,7 +103,7 @@ class Memex:
 
     def ingest(self) -> dict[str, Any]:
         """Ingest intent records from git commits and prompt logs.
-        
+
         Returns:
             Dictionary with ingestion statistics
         """
@@ -131,10 +131,10 @@ class Memex:
 
     def _ingest_commits(self, records: list[IntentRecord]) -> int:
         """Ingest intent from git commits.
-        
+
         Args:
             records: List to append records to
-            
+
         Returns:
             Number of commits ingested
         """
@@ -167,10 +167,10 @@ class Memex:
 
     def _ingest_prs(self, records: list[IntentRecord]) -> int:
         """Ingest intent from PR descriptions.
-        
+
         Args:
             records: List to append records to
-            
+
         Returns:
             Number of PRs ingested
         """
@@ -185,7 +185,7 @@ class Memex:
                 lines = content.split('\n')
                 title = lines[0] if lines else ""
                 description = '\n'.join(lines[1:]) if len(lines) > 1 else ""
-                
+
                 objective, constraints, rationale = self.extractor.extract_from_pr(title, description)
                 records.append(
                     IntentRecord(
@@ -199,16 +199,16 @@ class Memex:
                 pr_count += 1
             except Exception as exc:
                 logger.warning(f"Failed to ingest PR {pr_file}: {exc}")
-        
+
         logger.info(f"Ingested {pr_count} PR descriptions")
         return pr_count
 
     def _ingest_prompts(self, records: list[IntentRecord]) -> int:
         """Ingest intent from prompt logs.
-        
+
         Args:
             records: List to append records to
-            
+
         Returns:
             Number of prompts ingested
         """
@@ -231,16 +231,16 @@ class Memex:
                 )
             )
             prompt_count += 1
-        
+
         logger.info(f"Ingested {prompt_count} prompt log entries")
         return prompt_count
 
     def query(self, text: str) -> dict[str, Any]:
         """Query intent history for a symbol or area.
-        
+
         Args:
             text: Symbol or area to query
-            
+
         Returns:
             Dictionary with intent records
         """
@@ -249,19 +249,19 @@ class Memex:
 
     def score_relevance(self, symbol: str, records: list[IntentRecord]) -> list[IntentScore]:
         """Score relevance of intent records to a symbol.
-        
+
         Args:
             symbol: Symbol to score against
             records: Intent records to score
-            
+
         Returns:
             List of scored records sorted by relevance
         """
         scores: list[IntentScore] = []
-        
+
         for i, record in enumerate(records):
             relevance = 0.0
-            
+
             # Exact symbol match
             if record.linked_symbol == symbol:
                 relevance = 1.0
@@ -271,7 +271,7 @@ class Memex:
             # Objective contains symbol
             elif symbol in record.objective.lower():
                 relevance = 0.5
-            
+
             if relevance > 0.0:
                 scores.append(
                     IntentScore(
@@ -282,7 +282,7 @@ class Memex:
                         objective=record.objective,
                     )
                 )
-        
+
         # Sort by relevance descending
         scores.sort(key=lambda s: s.relevance, reverse=True)
         logger.debug(f"Scored {len(scores)} records for {symbol}")

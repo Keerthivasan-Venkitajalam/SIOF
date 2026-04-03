@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
-from typing import Any
+from dataclasses import dataclass
+from typing import ClassVar
 
 logger = logging.getLogger(__name__)
 
@@ -20,10 +20,10 @@ class PolicyEngine:
     """RBAC policy engine for tool authorization and rate limiting."""
 
     # Role hierarchy: lower index = fewer permissions
-    ROLE_HIERARCHY = ["viewer", "analyst", "admin", "service"]
+    ROLE_HIERARCHY: ClassVar[list[str]] = ["viewer", "analyst", "admin", "service"]
 
     # Tool permissions by role
-    TOOL_PERMISSIONS = {
+    TOOL_PERMISSIONS: ClassVar[dict[str, set[str]]] = {
         "viewer": {
             "find_data_lineage",
             "get_intent_history",
@@ -59,10 +59,10 @@ class PolicyEngine:
     }
 
     # Mutation tools requiring approval token
-    MUTATING_TOOLS = {"apply_patch_to_file"}
+    MUTATING_TOOLS: ClassVar[set[str]] = {"apply_patch_to_file"}
 
     # Rate limits per role (requests per hour)
-    RATE_LIMITS = {
+    RATE_LIMITS: ClassVar[dict[str, int]] = {
         "viewer": 100,
         "analyst": 1000,
         "admin": 10000,
@@ -76,11 +76,11 @@ class PolicyEngine:
 
     def authorize(self, tool_name: str, ctx: PolicyContext) -> bool:
         """Check if tool access is authorized.
-        
+
         Args:
             tool_name: Name of the tool to authorize
             ctx: Policy context with role and approval token
-            
+
         Returns:
             True if authorized, False otherwise
         """
@@ -110,10 +110,10 @@ class PolicyEngine:
 
     def check_rate_limit(self, ctx: PolicyContext) -> bool:
         """Check if request is within rate limit.
-        
+
         Args:
             ctx: Policy context with role
-            
+
         Returns:
             True if within limit, False otherwise
         """

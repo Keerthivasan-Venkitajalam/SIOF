@@ -157,14 +157,14 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    
+
     # Configure logging
     log_level = logging.DEBUG if getattr(args, "verbose", False) else logging.INFO
     logging.basicConfig(
         level=log_level,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
-    
+
     logger.info(f"SIOF starting with command: {args.command}")
     return args.func(args)
 

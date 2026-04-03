@@ -1,8 +1,6 @@
 """Comprehensive tests for the memex module."""
 from pathlib import Path
 
-import pytest
-
 from siof.memex import Memex
 
 
@@ -39,7 +37,7 @@ def test_memex_ingest_prompt_log(tmp_path: Path):
     """Test memex ingest from prompt log."""
     repo = tmp_path / "repo"
     repo.mkdir()
-    
+
     siof_dir = repo / ".siof"
     siof_dir.mkdir()
     (siof_dir / "prompts.log").write_text(
@@ -58,10 +56,10 @@ def test_memex_ingest_prompt_log(tmp_path: Path):
 def test_memex_extract_fields():
     """Test field extraction from intent text."""
     from siof.memex import IntentExtractor
-    
+
     text = "Implement user authentication module"
     objective, constraints, rationale = IntentExtractor.extract_from_prompt(text)
-    
+
     assert objective == text
     assert "compatibility" in constraints.lower()
     assert "prompt" in rationale
@@ -70,20 +68,20 @@ def test_memex_extract_fields():
 def test_memex_guess_symbol():
     """Test symbol guessing from text."""
     from siof.memex import IntentExtractor
-    
+
     text = "Fix bug in module.function where it fails"
     symbol = IntentExtractor.guess_symbol(text)
-    
+
     assert symbol == "module.function"
 
 
 def test_memex_guess_symbol_none():
     """Test symbol guessing returns None for no match."""
     from siof.memex import IntentExtractor
-    
+
     text = "Fix the bug in the code"
     symbol = IntentExtractor.guess_symbol(text)
-    
+
     assert symbol is None
 
 
@@ -91,7 +89,7 @@ def test_memex_query_after_ingest(tmp_path: Path):
     """Test querying after ingesting data."""
     repo = tmp_path / "repo"
     repo.mkdir()
-    
+
     siof_dir = repo / ".siof"
     siof_dir.mkdir()
     (siof_dir / "prompts.log").write_text(
@@ -101,7 +99,7 @@ def test_memex_query_after_ingest(tmp_path: Path):
     db = tmp_path / "siof.db"
     m = Memex(repo=repo, db_path=db)
     m.ingest()
-    
+
     result = m.query("module.process")
     m.close()
 
@@ -113,20 +111,20 @@ def test_memex_multiple_ingests(tmp_path: Path):
     """Test multiple ingest operations."""
     repo = tmp_path / "repo"
     repo.mkdir()
-    
+
     siof_dir = repo / ".siof"
     siof_dir.mkdir()
     (siof_dir / "prompts.log").write_text("First prompt\n")
 
     db = tmp_path / "siof.db"
     m = Memex(repo=repo, db_path=db)
-    
+
     result1 = m.ingest()
-    
+
     # Add more prompts
     (siof_dir / "prompts.log").write_text("First prompt\nSecond prompt\n")
     result2 = m.ingest()
-    
+
     m.close()
 
     assert result1["ingested"] >= 1
@@ -137,7 +135,7 @@ def test_memex_deterministic(tmp_path: Path):
     """Test that memex operations are deterministic."""
     repo = tmp_path / "repo"
     repo.mkdir()
-    
+
     siof_dir = repo / ".siof"
     siof_dir.mkdir()
     (siof_dir / "prompts.log").write_text("Test prompt\n")
@@ -159,10 +157,10 @@ def test_memex_long_text_truncation(tmp_path: Path):
     """Test that long text is properly truncated."""
     repo = tmp_path / "repo"
     repo.mkdir()
-    
+
     siof_dir = repo / ".siof"
     siof_dir.mkdir()
-    
+
     long_text = "x" * 500
     (siof_dir / "prompts.log").write_text(long_text + "\n")
 
@@ -178,7 +176,7 @@ def test_memex_special_characters(tmp_path: Path):
     """Test handling of special characters in prompts."""
     repo = tmp_path / "repo"
     repo.mkdir()
-    
+
     siof_dir = repo / ".siof"
     siof_dir.mkdir()
     (siof_dir / "prompts.log").write_text(

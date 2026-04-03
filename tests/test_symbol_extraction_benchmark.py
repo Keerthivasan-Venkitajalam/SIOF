@@ -3,9 +3,7 @@
 import time
 from pathlib import Path
 
-import pytest
-
-from siof.indexer import PythonIndexer, SymbolExtractor
+from siof.indexer import PythonIndexer
 
 
 class TestSymbolExtractionBenchmarks:
@@ -15,18 +13,18 @@ class TestSymbolExtractionBenchmarks:
         """Benchmark symbol extraction on simple module."""
         repo = tmp_path / "repo"
         repo.mkdir()
-        
+
         code = """
 class DataProcessor:
     '''Process data efficiently.'''
-    
+
     def __init__(self, name: str):
         self.name = name
-    
+
     @property
     def status(self) -> str:
         return "ready"
-    
+
     async def process(self, items: list) -> bool:
         '''Process items asynchronously.'''
         for item in items:
@@ -39,17 +37,17 @@ def helper_function(x: int) -> int:
 CONFIG = {"debug": True}
 """
         (repo / "module.py").write_text(code)
-        
+
         db = tmp_path / "siof.db"
         idx = PythonIndexer(repo=repo, db_path=db)
         idx.init()
-        
+
         start = time.time()
         result = idx.build()
         elapsed = time.time() - start
-        
+
         idx.close()
-        
+
         # Should complete in < 1 second
         assert elapsed < 1.0
         assert result["files"] == 1
@@ -59,20 +57,20 @@ CONFIG = {"debug": True}
         """Benchmark symbol extraction on larger module."""
         repo = tmp_path / "repo"
         repo.mkdir()
-        
+
         # Generate a large module with many classes and functions
         code_parts = []
         for i in range(50):
             code_parts.append(f"""
 class Class{i}:
     '''Class {i}.'''
-    
+
     def method1(self, x: int) -> int:
         return x * 2
-    
+
     def method2(self, y: str) -> str:
         return y.upper()
-    
+
     @property
     def prop(self) -> str:
         return "value"
@@ -81,20 +79,20 @@ def function{i}(a: int, b: str) -> bool:
     '''Function {i}.'''
     return True
 """)
-        
+
         code = "\n".join(code_parts)
         (repo / "large_module.py").write_text(code)
-        
+
         db = tmp_path / "siof.db"
         idx = PythonIndexer(repo=repo, db_path=db)
         idx.init()
-        
+
         start = time.time()
         result = idx.build()
         elapsed = time.time() - start
-        
+
         idx.close()
-        
+
         # Should complete in < 5 seconds
         assert elapsed < 5.0
         assert result["files"] == 1
@@ -105,7 +103,7 @@ def function{i}(a: int, b: str) -> bool:
         """Benchmark symbol extraction on multiple files."""
         repo = tmp_path / "repo"
         repo.mkdir()
-        
+
         # Create 100 small modules
         for i in range(100):
             code = f"""
@@ -117,17 +115,17 @@ def module{i}_function():
     pass
 """
             (repo / f"module{i}.py").write_text(code)
-        
+
         db = tmp_path / "siof.db"
         idx = PythonIndexer(repo=repo, db_path=db)
         idx.init()
-        
+
         start = time.time()
         result = idx.build()
         elapsed = time.time() - start
-        
+
         idx.close()
-        
+
         # Should complete in < 10 seconds
         assert elapsed < 10.0
         assert result["files"] == 100
@@ -138,32 +136,32 @@ def module{i}_function():
         """Benchmark symbol extraction with nested classes."""
         repo = tmp_path / "repo"
         repo.mkdir()
-        
+
         code = """
 class OuterClass:
     class InnerClass1:
         def method(self):
             pass
-    
+
     class InnerClass2:
         def method(self):
             pass
-    
+
     def outer_method(self):
         pass
 """
         (repo / "nested.py").write_text(code)
-        
+
         db = tmp_path / "siof.db"
         idx = PythonIndexer(repo=repo, db_path=db)
         idx.init()
-        
+
         start = time.time()
         result = idx.build()
         elapsed = time.time() - start
-        
+
         idx.close()
-        
+
         assert elapsed < 1.0
         assert result["files"] == 1
         # OuterClass, InnerClass1, InnerClass2, methods
@@ -173,7 +171,7 @@ class OuterClass:
         """Benchmark symbol extraction with many decorators."""
         repo = tmp_path / "repo"
         repo.mkdir()
-        
+
         code_parts = []
         for i in range(50):
             code_parts.append(f"""
@@ -187,29 +185,29 @@ class DecoratedClass{i}:
     @property
     def prop(self):
         return 42
-    
+
     @staticmethod
     def static():
         pass
-    
+
     @classmethod
     def cls_method(cls):
         pass
 """)
-        
+
         code = "\n".join(code_parts)
         (repo / "decorated.py").write_text(code)
-        
+
         db = tmp_path / "siof.db"
         idx = PythonIndexer(repo=repo, db_path=db)
         idx.init()
-        
+
         start = time.time()
         result = idx.build()
         elapsed = time.time() - start
-        
+
         idx.close()
-        
+
         assert elapsed < 5.0
         assert result["files"] == 1
         # Should have decorator edges
@@ -219,7 +217,7 @@ class DecoratedClass{i}:
         """Benchmark symbol extraction with complex type hints."""
         repo = tmp_path / "repo"
         repo.mkdir()
-        
+
         code = """
 from typing import List, Dict, Optional, Union, Callable
 
@@ -235,22 +233,22 @@ class ComplexClass:
     items: List[str]
     mapping: Dict[str, int]
     optional: Optional[str]
-    
+
     def method(self, x: List[int]) -> Dict[str, bool]:
         return {}
 """
         (repo / "typed.py").write_text(code)
-        
+
         db = tmp_path / "siof.db"
         idx = PythonIndexer(repo=repo, db_path=db)
         idx.init()
-        
+
         start = time.time()
         result = idx.build()
         elapsed = time.time() - start
-        
+
         idx.close()
-        
+
         assert elapsed < 1.0
         assert result["files"] == 1
         assert result["nodes"] >= 5
@@ -259,7 +257,7 @@ class ComplexClass:
         """Test symbol extraction scaling with increasing file count."""
         repo = tmp_path / "repo"
         repo.mkdir()
-        
+
         # Create files with increasing complexity
         for file_count in [10, 50, 100]:
             for i in range(file_count):

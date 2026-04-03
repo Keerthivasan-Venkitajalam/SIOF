@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from siof.memex import IntentExtractor, IntentScore, Memex
+from siof.memex import IntentExtractor, Memex
 from siof.models import IntentRecord
 
 
@@ -26,7 +26,7 @@ class TestIntentExtractor:
     def test_extract_from_commit_multiline(self) -> None:
         """Test extracting intent from multiline commit message."""
         message = "Add user authentication\n\nConstraint: must support OAuth2\nReason: enterprise requirement"
-        objective, constraints, rationale = IntentExtractor.extract_from_commit(message)
+        objective, constraints, _rationale = IntentExtractor.extract_from_commit(message)
 
         assert "Add user authentication" in objective
         assert "constraint" in constraints.lower() or "compatibility" in constraints

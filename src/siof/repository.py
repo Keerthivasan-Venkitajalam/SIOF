@@ -51,14 +51,14 @@ class IntentResult:
 
 class Repository:
     """High-level repository interface for DTG operations.
-    
+
     Provides semantic queries, analysis, and management operations
     on top of the underlying Storage backend.
     """
 
     def __init__(self, db_path: str | Path):
         """Initialize repository with database path.
-        
+
         Args:
             db_path: Path to SQLite database file
         """
@@ -88,19 +88,19 @@ class Repository:
         edges: list[TransformEdge],
     ) -> dict[str, int]:
         """Build/rebuild the complete index.
-        
+
         Args:
             artifacts: List of parsed artifacts
             nodes: List of DTG nodes
             edges: List of DTG edges
-            
+
         Returns:
             Dictionary with counts of indexed items
         """
         self.clear()
         self.storage.upsert_artifacts(artifacts)
         self.storage.replace_nodes_edges(nodes, edges)
-        
+
         result = {
             "artifacts": len(artifacts),
             "nodes": len(nodes),
@@ -111,20 +111,20 @@ class Repository:
 
     def find_data_lineage(self, symbol: str, depth: int = 3) -> LineageResult:
         """Find data lineage for a symbol.
-        
+
         Traces the data flow through transformations that affect a given symbol,
         showing all functions/methods that read from or write to that data.
-        
+
         Args:
             symbol: Symbol name to trace
             depth: Maximum traversal depth (default: 3)
-            
+
         Returns:
             LineageResult with edges and metadata
         """
         result = self.storage.query_lineage(symbol, depth)
         edges = result.get("edges", [])
-        
+
         lineage = LineageResult(
             symbol=symbol,
             depth=depth,
@@ -136,19 +136,19 @@ class Repository:
 
     def impact_of_change(self, file_or_symbol: str) -> ImpactResult:
         """Analyze impact of changing a file or symbol.
-        
+
         Identifies all downstream symbols and transformations affected by
         a change to the specified file or symbol.
-        
+
         Args:
             file_or_symbol: File path or symbol name to analyze
-            
+
         Returns:
             ImpactResult with affected nodes and edges
         """
         result = self.storage.query_impact(file_or_symbol)
         impacts = result.get("impacts", [])
-        
+
         impact = ImpactResult(
             query=file_or_symbol,
             impacts=impacts,
@@ -164,36 +164,36 @@ class Repository:
         relation: str = "any",
     ) -> bool:
         """Validate if a relationship exists between two symbols.
-        
+
         Args:
             source: Source symbol
             target: Target symbol
             relation: Relationship type to validate (default: "any")
-            
+
         Returns:
             True if relationship exists, False otherwise
         """
         result = self.storage.query_lineage(source)
         edges = result.get("edges", [])
-        
+
         for edge in edges:
             if edge["target"] == target:
                 if relation == "any" or edge["transform_kind"] == relation:
                     logger.debug(f"Validated relationship: {source} -> {target}")
                     return True
-        
+
         logger.debug(f"No relationship found: {source} -> {target}")
         return False
 
     def get_dead_paths(self) -> DeadPathResult:
         """Identify dead code paths (unused symbols).
-        
+
         Returns:
             DeadPathResult with unused nodes
         """
         result = self.storage.get_dead_paths()
         dead_nodes = result.get("dead_nodes", [])
-        
+
         dead_paths = DeadPathResult(
             dead_nodes=dead_nodes,
             total_dead=len(dead_nodes),
@@ -203,13 +203,13 @@ class Repository:
 
     def find_unhandled_exceptions(self, scope: str = "") -> dict[str, Any]:
         """Find unhandled exception patterns in scope.
-        
+
         Identifies try/except blocks that may be swallowing exceptions
         without proper logging or re-raising.
-        
+
         Args:
             scope: Scope to search (module, class, or function)
-            
+
         Returns:
             Dictionary with unhandled exception findings
         """
@@ -220,19 +220,19 @@ class Repository:
 
     def get_intent_history(self, symbol_or_area: str) -> IntentResult:
         """Get intent history for a symbol or area.
-        
+
         Retrieves developer intent records and architectural decisions
         related to a specific symbol or code area.
-        
+
         Args:
             symbol_or_area: Symbol name or code area to query
-            
+
         Returns:
             IntentResult with historical intent records
         """
         result = self.storage.get_intent_history(symbol_or_area)
         records = result.get("records", [])
-        
+
         intent = IntentResult(
             query=symbol_or_area,
             records=records,
@@ -243,10 +243,10 @@ class Repository:
 
     def get_run_energy(self, run_id: str) -> dict[str, Any]:
         """Get energy metrics for a specific run.
-        
+
         Args:
             run_id: Run identifier
-            
+
         Returns:
             Dictionary with energy metrics
         """
@@ -256,10 +256,10 @@ class Repository:
 
     def add_findings(self, findings: list[Finding]) -> int:
         """Add findings (linting results) to repository.
-        
+
         Args:
             findings: List of findings to add
-            
+
         Returns:
             Number of findings added
         """
@@ -274,10 +274,10 @@ class Repository:
 
     def add_intent_records(self, records: list[IntentRecord]) -> int:
         """Add intent records to repository.
-        
+
         Args:
             records: List of intent records to add
-            
+
         Returns:
             Number of records added
         """
@@ -287,18 +287,18 @@ class Repository:
 
     def get_statistics(self) -> dict[str, Any]:
         """Get repository statistics.
-        
+
         Returns:
             Dictionary with repository statistics
         """
         conn = self.storage.conn
-        
+
         artifacts_count = conn.execute("SELECT COUNT(*) FROM artifacts").fetchone()[0]
         nodes_count = conn.execute("SELECT COUNT(*) FROM nodes").fetchone()[0]
         edges_count = conn.execute("SELECT COUNT(*) FROM edges").fetchone()[0]
         findings_count = conn.execute("SELECT COUNT(*) FROM findings").fetchone()[0]
         intent_count = conn.execute("SELECT COUNT(*) FROM intent_records").fetchone()[0]
-        
+
         stats = {
             "artifacts": artifacts_count,
             "nodes": nodes_count,

@@ -3,8 +3,6 @@
 import json
 from pathlib import Path
 
-import pytest
-
 from siof.models import Finding
 from siof.sarif_reporter import JSONReporter, SARIFReporter
 
@@ -15,7 +13,7 @@ class TestSARIFReporter:
     def test_generate_empty_findings(self):
         """Test SARIF generation with no findings."""
         report = SARIFReporter.generate([])
-        
+
         assert report["version"] == "2.1.0"
         assert len(report["runs"]) == 1
         assert report["runs"][0]["results"] == []
@@ -32,9 +30,9 @@ class TestSARIFReporter:
                 autofix_applied=False,
             )
         ]
-        
+
         report = SARIFReporter.generate(findings)
-        
+
         assert len(report["runs"][0]["results"]) == 1
         result = report["runs"][0]["results"][0]
         assert result["ruleId"] == "NakedExceptionPass"
@@ -61,9 +59,9 @@ class TestSARIFReporter:
                 autofix_applied=False,
             ),
         ]
-        
+
         report = SARIFReporter.generate(findings)
-        
+
         assert len(report["runs"][0]["results"]) == 2
 
     def test_severity_mapping(self):
@@ -74,7 +72,7 @@ class TestSARIFReporter:
             ("medium", "warning"),
             ("low", "note"),
         ]
-        
+
         for severity, expected_level in test_cases:
             findings = [
                 Finding(
@@ -86,7 +84,7 @@ class TestSARIFReporter:
                     autofix_applied=False,
                 )
             ]
-            
+
             report = SARIFReporter.generate(findings)
             result = report["runs"][0]["results"][0]
             assert result["level"] == expected_level
@@ -103,15 +101,15 @@ class TestSARIFReporter:
                 autofix_applied=False,
             )
         ]
-        
+
         output_path = tmp_path / "report.sarif"
         SARIFReporter.write_sarif(findings, output_path)
-        
+
         assert output_path.exists()
-        
+
         with open(output_path) as f:
             report = json.load(f)
-        
+
         assert report["version"] == "2.1.0"
         assert len(report["runs"][0]["results"]) == 1
 
@@ -135,10 +133,10 @@ class TestSARIFReporter:
                 autofix_applied=False,
             ),
         ]
-        
+
         report = SARIFReporter.generate(findings)
         rules = report["runs"][0]["tool"]["driver"]["rules"]
-        
+
         assert len(rules) == 2
         rule_ids = {r["id"] for r in rules}
         assert "NakedExceptionPass" in rule_ids
@@ -151,7 +149,7 @@ class TestJSONReporter:
     def test_generate_empty_findings(self):
         """Test JSON generation with no findings."""
         report = JSONReporter.generate([])
-        
+
         assert report["summary"]["total"] == 0
         assert report["summary"]["by_severity"]["critical"] == 0
         assert report["summary"]["by_severity"]["high"] == 0
@@ -168,9 +166,9 @@ class TestJSONReporter:
                 autofix_applied=False,
             )
         ]
-        
+
         report = JSONReporter.generate(findings)
-        
+
         assert report["summary"]["total"] == 1
         assert report["summary"]["by_severity"]["high"] == 1
         assert len(report["findings"]["high"]) == 1
@@ -203,9 +201,9 @@ class TestJSONReporter:
                 autofix_applied=False,
             ),
         ]
-        
+
         report = JSONReporter.generate(findings)
-        
+
         assert report["summary"]["total"] == 3
         assert report["summary"]["by_severity"]["high"] == 1
         assert report["summary"]["by_severity"]["low"] == 2
@@ -225,15 +223,15 @@ class TestJSONReporter:
                 autofix_applied=False,
             )
         ]
-        
+
         output_path = tmp_path / "report.json"
         JSONReporter.write_json(findings, output_path)
-        
+
         assert output_path.exists()
-        
+
         with open(output_path) as f:
             report = json.load(f)
-        
+
         assert report["summary"]["total"] == 1
         assert len(report["findings"]["high"]) == 1
 
@@ -273,9 +271,9 @@ class TestJSONReporter:
                 autofix_applied=False,
             ),
         ]
-        
+
         report = JSONReporter.generate(findings)
-        
+
         assert report["summary"]["total"] == 4
         assert report["summary"]["by_severity"]["critical"] == 1
         assert report["summary"]["by_severity"]["high"] == 1

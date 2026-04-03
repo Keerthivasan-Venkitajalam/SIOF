@@ -54,3 +54,14 @@ site/
 # Distribution
 *.whl
 *.tar.gz
+
+# Temporary documentation and status files
+*_SUMMARY.md
+*_STATUS.md
+*_IMPLEMENTATION.md
+*_ROADMAP.md
+*_ASSESSMENT.md
+IMPLEMENTATION.md
+specs/
+Library*.txt
+Upscaling*.txt
