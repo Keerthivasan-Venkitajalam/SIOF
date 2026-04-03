@@ -90,12 +90,8 @@ class TestDTGBuilderBenchmarks:
                     bases=[],
                     parameters=["self", "x", "y"],
                 )
-                builder.add_symbol_node(
-                    f"myapp.core.Class{i}.method{j}", method_symbol
-                )
-                builder.add_parameter_edges(
-                    f"myapp.core.Class{i}.method{j}", method_symbol
-                )
+                builder.add_symbol_node(f"myapp.core.Class{i}.method{j}", method_symbol)
+                builder.add_parameter_edges(f"myapp.core.Class{i}.method{j}", method_symbol)
 
         result = builder.build()
         elapsed = time.time() - start
@@ -183,6 +179,7 @@ def process_users(users):
         start = time.time()
         for _ in range(10):
             import ast
+
             tree = ast.parse(code)
             extractor = SymbolExtractor("models", "models.py")
             symbols = extractor.extract(tree)

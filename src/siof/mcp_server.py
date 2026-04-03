@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 @dataclass(slots=True)
 class MCPRequest:
     """MCP tool request."""
+
     tool: str
     args: dict[str, Any]
     role: str = "reader"
@@ -40,6 +41,7 @@ class MCPRequest:
 @dataclass(slots=True)
 class MCPResponse:
     """MCP tool response."""
+
     ok: bool
     result: dict[str, Any] | None = None
     error: str | None = None
@@ -173,10 +175,12 @@ class Tracer:
                 "spans": [],
                 "start_time": time.time(),
             }
-        self.traces[trace_id]["spans"].append({
-            "name": span_name,
-            "start_time": time.time(),
-        })
+        self.traces[trace_id]["spans"].append(
+            {
+                "name": span_name,
+                "start_time": time.time(),
+            }
+        )
 
     def end_span(self, trace_id: str) -> None:
         """End the current trace span.
@@ -273,9 +277,7 @@ class MCPGraphServer:
             )
 
             if not self.policy.authorize(request.tool, ctx):
-                logger.warning(
-                    f"Unauthorized access: tool={request.tool}, role={request.role}"
-                )
+                logger.warning(f"Unauthorized access: tool={request.tool}, role={request.role}")
                 return MCPResponse(
                     ok=False,
                     error="unauthorized",
@@ -311,9 +313,7 @@ class MCPGraphServer:
             latency_ms = (time.time() - start_time) * 1000
             self.metrics["total_latency_ms"] += latency_ms
 
-            logger.info(
-                f"Tool executed: {request.tool}, latency={latency_ms:.2f}ms"
-            )
+            logger.info(f"Tool executed: {request.tool}, latency={latency_ms:.2f}ms")
 
             return MCPResponse(
                 ok=True,

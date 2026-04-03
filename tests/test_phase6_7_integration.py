@@ -43,8 +43,7 @@ class TestOrchestrator:
             siof_dir = repo / ".siof"
             siof_dir.mkdir()
             (siof_dir / "prompts.log").write_text(
-                "Add authentication module\n"
-                "Implement caching layer\n"
+                "Add authentication module\n" "Implement caching layer\n"
             )
 
             yield repo
@@ -213,8 +212,7 @@ class TestE2EWorkflow:
             siof_dir = repo / ".siof"
             siof_dir.mkdir()
             (siof_dir / "prompts.log").write_text(
-                "Implement user authentication\n"
-                "Add caching for performance\n"
+                "Implement user authentication\n" "Add caching for performance\n"
             )
 
             db_path = Path(tmpdir) / "siof.db"
@@ -301,9 +299,18 @@ class TestE2EWorkflow:
             )
 
             # Results should be identical
-            assert result1.phase_results["phase1_index"]["files"] == result2.phase_results["phase1_index"]["files"]
-            assert result1.phase_results["phase1_index"]["nodes"] == result2.phase_results["phase1_index"]["nodes"]
-            assert result1.phase_results["phase1_index"]["edges"] == result2.phase_results["phase1_index"]["edges"]
+            assert (
+                result1.phase_results["phase1_index"]["files"]
+                == result2.phase_results["phase1_index"]["files"]
+            )
+            assert (
+                result1.phase_results["phase1_index"]["nodes"]
+                == result2.phase_results["phase1_index"]["nodes"]
+            )
+            assert (
+                result1.phase_results["phase1_index"]["edges"]
+                == result2.phase_results["phase1_index"]["edges"]
+            )
 
     def test_workflow_with_errors(self) -> None:
         """Test workflow error handling."""
@@ -368,10 +375,7 @@ class TestProductionReadiness:
 
             # Create moderate-sized repo
             for i in range(10):
-                (repo / f"module{i}.py").write_text(
-                    f"def func{i}(x):\n"
-                    f"    return x + {i}\n"
-                )
+                (repo / f"module{i}.py").write_text(f"def func{i}(x):\n" f"    return x + {i}\n")
 
             db_path = Path(tmpdir) / "siof.db"
             orch = SIOFOrchestrator(repo, db_path)
@@ -403,23 +407,33 @@ class TestProductionReadiness:
                 "    return result\n"
             )
 
-            (repo / "utils.py").write_text(
-                "def helper(x):\n"
-                "    return x * 2\n"
-            )
+            (repo / "utils.py").write_text("def helper(x):\n" "    return x * 2\n")
 
-            (repo / "auth.py").write_text(
-                "def login(user):\n"
-                "    return user\n"
-            )
+            (repo / "auth.py").write_text("def login(user):\n" "    return user\n")
 
             # Initialize git repo so Memex can ingest commits
             import subprocess
+
             subprocess.run(["git", "init"], cwd=repo, capture_output=True, check=False)
-            subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=repo, capture_output=True, check=False)
-            subprocess.run(["git", "config", "user.name", "Test User"], cwd=repo, capture_output=True, check=False)
+            subprocess.run(
+                ["git", "config", "user.email", "test@example.com"],
+                cwd=repo,
+                capture_output=True,
+                check=False,
+            )
+            subprocess.run(
+                ["git", "config", "user.name", "Test User"],
+                cwd=repo,
+                capture_output=True,
+                check=False,
+            )
             subprocess.run(["git", "add", "."], cwd=repo, capture_output=True, check=False)
-            subprocess.run(["git", "commit", "-m", "Initial commit"], cwd=repo, capture_output=True, check=False)
+            subprocess.run(
+                ["git", "commit", "-m", "Initial commit"],
+                cwd=repo,
+                capture_output=True,
+                check=False,
+            )
 
             db_path = Path(tmpdir) / "siof.db"
             orch = SIOFOrchestrator(repo, db_path)

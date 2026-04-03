@@ -1,4 +1,5 @@
 """Comprehensive tests for the MCP server module."""
+
 from pathlib import Path
 
 import pytest
@@ -223,7 +224,7 @@ def test_mcp_stdio_protocol(indexed_repo: Path, capsys):
         server.serve_stdio()
 
         output = sys.stdout.getvalue()
-        lines = output.strip().split('\n')
+        lines = output.strip().split("\n")
 
         # Should have at least one response
         assert len(lines) >= 1
@@ -246,17 +247,18 @@ def test_mcp_invalid_json(indexed_repo: Path):
     old_stdout = sys.stdout
 
     try:
-        sys.stdin = StringIO('invalid json\nquit\n')
+        sys.stdin = StringIO("invalid json\nquit\n")
         sys.stdout = StringIO()
 
         server.serve_stdio()
 
         output = sys.stdout.getvalue()
-        lines = output.strip().split('\n')
+        lines = output.strip().split("\n")
 
         # Should have error response
         assert len(lines) >= 1
         import json
+
         response = json.loads(lines[0])
         assert response["ok"] is False
     finally:

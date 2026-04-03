@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 @dataclass(slots=True)
 class LineageResult:
     """Result of a lineage query."""
+
     symbol: str
     depth: int
     edges: list[dict[str, Any]]
@@ -29,6 +30,7 @@ class LineageResult:
 @dataclass(slots=True)
 class ImpactResult:
     """Result of an impact analysis query."""
+
     query: str
     impacts: list[dict[str, Any]]
     total_impacts: int
@@ -37,6 +39,7 @@ class ImpactResult:
 @dataclass(slots=True)
 class DeadPathResult:
     """Result of dead path analysis."""
+
     dead_nodes: list[dict[str, Any]]
     total_dead: int
 
@@ -44,6 +47,7 @@ class DeadPathResult:
 @dataclass(slots=True)
 class IntentResult:
     """Result of intent history query."""
+
     query: str
     records: list[dict[str, Any]]
     total_records: int
@@ -306,7 +310,9 @@ class Repository:
             "findings": findings_count,
             "intent_records": intent_count,
             "db_path": str(self.db_path),
-            "db_size_mb": self.db_path.stat().st_size / (1024 * 1024) if self.db_path.exists() else 0,
+            "db_size_mb": (
+                self.db_path.stat().st_size / (1024 * 1024) if self.db_path.exists() else 0
+            ),
         }
         logger.info(f"Repository statistics: {stats}")
         return stats

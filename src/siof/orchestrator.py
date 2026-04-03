@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 @dataclass(slots=True)
 class OrchestrationResult:
     """Result of orchestrated workflow."""
+
     success: bool
     phase_results: dict[str, Any]
     total_duration_s: float

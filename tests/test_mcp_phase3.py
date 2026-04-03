@@ -267,8 +267,12 @@ class TestMCPGraphServer:
                 Artifact(path="src/module.py", hash="abc123", parse_ok=True),
             ]
             nodes = [
-                DataNode(symbol="func_a", module="module", kind="function", location="src/module.py:10"),
-                DataNode(symbol="func_b", module="module", kind="function", location="src/module.py:20"),
+                DataNode(
+                    symbol="func_a", module="module", kind="function", location="src/module.py:10"
+                ),
+                DataNode(
+                    symbol="func_b", module="module", kind="function", location="src/module.py:20"
+                ),
             ]
             edges = [
                 TransformEdge(

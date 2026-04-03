@@ -1,4 +1,5 @@
 """Comprehensive tests for the indexer module."""
+
 import ast
 from pathlib import Path
 
@@ -117,9 +118,7 @@ def test_index_build_with_class(tmp_path: Path):
     """Test index build with class definitions."""
     repo = tmp_path / "repo"
     repo.mkdir()
-    (repo / "a.py").write_text(
-        "class MyClass:\n    def method(self, x):\n        return x\n"
-    )
+    (repo / "a.py").write_text("class MyClass:\n    def method(self, x):\n        return x\n")
 
     db = tmp_path / "siof.db"
     idx = PythonIndexer(repo=repo, db_path=db)
@@ -136,9 +135,7 @@ def test_index_build_with_inheritance(tmp_path: Path):
     """Test index build with class inheritance."""
     repo = tmp_path / "repo"
     repo.mkdir()
-    (repo / "a.py").write_text(
-        "class Base:\n    pass\n\nclass Derived(Base):\n    pass\n"
-    )
+    (repo / "a.py").write_text("class Base:\n    pass\n\nclass Derived(Base):\n    pass\n")
 
     db = tmp_path / "siof.db"
     idx = PythonIndexer(repo=repo, db_path=db)

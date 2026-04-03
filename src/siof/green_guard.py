@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 @dataclass(slots=True)
 class EnergyMetrics:
     """Energy metrics for a run."""
+
     run_id: str
     duration_s: float
     cpu_seconds: float
@@ -65,9 +66,7 @@ class GreenGuard:
         self.db.init_schema()
         self.co2_kg_per_kwh = co2_kg_per_kwh
         self.cpu_watts = cpu_watts
-        logger.info(
-            f"Initialized GreenGuard: CO2={co2_kg_per_kwh} kg/kWh, CPU={cpu_watts}W"
-        )
+        logger.info(f"Initialized GreenGuard: CO2={co2_kg_per_kwh} kg/kWh, CPU={cpu_watts}W")
 
     def close(self) -> None:
         """Close database connection."""

@@ -289,4 +289,3 @@ def function{i}():
             # Clean up for next iteration
             for f in repo.glob("*.py"):
                 f.unlink()
-

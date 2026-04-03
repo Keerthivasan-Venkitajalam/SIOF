@@ -1,5 +1,3 @@
-
-
 from siof.indexer import (
     DTGBuilder,
     SymbolInfo,
@@ -263,6 +261,7 @@ class TestDTGBuilder:
 
         # Manually add an invalid edge (bypassing clamping)
         from siof.models import TransformEdge
+
         builder.edges.append(
             TransformEdge(
                 source="a",

@@ -1,4 +1,5 @@
 """End-to-end integration tests."""
+
 from pathlib import Path
 
 from siof.deslopper import DeSlopper
@@ -27,9 +28,7 @@ def test_e2e_full_workflow(tmp_path: Path):
     )
 
     (repo / "utils.py").write_text(
-        "# This is a robust solution\n"
-        "def helper():\n"
-        "    return 42\n"
+        "# This is a robust solution\n" "def helper():\n" "    return 42\n"
     )
 
     db = tmp_path / "siof.db"

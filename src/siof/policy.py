@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 @dataclass(slots=True)
 class PolicyContext:
     """Authorization context for policy decisions."""
+
     role: str = "reader"
     approval_token: str | None = None
     org: str = "default"
@@ -92,17 +93,13 @@ class PolicyEngine:
         # Check tool permission
         allowed_tools = self.TOOL_PERMISSIONS.get(ctx.role, set())
         if tool_name not in allowed_tools:
-            logger.warning(
-                f"Tool {tool_name} not allowed for role {ctx.role}"
-            )
+            logger.warning(f"Tool {tool_name} not allowed for role {ctx.role}")
             return False
 
         # Require approval token for mutations
         if tool_name in self.MUTATING_TOOLS:
             if not ctx.approval_token:
-                logger.warning(
-                    f"Mutation tool {tool_name} requires approval token"
-                )
+                logger.warning(f"Mutation tool {tool_name} requires approval token")
                 return False
 
         logger.debug(f"Authorized {ctx.role} for tool {tool_name}")

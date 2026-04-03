@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 @dataclass(slots=True)
 class VerificationResult:
     """Result of graph integrity verification."""
+
     valid: bool
     total_nodes: int
     total_edges: int
@@ -106,9 +107,7 @@ class GraphVerifier:
         Returns:
             List of node dictionaries
         """
-        cur = self.storage.conn.execute(
-            "SELECT symbol, module, kind, location FROM nodes"
-        )
+        cur = self.storage.conn.execute("SELECT symbol, module, kind, location FROM nodes")
         return [dict(r) for r in cur.fetchall()]
 
     def _fetch_edges(self) -> list[dict[str, Any]]:
@@ -150,7 +149,9 @@ class GraphVerifier:
             logger.warning(f"Found {len(invalid)} edges with invalid confidence")
         return invalid
 
-    def _find_dead_nodes(self, nodes: list[dict[str, Any]], edges: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _find_dead_nodes(
+        self, nodes: list[dict[str, Any]], edges: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Find dead nodes (no incoming or outgoing edges).
 
         Args:
@@ -165,15 +166,16 @@ class GraphVerifier:
         edge_targets = {e["target"] for e in edges}
 
         dead = [
-            n for n in nodes
-            if n["symbol"] not in edge_sources and n["symbol"] not in edge_targets
+            n for n in nodes if n["symbol"] not in edge_sources and n["symbol"] not in edge_targets
         ]
 
         if dead:
             logger.info(f"Found {len(dead)} dead nodes")
         return dead
 
-    def _find_orphaned_nodes(self, nodes: list[dict[str, Any]], edges: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _find_orphaned_nodes(
+        self, nodes: list[dict[str, Any]], edges: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Find orphaned nodes (not reachable from entry points).
 
         Entry points are nodes with no incoming edges (sources).
@@ -217,7 +219,9 @@ class GraphVerifier:
             logger.info(f"Found {len(orphaned)} orphaned nodes")
         return orphaned
 
-    def _detect_cycles(self, nodes: list[dict[str, Any]], edges: list[dict[str, Any]]) -> list[list[str]]:
+    def _detect_cycles(
+        self, nodes: list[dict[str, Any]], edges: list[dict[str, Any]]
+    ) -> list[list[str]]:
         """Detect cycles in transformation graph using DFS.
 
         Args:

@@ -16,7 +16,9 @@ def test_mcp_lineage(tmp_path: Path):
     idx.close()
 
     server = MCPGraphServer(db)
-    res = server.handle(MCPRequest(tool="find_data_lineage", args={"node_or_symbol": "a.f"}, role="analyst"))
+    res = server.handle(
+        MCPRequest(tool="find_data_lineage", args={"node_or_symbol": "a.f"}, role="analyst")
+    )
     server.close()
 
     assert res.ok is True

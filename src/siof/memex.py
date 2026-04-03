@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 @dataclass(slots=True)
 class IntentScore:
     """Relevance score for intent record."""
+
     record_id: str
     symbol: str
     relevance: float  # 0.0-1.0
@@ -35,14 +36,14 @@ class IntentExtractor:
     @staticmethod
     def extract_from_commit(message: str) -> tuple[str, str, str]:
         """Extract objective, constraints, rationale from commit message."""
-        lines = message.strip().split('\n')
+        lines = message.strip().split("\n")
         objective = lines[0][:180] if lines else ""
 
         # Extract constraints from message body
         constraints = "maintain compatibility and semantic integrity"
         if len(lines) > 1:
-            body = '\n'.join(lines[1:])
-            if 'constraint' in body.lower() or 'require' in body.lower():
+            body = "\n".join(lines[1:])
+            if "constraint" in body.lower() or "require" in body.lower():
                 constraints = body[:200]
 
         rationale = f"Derived from commit: {objective}"
@@ -54,7 +55,7 @@ class IntentExtractor:
         objective = title[:180]
         constraints = "maintain compatibility and semantic integrity"
         if description:
-            if 'constraint' in description.lower():
+            if "constraint" in description.lower():
                 constraints = description[:200]
         rationale = f"Derived from PR: {objective}"
         return objective, constraints, rationale
@@ -145,7 +146,7 @@ class Memex:
                 stderr=subprocess.DEVNULL,
             )
             commit_count = 0
-            for message in log.split('\n\n'):
+            for message in log.split("\n\n"):
                 if not message.strip():
                     continue
                 objective, constraints, rationale = self.extractor.extract_from_commit(message)
@@ -182,11 +183,13 @@ class Memex:
         for pr_file in pr_dir.glob("*.md"):
             try:
                 content = pr_file.read_text(encoding="utf-8", errors="ignore")
-                lines = content.split('\n')
+                lines = content.split("\n")
                 title = lines[0] if lines else ""
-                description = '\n'.join(lines[1:]) if len(lines) > 1 else ""
+                description = "\n".join(lines[1:]) if len(lines) > 1 else ""
 
-                objective, constraints, rationale = self.extractor.extract_from_pr(title, description)
+                objective, constraints, rationale = self.extractor.extract_from_pr(
+                    title, description
+                )
                 records.append(
                     IntentRecord(
                         source="pr",

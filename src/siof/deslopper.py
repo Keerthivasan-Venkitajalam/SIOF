@@ -157,7 +157,10 @@ class DeSlopper:
                 )
 
         # Rule: likely echo comment (comments that just repeat code)
-        echo_pattern = re.compile(r"^\s*#\s*(set|get|initialize|create|update|return|define|check|validate)\b", re.IGNORECASE)
+        echo_pattern = re.compile(
+            r"^\s*#\s*(set|get|initialize|create|update|return|define|check|validate)\b",
+            re.IGNORECASE,
+        )
         for idx, line in enumerate(text.splitlines(), start=1):
             if echo_pattern.match(line):
                 findings.append(

@@ -1,4 +1,5 @@
 """Tests for the CLI module."""
+
 from pathlib import Path
 
 from siof.cli import build_parser, main
@@ -140,6 +141,7 @@ def test_parser_green_report(tmp_path: Path):
 
     # Get the run_id from the database
     from siof.storage import Storage
+
     storage = Storage(db)
     storage.init_schema()
     row = storage.conn.execute("SELECT run_id FROM energy_runs LIMIT 1").fetchone()
@@ -160,6 +162,7 @@ def test_parser_default_db_path(tmp_path: Path):
 
     # Change to repo directory
     import os
+
     old_cwd = os.getcwd()
     try:
         os.chdir(repo)

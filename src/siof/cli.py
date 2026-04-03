@@ -30,7 +30,10 @@ def cmd_index(args: argparse.Namespace) -> int:
             print("Starting full index build...", file=sys.stderr)
             result = idx.build()
             print(f"✓ Discovered {result['files']} files", file=sys.stderr)
-            print(f"✓ Parsed {result['artifacts']} artifacts ({result['parse_errors']} errors)", file=sys.stderr)
+            print(
+                f"✓ Parsed {result['artifacts']} artifacts ({result['parse_errors']} errors)",
+                file=sys.stderr,
+            )
             print(f"✓ Built {result['nodes']} nodes and {result['edges']} edges", file=sys.stderr)
             print(f"✓ Extracted {result['dependency_seeds']} dependency seeds", file=sys.stderr)
             print(json.dumps(result, indent=2))
@@ -38,12 +41,17 @@ def cmd_index(args: argparse.Namespace) -> int:
             changed = [Path(p) for p in (args.changed_files or [])]
             print(f"Updating index for {len(changed)} changed files...", file=sys.stderr)
             result = idx.update(changed)
-            print(f"✓ Update complete: {result['nodes']} nodes, {result['edges']} edges", file=sys.stderr)
+            print(
+                f"✓ Update complete: {result['nodes']} nodes, {result['edges']} edges",
+                file=sys.stderr,
+            )
             print(json.dumps(result, indent=2))
         elif args.index_command == "verify":
             print("Verifying graph integrity...", file=sys.stderr)
             result = idx.verify()
-            print(f"✓ Verification complete: {result['dead_nodes']} dead nodes found", file=sys.stderr)
+            print(
+                f"✓ Verification complete: {result['dead_nodes']} dead nodes found", file=sys.stderr
+            )
             print(json.dumps(result, indent=2))
     finally:
         idx.close()

@@ -114,9 +114,7 @@ class TestPythonIndexerBenchmark:
             subdir.mkdir()
             (subdir / "__init__.py").write_text("")
             for j in range(50):
-                (subdir / f"module_{j}.py").write_text(
-                    f"def func_{i}_{j}(): pass\n"
-                )
+                (subdir / f"module_{j}.py").write_text(f"def func_{i}_{j}(): pass\n")
 
         db = tmp_path / "siof.db"
         idx = PythonIndexer(repo=repo, db_path=db)
@@ -141,6 +139,7 @@ class TestPythonIndexerBenchmark:
         for count in [100, 500, 1000]:
             # Clear and recreate repo
             import shutil
+
             if repo.exists():
                 shutil.rmtree(repo)
             repo.mkdir()

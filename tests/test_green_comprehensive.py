@@ -1,4 +1,5 @@
 """Comprehensive tests for the green_guard module."""
+
 from pathlib import Path
 
 from siof.green_guard import GreenGuard

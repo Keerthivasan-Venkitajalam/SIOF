@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 @dataclass(slots=True)
 class SymbolInfo:
     """Comprehensive symbol metadata extracted from AST."""
+
     name: str
     kind: str  # function, class, method, property, variable, decorator
     module: str
@@ -41,6 +42,7 @@ class SymbolInfo:
 @dataclass(slots=True)
 class ScopeLevel:
     """Represents a scope level in the symbol table."""
+
     name: str
     kind: str  # module, class, function
     symbols: dict[str, SymbolInfo] = field(default_factory=dict)
@@ -248,7 +250,9 @@ class SymbolExtractor(ast.NodeVisitor):
         docstring = ast.get_docstring(node)
 
         # Determine if abstract (check decorators and base classes)
-        is_abstract = any(d in ("abstractmethod", "ABC") for d in decorators) or any(b in ("ABC", "ABCMeta") for b in bases)
+        is_abstract = any(d in ("abstractmethod", "ABC") for d in decorators) or any(
+            b in ("ABC", "ABCMeta") for b in bases
+        )
 
         # Create symbol
         symbol = SymbolInfo(
@@ -386,6 +390,7 @@ class SymbolExtractor(ast.NodeVisitor):
 @dataclass(slots=True)
 class FileMetadata:
     """Metadata for discovered Python file."""
+
     path: Path
     size: int
     hash: str
@@ -395,6 +400,7 @@ class FileMetadata:
 @dataclass(slots=True)
 class DependencySeed:
     """Extracted dependency seed from a file."""
+
     module: str
     imports: list[str] = field(default_factory=list)
     from_imports: dict[str, list[str]] = field(default_factory=dict)
@@ -410,15 +416,21 @@ class FileDiscovery:
 
     # Directories to skip during traversal
     SKIP_DIRS: ClassVar[set[str]] = {
-        ".venv", "venv", "env",
+        ".venv",
+        "venv",
+        "env",
         "__pycache__",
-        ".egg-info", ".eggs",
+        ".egg-info",
+        ".eggs",
         "node_modules",
-        ".git", ".hg", ".svn",
+        ".git",
+        ".hg",
+        ".svn",
         ".pytest_cache",
         ".mypy_cache",
         ".tox",
-        "dist", "build",
+        "dist",
+        "build",
         ".coverage",
     }
 
@@ -1185,8 +1197,7 @@ class DTGBuilder:
         for edge in self.edges:
             if not (0.0 <= edge.confidence <= 1.0):
                 violations.append(
-                    f"Invalid confidence score: {edge.confidence} "
-                    f"(must be in [0.0, 1.0])"
+                    f"Invalid confidence score: {edge.confidence} " f"(must be in [0.0, 1.0])"
                 )
 
         return violations

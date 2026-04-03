@@ -1,4 +1,5 @@
 """Comprehensive tests for the memex module."""
+
 from pathlib import Path
 
 from siof.memex import Memex
@@ -41,8 +42,7 @@ def test_memex_ingest_prompt_log(tmp_path: Path):
     siof_dir = repo / ".siof"
     siof_dir.mkdir()
     (siof_dir / "prompts.log").write_text(
-        "Implement a function to process data\n"
-        "Add error handling for edge cases\n"
+        "Implement a function to process data\n" "Add error handling for edge cases\n"
     )
 
     db = tmp_path / "siof.db"
@@ -92,9 +92,7 @@ def test_memex_query_after_ingest(tmp_path: Path):
 
     siof_dir = repo / ".siof"
     siof_dir.mkdir()
-    (siof_dir / "prompts.log").write_text(
-        "Implement module.process function\n"
-    )
+    (siof_dir / "prompts.log").write_text("Implement module.process function\n")
 
     db = tmp_path / "siof.db"
     m = Memex(repo=repo, db_path=db)

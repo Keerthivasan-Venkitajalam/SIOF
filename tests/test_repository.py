@@ -358,9 +358,15 @@ class TestRepository:
             Artifact(path="module2.py", hash="hash2", parse_ok=True),
         ]
         nodes = [
-            DataNode(symbol="mod1.func1", module="module1", kind="function", location="module1.py:1"),
-            DataNode(symbol="mod1.func2", module="module1", kind="function", location="module1.py:10"),
-            DataNode(symbol="mod2.func3", module="module2", kind="function", location="module2.py:1"),
+            DataNode(
+                symbol="mod1.func1", module="module1", kind="function", location="module1.py:1"
+            ),
+            DataNode(
+                symbol="mod1.func2", module="module1", kind="function", location="module1.py:10"
+            ),
+            DataNode(
+                symbol="mod2.func3", module="module2", kind="function", location="module2.py:1"
+            ),
         ]
         edges = [
             TransformEdge(

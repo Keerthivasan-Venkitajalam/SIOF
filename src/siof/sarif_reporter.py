@@ -16,6 +16,7 @@ logger_name = "siof.sarif_reporter"
 @dataclass(slots=True)
 class SARIFReport:
     """SARIF report container."""
+
     version: str
     runs: list[dict[str, Any]]
 
@@ -198,7 +199,9 @@ class SARIFReporter:
         return list(rules_by_id.values())
 
     @staticmethod
-    def write_sarif(findings: list[Finding], output_path: Path | str, repo_path: Path | str = ".") -> None:
+    def write_sarif(
+        findings: list[Finding], output_path: Path | str, repo_path: Path | str = "."
+    ) -> None:
         """Write SARIF report to file.
 
         Args:

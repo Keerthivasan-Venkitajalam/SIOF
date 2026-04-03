@@ -18,8 +18,7 @@ class Storage:
         self.conn.close()
 
     def init_schema(self) -> None:
-        self.conn.executescript(
-            """
+        self.conn.executescript("""
             CREATE TABLE IF NOT EXISTS artifacts (
                 id INTEGER PRIMARY KEY,
                 path TEXT UNIQUE NOT NULL,
@@ -80,8 +79,7 @@ class Storage:
             CREATE INDEX IF NOT EXISTS idx_edges_source_target ON edges(source, target);
             CREATE INDEX IF NOT EXISTS idx_findings_severity_rule ON findings(severity, rule_id);
             CREATE INDEX IF NOT EXISTS idx_intent_source ON intent_records(source);
-            """
-        )
+            """)
         self.conn.commit()
 
     def clear_index(self) -> None:
@@ -104,7 +102,9 @@ class Storage:
         )
         self.conn.commit()
 
-    def replace_nodes_edges(self, nodes: Iterable[DataNode], edges: Iterable[TransformEdge]) -> None:
+    def replace_nodes_edges(
+        self, nodes: Iterable[DataNode], edges: Iterable[TransformEdge]
+    ) -> None:
         self.conn.execute("DELETE FROM nodes")
         self.conn.execute("DELETE FROM edges")
         self.conn.executemany(
@@ -173,16 +173,14 @@ class Storage:
         return {"query": file_or_symbol, "impacts": out}
 
     def get_dead_paths(self) -> dict:
-        cur = self.conn.execute(
-            """
+        cur = self.conn.execute("""
             SELECT n.symbol, n.module, n.location
             FROM nodes n
             LEFT JOIN edges e1 ON e1.source = n.symbol
             LEFT JOIN edges e2 ON e2.target = n.symbol
             WHERE e1.id IS NULL AND e2.id IS NULL
             LIMIT 200
-            """
-        )
+            """)
         return {"dead_nodes": [dict(r) for r in cur.fetchall()]}
 
     def get_intent_history(self, symbol_or_area: str) -> dict:
