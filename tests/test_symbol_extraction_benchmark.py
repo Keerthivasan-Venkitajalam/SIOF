@@ -272,22 +272,23 @@ def function{i}():
     pass
 """
                 (repo / f"file{i}.py").write_text(code)
-            
+
             db = tmp_path / f"siof_{file_count}.db"
             idx = PythonIndexer(repo=repo, db_path=db)
             idx.init()
-            
+
             start = time.time()
             result = idx.build()
             elapsed = time.time() - start
-            
+
             idx.close()
-            
+
             # Verify linear scaling
             assert result["files"] == file_count
             # Should scale roughly linearly
             assert elapsed < file_count * 0.1  # 100ms per file max
-            
+
             # Clean up for next iteration
             for f in repo.glob("*.py"):
                 f.unlink()
+

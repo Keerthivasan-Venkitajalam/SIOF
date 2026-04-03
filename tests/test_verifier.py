@@ -2,8 +2,6 @@
 
 from pathlib import Path
 
-import pytest
-
 from siof.models import DataNode, TransformEdge
 from siof.storage import Storage
 from siof.verifier import GraphVerifier
