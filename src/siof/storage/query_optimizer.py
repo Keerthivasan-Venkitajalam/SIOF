@@ -3,7 +3,7 @@
 import hashlib
 import logging
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -45,10 +45,10 @@ class QueryOptimizer:
         if plan_cache_size < 0:
             raise ValueError(f"plan_cache_size must be non-negative, got {plan_cache_size}")
 
-        self.plan_cache: Dict[str, Dict[str, Any]] = {}
+        self.plan_cache: dict[str, dict[str, Any]] = {}
         self.plan_cache_size = plan_cache_size
 
-    def optimize(self, query: str, params: Dict[str, Any]) -> Dict[str, Any]:
+    def optimize(self, query: str, params: dict[str, Any]) -> dict[str, Any]:
         """Analyze query and choose optimal execution strategy.
         
         This method analyzes the query structure and parameters to determine
@@ -72,7 +72,7 @@ class QueryOptimizer:
 
         # Check cache
         if cache_key in self.plan_cache:
-            logger.debug(f"Using cached plan for query")
+            logger.debug("Using cached plan for query")
             return self.plan_cache[cache_key]
 
         # Analyze query
@@ -92,7 +92,7 @@ class QueryOptimizer:
             self.plan_cache[cache_key] = plan
             logger.debug(f"Cached query plan: {cache_key}")
         else:
-            logger.debug(f"Plan cache full, not caching new plan")
+            logger.debug("Plan cache full, not caching new plan")
 
         return plan
 
@@ -127,7 +127,7 @@ class QueryOptimizer:
         logger.debug("Query is full graph scan, using BROADCAST")
         return ExecutionStrategy.BROADCAST
 
-    def _extract_filters(self, query: str) -> List[str]:
+    def _extract_filters(self, query: str) -> list[str]:
         """Extract filter conditions that can be pushed to backend.
         
         Identifies WHERE clause conditions that can be executed at the
@@ -248,7 +248,7 @@ class QueryOptimizer:
         self.plan_cache.clear()
         logger.debug("Query plan cache cleared")
 
-    def get_cache_stats(self) -> Dict[str, Any]:
+    def get_cache_stats(self) -> dict[str, Any]:
         """Get cache statistics.
         
         Returns:

@@ -1,7 +1,6 @@
 """Data models for authentication."""
 
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
@@ -36,4 +35,4 @@ class PublicKey:
     key_id: str
     public_key_pem: str
     created_at: int  # unix timestamp
-    expires_at: Optional[int] = None  # unix timestamp, None if no expiry
+    expires_at: int | None = None  # unix timestamp, None if no expiry

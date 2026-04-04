@@ -1,29 +1,25 @@
 """Unit tests for storage backend infrastructure."""
 
+from unittest.mock import Mock, patch
+
 import pytest
-from unittest.mock import Mock, MagicMock, patch
-from siof.storage.backend import Node, Edge, StorageBackend
-from siof.storage.connection_pool import ConnectionPool
-from siof.storage.retry import RetryPolicy, ErrorCategory
-from siof.storage.exceptions import (
-    StorageException,
-    ConnectionRefused,
-    ConnectionTimeout,
-    DuplicateNode,
-    ReferentialIntegrityError,
-    InvalidQuery,
-    QueryTimeout,
-    TransactionFailed,
-)
+
+from siof.storage.backend import Edge, Node, StorageBackend
 from siof.storage.config import (
-    StorageConfig,
     BackendConfig,
     ConnectionPoolConfig,
     RetryPolicyConfig,
-    CacheConfig,
-    QueryOptimizerConfig,
+    StorageConfig,
 )
-
+from siof.storage.connection_pool import ConnectionPool
+from siof.storage.exceptions import (
+    ConnectionRefused,
+    DuplicateNode,
+    InvalidQuery,
+    StorageException,
+    TransactionFailed,
+)
+from siof.storage.retry import ErrorCategory, RetryPolicy
 
 # ============================================================================
 # Node and Edge Tests
@@ -1261,8 +1257,9 @@ class TestDistributedRepository:
 
     def test_cache_ttl_expiration(self):
         """Test cache TTL expiration."""
-        from siof.storage.distributed_repository import DistributedRepository
         import time
+
+        from siof.storage.distributed_repository import DistributedRepository
 
         backend = Mock(spec=StorageBackend)
         repo = DistributedRepository(backend, cache_ttl_seconds=1)
@@ -1345,7 +1342,7 @@ class TestQueryOptimizer:
 
     def test_optimize_query_with_id_filter(self):
         """Test optimizing query with specific node ID."""
-        from siof.storage.query_optimizer import QueryOptimizer, ExecutionStrategy
+        from siof.storage.query_optimizer import ExecutionStrategy, QueryOptimizer
 
         optimizer = QueryOptimizer()
         query = "MATCH (n:Node {id: $id}) RETURN n"
@@ -1356,7 +1353,7 @@ class TestQueryOptimizer:
 
     def test_optimize_query_with_where_clause(self):
         """Test optimizing query with WHERE clause."""
-        from siof.storage.query_optimizer import QueryOptimizer, ExecutionStrategy
+        from siof.storage.query_optimizer import ExecutionStrategy, QueryOptimizer
 
         optimizer = QueryOptimizer()
         query = "MATCH (n:Node) WHERE n.type = $type RETURN n"
@@ -1367,7 +1364,7 @@ class TestQueryOptimizer:
 
     def test_optimize_query_broadcast(self):
         """Test optimizing full graph scan query."""
-        from siof.storage.query_optimizer import QueryOptimizer, ExecutionStrategy
+        from siof.storage.query_optimizer import ExecutionStrategy, QueryOptimizer
 
         optimizer = QueryOptimizer()
         query = "MATCH (n:Node) RETURN n"
@@ -1405,7 +1402,7 @@ class TestQueryOptimizer:
 
     def test_estimate_cost_single_shard(self):
         """Test cost estimation for single shard strategy."""
-        from siof.storage.query_optimizer import QueryOptimizer, ExecutionStrategy
+        from siof.storage.query_optimizer import ExecutionStrategy, QueryOptimizer
 
         optimizer = QueryOptimizer()
         query = "MATCH (n:Node {id: $id}) RETURN n"
@@ -1415,7 +1412,7 @@ class TestQueryOptimizer:
 
     def test_estimate_cost_multi_shard(self):
         """Test cost estimation for multi-shard strategy."""
-        from siof.storage.query_optimizer import QueryOptimizer, ExecutionStrategy
+        from siof.storage.query_optimizer import ExecutionStrategy, QueryOptimizer
 
         optimizer = QueryOptimizer()
         query = "MATCH (n:Node) WHERE n.type = $type RETURN n"
@@ -1426,7 +1423,7 @@ class TestQueryOptimizer:
 
     def test_estimate_cost_broadcast(self):
         """Test cost estimation for broadcast strategy."""
-        from siof.storage.query_optimizer import QueryOptimizer, ExecutionStrategy
+        from siof.storage.query_optimizer import ExecutionStrategy, QueryOptimizer
 
         optimizer = QueryOptimizer()
         query = "MATCH (n:Node) RETURN n"
@@ -1436,7 +1433,7 @@ class TestQueryOptimizer:
 
     def test_estimate_cost_with_aggregation(self):
         """Test cost estimation increases for aggregations."""
-        from siof.storage.query_optimizer import QueryOptimizer, ExecutionStrategy
+        from siof.storage.query_optimizer import ExecutionStrategy, QueryOptimizer
 
         optimizer = QueryOptimizer()
         query_simple = "MATCH (n:Node) RETURN n"
@@ -1626,8 +1623,9 @@ class TestDistributedRepositoryTransactions:
 
     def test_transaction_timeout(self):
         """Test transaction timeout handling."""
-        from siof.storage.distributed_repository import DistributedRepository
         import time
+
+        from siof.storage.distributed_repository import DistributedRepository
 
         backend = Mock(spec=StorageBackend)
         backend.begin_transaction = Mock()
@@ -1750,9 +1748,10 @@ class TestMigrationTool:
 
     def test_export_nodes(self):
         """Test exporting nodes."""
-        from siof.storage.migration import MigrationTool
-        import tempfile
         import json
+        import tempfile
+
+        from siof.storage.migration import MigrationTool
 
         source = Mock(spec=StorageBackend)
         source.get_backend_name = Mock(return_value="Neo4j")
@@ -1781,7 +1780,7 @@ class TestMigrationTool:
             assert "output_file" in result
 
             # Verify file contents
-            with open(output_file, "r") as f:
+            with open(output_file) as f:
                 data = json.load(f)
                 assert len(data["nodes"]) == 2
                 assert len(data["edges"]) == 0
@@ -1792,9 +1791,10 @@ class TestMigrationTool:
 
     def test_import_nodes(self):
         """Test importing nodes."""
-        from siof.storage.migration import MigrationTool
-        import tempfile
         import json
+        import tempfile
+
+        from siof.storage.migration import MigrationTool
 
         source = Mock(spec=StorageBackend)
         target = Mock(spec=StorageBackend)

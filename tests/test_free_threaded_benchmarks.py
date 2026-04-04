@@ -19,7 +19,6 @@ import pytest
 from siof.free_threaded_indexer import FreeThreadedIndexer
 from siof.indexer import PythonIndexer
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -498,7 +497,7 @@ class TestRaceConditionStress:
 
         Validates: Requirements 12.3
         """
-        from siof.free_threaded_indexer import ParseTask, ParseWorker, WorkPool
+        from siof.free_threaded_indexer import ParseTask, WorkPool
 
         repo = tmp_path / "repo"
         _make_python_files(repo, 5)

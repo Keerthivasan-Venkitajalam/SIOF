@@ -2,8 +2,6 @@
 
 from pathlib import Path
 
-import pytest
-
 from siof.v2.interfaces import CodeEmbedding, Edge, Node, ParseTask
 from siof.v2.mocks import (
     MockAuthProvider,

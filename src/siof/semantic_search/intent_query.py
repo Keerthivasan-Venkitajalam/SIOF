@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from .models import CodeSymbol, SearchResults
 from .semantic_search import SemanticSearch

@@ -10,10 +10,10 @@ from __future__ import annotations
 import logging
 import sys
 import threading
+from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterator
 
 from siof.models import Artifact, DataNode, TransformEdge
 
@@ -107,7 +107,7 @@ class BuildResult:
 
 class VersionDetector:
     """Detects Python version and free-threading capabilities."""
-    
+
     @staticmethod
     def detect() -> ParsingMode:
         """Detect parsing mode based on Python version.
@@ -116,7 +116,7 @@ class VersionDetector:
             ParsingMode with detection results
         """
         python_version = sys.version_info[:3]
-        
+
         # Check if Python 3.14+
         if python_version < (3, 14, 0):
             return ParsingMode(
@@ -126,7 +126,7 @@ class VersionDetector:
                 reason=f"Python {python_version[0]}.{python_version[1]} detected, "
                        f"free-threading requires Python 3.14+"
             )
-        
+
         # Check if GIL is disabled
         # sys._is_gil_enabled() returns False when GIL is disabled
         gil_enabled = True
@@ -136,7 +136,7 @@ class VersionDetector:
             except Exception:
                 # If we can't determine GIL status, assume it's enabled
                 gil_enabled = True
-        
+
         if gil_enabled:
             return ParsingMode(
                 parallel=False,
@@ -145,7 +145,7 @@ class VersionDetector:
                 reason=f"Python {python_version[0]}.{python_version[1]} detected, "
                        f"but GIL is enabled (free-threading not active)"
             )
-        
+
         # Python 3.14+ with GIL disabled - enable parallel mode
         return ParsingMode(
             parallel=True,
@@ -179,7 +179,7 @@ class ParallelFileDiscovery:
     parallel directory traversal. Tracks visited inodes to prevent
     circular symlink loops.
     """
-    
+
     # Directories to skip during traversal (copied from FileDiscovery)
     SKIP_DIRS: set[str] = {
         ".venv",
@@ -199,7 +199,7 @@ class ParallelFileDiscovery:
         "build",
         ".coverage",
     }
-    
+
     def __init__(self, repo: Path, workers: int = 4):
         """Initialize parallel file discovery.
         
@@ -213,7 +213,7 @@ class ParallelFileDiscovery:
         self._visited_lock = threading.Lock()
         self._files: list[FileMetadata] = []
         self._files_lock = threading.Lock()
-        
+
     def discover(self) -> list[FileMetadata]:
         """Discover Python files in parallel.
         
@@ -223,10 +223,10 @@ class ParallelFileDiscovery:
         # Reset state
         self._visited_inodes.clear()
         self._files.clear()
-        
+
         # Start with root directory
         directories_to_process = [self.repo]
-        
+
         # Process directories in parallel
         with ThreadPoolExecutor(max_workers=self.workers) as executor:
             while directories_to_process:
@@ -235,7 +235,7 @@ class ParallelFileDiscovery:
                     executor.submit(self._process_directory, directory)
                     for directory in directories_to_process
                 ]
-                
+
                 # Collect new directories to process
                 directories_to_process = []
                 for future in as_completed(futures):
@@ -244,10 +244,10 @@ class ParallelFileDiscovery:
                         directories_to_process.extend(subdirs)
                     except Exception as exc:
                         logger.warning(f"Error processing directory: {exc}")
-        
+
         logger.info(f"Discovered {len(self._files)} Python files")
         return self._files.copy()
-    
+
     def _process_directory(self, directory: Path) -> list[Path]:
         """Process a single directory and return subdirectories to traverse.
         
@@ -258,41 +258,41 @@ class ParallelFileDiscovery:
             List of subdirectories to process next
         """
         subdirs: list[Path] = []
-        
+
         try:
             entries = list(directory.iterdir())
         except (PermissionError, OSError) as exc:
             logger.warning(f"Cannot read directory {directory}: {exc}")
             return subdirs
-        
+
         for entry in entries:
             try:
                 # Check if it's a directory
                 is_directory = entry.is_dir()
             except OSError:
                 continue
-            
+
             if is_directory:
                 # Skip directories in SKIP_DIRS
                 if entry.name in self.SKIP_DIRS:
                     continue
-                
+
                 # Skip symlinks (we don't follow them by default)
                 if entry.is_symlink():
                     continue
-                
+
                 # Check for circular references via inode tracking
                 try:
                     stat = entry.stat(follow_symlinks=False)
                     inode = stat.st_ino
-                    
+
                     # Thread-safe inode check and add
                     with self._visited_lock:
                         if inode in self._visited_inodes:
                             logger.debug(f"Skipping circular symlink: {entry}")
                             continue
                         self._visited_inodes.add(inode)
-                    
+
                     subdirs.append(entry)
                 except (OSError, ValueError):
                     logger.debug(f"Cannot stat {entry}, skipping")
@@ -303,12 +303,12 @@ class ParallelFileDiscovery:
                     is_python_file = entry.is_file() and entry.suffix == ".py"
                 except OSError:
                     continue
-                
+
                 if is_python_file:
                     # Skip symlinks for files too
                     if entry.is_symlink():
                         continue
-                    
+
                     try:
                         metadata = self._extract_file_metadata(entry)
                         # Thread-safe file list append
@@ -316,9 +316,9 @@ class ParallelFileDiscovery:
                             self._files.append(metadata)
                     except Exception as exc:
                         logger.warning(f"Error extracting metadata for {entry}: {exc}")
-        
+
         return subdirs
-    
+
     def _extract_file_metadata(self, file_path: Path) -> FileMetadata:
         """Extract metadata for a Python file.
         
@@ -329,7 +329,7 @@ class ParallelFileDiscovery:
             FileMetadata with size and hash
         """
         import hashlib
-        
+
         try:
             content = file_path.read_bytes()
             size = len(content)
@@ -353,12 +353,12 @@ class LockFreeSymbolTable:
         _symbols: Dictionary mapping qualified names to SymbolInfo objects
         _lock: Lock for atomic check-then-update operations
     """
-    
+
     def __init__(self):
         """Initialize lock-free symbol table with thread-safe dict."""
         self._symbols: dict[str, SymbolInfo] = {}
         self._lock = threading.Lock()  # Minimal locking for dict updates
-        
+
     def add_symbol(self, qualified_name: str, symbol: SymbolInfo) -> None:
         """Add symbol atomically with minimal locking.
         
@@ -376,7 +376,7 @@ class LockFreeSymbolTable:
             # Only add if not already present (first occurrence wins)
             if qualified_name not in self._symbols:
                 self._symbols[qualified_name] = symbol
-                
+
     def get_all_symbols(self) -> dict[str, SymbolInfo]:
         """Get snapshot of all symbols for retrieval.
         
@@ -399,7 +399,7 @@ class ParseWorker:
     in parallel. It includes comprehensive error handling to ensure that
     errors in one file don't affect the parsing of other files.
     """
-    
+
     @staticmethod
     def parse(task: ParseTask, repo: Path) -> ParseResult:
         """Parse a single file and extract DTG nodes/edges.
@@ -419,13 +419,14 @@ class ParseWorker:
         import ast
         import hashlib
         import time
-        from siof.indexer import SymbolExtractor, DTGBuilder
+
+        from siof.indexer import DTGBuilder, SymbolExtractor
         from siof.models import module_name
-        
+
         start_time = time.perf_counter()
         file_path = task.file_path
         errors: list[str] = []
-        
+
         # Compute relative path for artifact tracking
         try:
             rel_path = str(file_path.relative_to(repo))
@@ -445,7 +446,7 @@ class ParseWorker:
                 duration_ms=duration_ms,
                 success=False
             )
-        
+
         # Read file content with error handling
         try:
             text = file_path.read_text(encoding="utf-8", errors="ignore")
@@ -481,7 +482,7 @@ class ParseWorker:
                 duration_ms=duration_ms,
                 success=False
             )
-        
+
         # Compute file hash
         try:
             digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
@@ -491,7 +492,7 @@ class ParseWorker:
             logger.error(error_msg)
             errors.append(error_msg)
             digest = ""
-        
+
         # Compute module name
         try:
             mod = module_name(repo, file_path)
@@ -500,7 +501,7 @@ class ParseWorker:
             logger.error(error_msg)
             errors.append(error_msg)
             mod = rel_path.replace("/", ".").replace(".py", "")
-        
+
         # Parse AST with syntax error handling
         try:
             tree = ast.parse(text)
@@ -536,23 +537,23 @@ class ParseWorker:
                 duration_ms=duration_ms,
                 success=False
             )
-        
+
         # Extract symbols and build DTG with error handling
         try:
             # Extract comprehensive symbols using SymbolExtractor
             extractor = SymbolExtractor(mod, rel_path)
             symbols = extractor.extract(tree)
-            
+
             # Build DTG using dedicated builder
             builder = DTGBuilder(mod, rel_path)
-            
+
             # Add symbol nodes and their relationships
             for qualified_name, symbol in symbols.items():
                 builder.add_symbol_node(qualified_name, symbol)
                 builder.add_parameter_edges(qualified_name, symbol)
                 builder.add_inheritance_edges(qualified_name, symbol)
                 builder.add_decorator_edges(qualified_name, symbol)
-            
+
             # Extract call relationships and assignments
             for node in ast.walk(tree):
                 # Track assignments (state mutations)
@@ -567,7 +568,7 @@ class ParseWorker:
                                     fn_name = node.value.func.id
                                 elif isinstance(node.value.func, ast.Attribute):
                                     fn_name = node.value.func.attr
-                                
+
                                 if fn_name:
                                     builder.add_assignment_transform_edge(
                                         fn_name,
@@ -575,19 +576,19 @@ class ParseWorker:
                                         location=f"{rel_path}:{node.lineno}",
                                         confidence=0.8,
                                     )
-            
+
             # Verify graph integrity
             violations = builder.verify_integrity()
             if violations:
                 logger.debug(f"Graph integrity issues in {rel_path}: {violations}")
                 # Note: We don't treat integrity violations as errors - just log them
-            
+
             # Build final nodes and edges
             nodes, edges = builder.build()
-            
+
             # Create successful artifact
             artifact = Artifact(path=rel_path, hash=digest, parse_ok=True, error=None)
-            
+
             duration_ms = (time.perf_counter() - start_time) * 1000
             return ParseResult(
                 task_id=task.task_id,
@@ -599,7 +600,7 @@ class ParseWorker:
                 duration_ms=duration_ms,
                 success=True
             )
-            
+
         except Exception as exc:
             # Unexpected error during symbol extraction or DTG building
             error_msg = f"Unexpected error extracting symbols from {rel_path}: {exc}"
@@ -630,7 +631,7 @@ class WorkPool:
         repo: Repository root path
         _executor: ThreadPoolExecutor for managing worker threads
     """
-    
+
     def __init__(self, workers: int, repo: Path):
         """Initialize work pool with ThreadPoolExecutor.
         
@@ -642,7 +643,7 @@ class WorkPool:
         self.repo = repo
         self._executor = ThreadPoolExecutor(max_workers=workers)
         logger.info(f"Initialized WorkPool with {workers} workers")
-    
+
     def submit_tasks(self, tasks: list[ParseTask]) -> Iterator[ParseResult]:
         """Submit tasks and yield results as they complete.
         
@@ -661,9 +662,9 @@ class WorkPool:
             self._executor.submit(ParseWorker.parse, task, self.repo): task
             for task in tasks
         }
-        
+
         logger.info(f"Submitted {len(tasks)} tasks to WorkPool")
-        
+
         # Yield results as they complete
         for future in as_completed(future_to_task):
             task = future_to_task[future]
@@ -674,7 +675,7 @@ class WorkPool:
                 # Worker thread raised an unexpected exception
                 error_msg = f"Worker thread failed for task {task.task_id} ({task.file_path}): {exc}"
                 logger.error(error_msg, exc_info=True)
-                
+
                 # Yield error result
                 yield ParseResult(
                     task_id=task.task_id,
@@ -691,7 +692,7 @@ class WorkPool:
                     duration_ms=0.0,
                     success=False
                 )
-    
+
     def shutdown(self, timeout: float = 30.0) -> None:
         """Shutdown work pool gracefully with timeout.
         
@@ -703,7 +704,7 @@ class WorkPool:
             timeout: Maximum wait time in seconds (default: 30.0)
         """
         logger.info(f"Shutting down WorkPool (timeout={timeout}s)")
-        
+
         try:
             # Attempt graceful shutdown with timeout
             self._executor.shutdown(wait=True, cancel_futures=False)
@@ -711,7 +712,7 @@ class WorkPool:
         except Exception as exc:
             # Log any errors during shutdown
             logger.error(f"Error during WorkPool shutdown: {exc}", exc_info=True)
-            
+
             # Force shutdown if graceful shutdown failed
             try:
                 self._executor.shutdown(wait=False, cancel_futures=True)
@@ -733,14 +734,14 @@ class DTGAggregator:
         _edges: List of all TransformEdge objects
         _conflicts: List of conflict descriptions for debugging
     """
-    
+
     def __init__(self):
         """Initialize aggregator with empty node/edge collections."""
         self._nodes: dict[str, DataNode] = {}
         self._edges: list[TransformEdge] = []
         self._conflicts: list[str] = []
         logger.debug("Initialized DTGAggregator")
-    
+
     def add_result(self, result: ParseResult) -> None:
         """Add parse result to aggregation.
         
@@ -769,15 +770,15 @@ class DTGAggregator:
             else:
                 # First occurrence - add to nodes dictionary
                 self._nodes[node.symbol] = node
-        
+
         # Add all edges (duplicates may represent multiple call sites)
         self._edges.extend(result.edges)
-        
+
         logger.debug(
             f"Added result from {result.file_path}: "
             f"{len(result.nodes)} nodes, {len(result.edges)} edges"
         )
-    
+
     def resolve_conflicts(self) -> None:
         """Resolve conflicting node definitions.
         
@@ -795,13 +796,13 @@ class DTGAggregator:
                 f"Detected {len(self._conflicts)} node conflicts during DTG aggregation. "
                 f"Keeping first occurrence for each duplicate node."
             )
-            
+
             # Log individual conflict warnings for debugging
             for conflict in self._conflicts:
                 logger.warning(f"Node conflict: {conflict}")
         else:
             logger.debug("No conflicts detected during DTG aggregation")
-    
+
     def get_dtg(self) -> tuple[list[DataNode], list[TransformEdge]]:
         """Get aggregated DTG as lists of nodes and edges.
         
@@ -815,7 +816,7 @@ class DTGAggregator:
             f"{len(self._edges)} edges, {len(self._conflicts)} conflicts"
         )
         return nodes, self._edges
-    
+
     def get_conflicts(self) -> list[str]:
         """Get list of conflicts detected during aggregation.
         
@@ -823,7 +824,7 @@ class DTGAggregator:
             List of conflict description strings
         """
         return self._conflicts.copy()
-    
+
     def verify_integrity(self) -> list[str]:
         """Verify DTG integrity constraints on aggregated graph.
         
@@ -842,10 +843,10 @@ class DTGAggregator:
             List of integrity violation messages (empty if valid)
         """
         violations: list[str] = []
-        
+
         # Build set of node symbols for dangling edge detection
         node_symbols = set(self._nodes.keys())
-        
+
         # Check each edge for integrity violations
         for edge in self._edges:
             # Check 1: Self-loops (except allowed cases)
@@ -855,14 +856,14 @@ class DTGAggregator:
                     f"Self-loop detected: {edge.source} -> {edge.target} "
                     f"(kind={edge.transform_kind}, location={edge.location})"
                 )
-            
+
             # Check 2: Valid confidence bounds [0.0, 1.0]
             if not (0.0 <= edge.confidence <= 1.0):
                 violations.append(
                     f"Invalid confidence score: {edge.confidence} for edge "
                     f"{edge.source} -> {edge.target} (must be in [0.0, 1.0])"
                 )
-            
+
             # Check 3: Dangling edges (edges referencing non-existent nodes)
             # Note: We allow edges to external symbols (cross-module references)
             # Only flag edges where both source and target are missing
@@ -871,14 +872,14 @@ class DTGAggregator:
                     f"Dangling edge: {edge.source} -> {edge.target} "
                     f"(neither source nor target node exists)"
                 )
-        
+
         if violations:
             logger.warning(
                 f"DTG integrity verification found {len(violations)} violations"
             )
         else:
             logger.debug("DTG integrity verification passed with no violations")
-        
+
         return violations
 
 
@@ -1260,7 +1261,9 @@ class FreeThreadedIndexer:
         all_artifacts_rows = conn.execute(
             "SELECT path, hash, parse_ok, error FROM artifacts"
         ).fetchall()
-        from .models import Artifact as _Artifact, DataNode as _DataNode, TransformEdge as _TransformEdge
+        from .models import Artifact as _Artifact
+        from .models import DataNode as _DataNode
+        from .models import TransformEdge as _TransformEdge
 
         all_artifacts_full = [
             _Artifact(path=r["path"], hash=r["hash"], parse_ok=bool(r["parse_ok"]), error=r["error"])

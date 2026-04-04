@@ -7,9 +7,9 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
+import hypothesis.strategies as st
 import pytest
 from hypothesis import given, settings
-import hypothesis.strategies as st
 
 from siof.free_threaded_indexer import (
     BuildResult,
@@ -27,7 +27,7 @@ from siof.models import Artifact, DataNode, TransformEdge
 
 class TestParsingMode:
     """Tests for ParsingMode dataclass."""
-    
+
     def test_parallel_mode_creation(self):
         """Test creating a parallel parsing mode."""
         mode = ParsingMode(
@@ -36,12 +36,12 @@ class TestParsingMode:
             gil_enabled=False,
             reason="Free-threading enabled"
         )
-        
+
         assert mode.parallel is True
         assert mode.python_version == (3, 14, 0)
         assert mode.gil_enabled is False
         assert "Free-threading" in mode.reason
-    
+
     def test_single_threaded_mode_creation(self):
         """Test creating a single-threaded parsing mode."""
         mode = ParsingMode(
@@ -50,7 +50,7 @@ class TestParsingMode:
             gil_enabled=True,
             reason="Python 3.11 detected"
         )
-        
+
         assert mode.parallel is False
         assert mode.python_version == (3, 11, 0)
         assert mode.gil_enabled is True
@@ -59,7 +59,7 @@ class TestParsingMode:
 
 class TestParseTask:
     """Tests for ParseTask dataclass."""
-    
+
     def test_parse_task_creation(self):
         """Test creating a parse task."""
         task = ParseTask(
@@ -67,7 +67,7 @@ class TestParseTask:
             file_metadata={"size": 100, "hash": "abc123"},
             task_id=1
         )
-        
+
         assert task.file_path == Path("test.py")
         assert task.file_metadata["size"] == 100
         assert task.task_id == 1
@@ -75,7 +75,7 @@ class TestParseTask:
 
 class TestParseResult:
     """Tests for ParseResult dataclass."""
-    
+
     def test_successful_parse_result(self):
         """Test creating a successful parse result."""
         artifact = Artifact(
@@ -84,7 +84,7 @@ class TestParseResult:
             parse_ok=True,
             error=None
         )
-        
+
         nodes = [
             DataNode(
                 symbol="test.func",
@@ -93,7 +93,7 @@ class TestParseResult:
                 location="test.py:1"
             )
         ]
-        
+
         edges = [
             TransformEdge(
                 source="test.func",
@@ -104,7 +104,7 @@ class TestParseResult:
                 confidence=1.0
             )
         ]
-        
+
         result = ParseResult(
             task_id=1,
             file_path=Path("test.py"),
@@ -115,14 +115,14 @@ class TestParseResult:
             duration_ms=10.5,
             success=True
         )
-        
+
         assert result.success is True
         assert result.task_id == 1
         assert len(result.nodes) == 1
         assert len(result.edges) == 1
         assert len(result.errors) == 0
         assert result.duration_ms == 10.5
-    
+
     def test_failed_parse_result(self):
         """Test creating a failed parse result."""
         artifact = Artifact(
@@ -131,7 +131,7 @@ class TestParseResult:
             parse_ok=False,
             error="SyntaxError: invalid syntax"
         )
-        
+
         result = ParseResult(
             task_id=1,
             file_path=Path("test.py"),
@@ -142,7 +142,7 @@ class TestParseResult:
             duration_ms=5.0,
             success=False
         )
-        
+
         assert result.success is False
         assert len(result.errors) == 1
         assert "SyntaxError" in result.errors[0]
@@ -150,7 +150,7 @@ class TestParseResult:
 
 class TestBuildResult:
     """Tests for BuildResult dataclass."""
-    
+
     def test_build_result_creation(self):
         """Test creating a build result."""
         mode = ParsingMode(
@@ -159,7 +159,7 @@ class TestBuildResult:
             gil_enabled=False,
             reason="Free-threading enabled"
         )
-        
+
         result = BuildResult(
             artifacts=100,
             nodes=500,
@@ -170,7 +170,7 @@ class TestBuildResult:
             speedup_factor=8.0,
             mode=mode
         )
-        
+
         assert result.artifacts == 100
         assert result.nodes == 500
         assert result.edges == 1000
@@ -183,59 +183,59 @@ class TestBuildResult:
 
 class TestVersionDetector:
     """Tests for VersionDetector class."""
-    
+
     def test_detect_python_314_with_free_threading(self):
         """Test detection of Python 3.14+ with free-threading enabled."""
         with patch.object(sys, 'version_info', (3, 14, 0, 'final', 0)):
             with patch.object(sys, '_is_gil_enabled', return_value=False):
                 mode = VersionDetector.detect()
-                
+
                 assert mode.parallel is True
                 assert mode.python_version == (3, 14, 0)
                 assert mode.gil_enabled is False
                 assert "parallel parsing enabled" in mode.reason
-    
+
     def test_detect_python_314_without_free_threading(self):
         """Test detection of Python 3.14+ with GIL still enabled."""
         with patch.object(sys, 'version_info', (3, 14, 0, 'final', 0)):
             with patch.object(sys, '_is_gil_enabled', return_value=True):
                 mode = VersionDetector.detect()
-                
+
                 assert mode.parallel is False
                 assert mode.python_version == (3, 14, 0)
                 assert mode.gil_enabled is True
                 assert "GIL is enabled" in mode.reason
-    
+
     def test_detect_python_313(self):
         """Test detection of Python 3.13 (no free-threading)."""
         with patch.object(sys, 'version_info', (3, 13, 0, 'final', 0)):
             mode = VersionDetector.detect()
-            
+
             assert mode.parallel is False
             assert mode.python_version == (3, 13, 0)
             assert mode.gil_enabled is True
             assert "requires Python 3.14+" in mode.reason
-    
+
     def test_detect_python_311(self):
         """Test detection of Python 3.11 (no free-threading)."""
         with patch.object(sys, 'version_info', (3, 11, 0, 'final', 0)):
             mode = VersionDetector.detect()
-            
+
             assert mode.parallel is False
             assert mode.python_version == (3, 11, 0)
             assert mode.gil_enabled is True
             assert "requires Python 3.14+" in mode.reason
-    
+
     def test_detect_python_315(self):
         """Test detection of Python 3.15+ with free-threading."""
         with patch.object(sys, 'version_info', (3, 15, 0, 'final', 0)):
             with patch.object(sys, '_is_gil_enabled', return_value=False):
                 mode = VersionDetector.detect()
-                
+
                 assert mode.parallel is True
                 assert mode.python_version == (3, 15, 0)
                 assert mode.gil_enabled is False
-    
+
     def test_detect_missing_gil_check(self):
         """Test detection when _is_gil_enabled is not available."""
         with patch.object(sys, 'version_info', (3, 14, 0, 'final', 0)):
@@ -243,10 +243,10 @@ class TestVersionDetector:
             original_attr = getattr(sys, '_is_gil_enabled', None)
             if hasattr(sys, '_is_gil_enabled'):
                 delattr(sys, '_is_gil_enabled')
-            
+
             try:
                 mode = VersionDetector.detect()
-                
+
                 # Should fall back to single-threaded mode
                 assert mode.parallel is False
                 assert mode.gil_enabled is True
@@ -254,13 +254,13 @@ class TestVersionDetector:
                 # Restore attribute if it existed
                 if original_attr is not None:
                     sys._is_gil_enabled = original_attr
-    
+
     def test_detect_gil_check_exception(self):
         """Test detection when _is_gil_enabled raises an exception."""
         with patch.object(sys, 'version_info', (3, 14, 0, 'final', 0)):
             with patch.object(sys, '_is_gil_enabled', side_effect=RuntimeError("Test error")):
                 mode = VersionDetector.detect()
-                
+
                 # Should fall back to single-threaded mode
                 assert mode.parallel is False
                 assert mode.gil_enabled is True
@@ -268,7 +268,7 @@ class TestVersionDetector:
 
 class TestFileMetadata:
     """Tests for FileMetadata dataclass."""
-    
+
     def test_file_metadata_creation(self):
         """Test creating file metadata."""
         metadata = FileMetadata(
@@ -277,12 +277,12 @@ class TestFileMetadata:
             hash="abc123",
             language="python"
         )
-        
+
         assert metadata.path == Path("test.py")
         assert metadata.size == 100
         assert metadata.hash == "abc123"
         assert metadata.language == "python"
-    
+
     def test_file_metadata_default_language(self):
         """Test file metadata with default language."""
         metadata = FileMetadata(
@@ -290,198 +290,198 @@ class TestFileMetadata:
             size=100,
             hash="abc123"
         )
-        
+
         assert metadata.language == "python"
 
 
 class TestParallelFileDiscovery:
     """Tests for ParallelFileDiscovery class."""
-    
+
     def test_init_with_default_workers(self):
         """Test initialization with default worker count."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
             discovery = ParallelFileDiscovery(repo)
-            
+
             assert discovery.repo == repo
             assert discovery.workers == 4
             assert len(discovery._visited_inodes) == 0
             assert len(discovery._files) == 0
-    
+
     def test_init_with_custom_workers(self):
         """Test initialization with custom worker count."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
             discovery = ParallelFileDiscovery(repo, workers=8)
-            
+
             assert discovery.repo == repo
             assert discovery.workers == 8
-    
+
     def test_discover_empty_directory(self):
         """Test discovering files in an empty directory."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
             discovery = ParallelFileDiscovery(repo)
-            
+
             files = discovery.discover()
-            
+
             assert len(files) == 0
-    
+
     def test_discover_single_python_file(self):
         """Test discovering a single Python file."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create a Python file
             test_file = repo / "test.py"
             test_file.write_text("print('hello')")
-            
+
             discovery = ParallelFileDiscovery(repo)
             files = discovery.discover()
-            
+
             assert len(files) == 1
             assert files[0].path == test_file
             assert files[0].size > 0
             assert len(files[0].hash) == 64  # SHA-256 hash length
             assert files[0].language == "python"
-    
+
     def test_discover_multiple_python_files(self):
         """Test discovering multiple Python files."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create multiple Python files
             file1 = repo / "test1.py"
             file2 = repo / "test2.py"
             file3 = repo / "test3.py"
-            
+
             file1.write_text("print('test1')")
             file2.write_text("print('test2')")
             file3.write_text("print('test3')")
-            
+
             discovery = ParallelFileDiscovery(repo)
             files = discovery.discover()
-            
+
             assert len(files) == 3
             file_paths = {f.path for f in files}
             assert file1 in file_paths
             assert file2 in file_paths
             assert file3 in file_paths
-    
+
     def test_discover_nested_directories(self):
         """Test discovering files in nested directories."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create nested directory structure
             subdir1 = repo / "subdir1"
             subdir2 = subdir1 / "subdir2"
             subdir1.mkdir()
             subdir2.mkdir()
-            
+
             # Create Python files at different levels
             file1 = repo / "root.py"
             file2 = subdir1 / "level1.py"
             file3 = subdir2 / "level2.py"
-            
+
             file1.write_text("print('root')")
             file2.write_text("print('level1')")
             file3.write_text("print('level2')")
-            
+
             discovery = ParallelFileDiscovery(repo)
             files = discovery.discover()
-            
+
             assert len(files) == 3
             file_paths = {f.path for f in files}
             assert file1 in file_paths
             assert file2 in file_paths
             assert file3 in file_paths
-    
+
     def test_discover_skips_skip_dirs(self):
         """Test that SKIP_DIRS are properly excluded."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create directories that should be skipped
             venv_dir = repo / ".venv"
             pycache_dir = repo / "__pycache__"
             git_dir = repo / ".git"
-            
+
             venv_dir.mkdir()
             pycache_dir.mkdir()
             git_dir.mkdir()
-            
+
             # Create Python files in skipped directories
             (venv_dir / "test.py").write_text("print('venv')")
             (pycache_dir / "test.py").write_text("print('pycache')")
             (git_dir / "test.py").write_text("print('git')")
-            
+
             # Create a valid Python file
             valid_file = repo / "valid.py"
             valid_file.write_text("print('valid')")
-            
+
             discovery = ParallelFileDiscovery(repo)
             files = discovery.discover()
-            
+
             # Should only find the valid file
             assert len(files) == 1
             assert files[0].path == valid_file
-    
+
     def test_skip_dirs_matches_file_discovery(self):
         """Test that ParallelFileDiscovery.SKIP_DIRS matches FileDiscovery.SKIP_DIRS."""
         from siof.indexer import FileDiscovery
-        
+
         # Verify SKIP_DIRS sets are identical
         assert ParallelFileDiscovery.SKIP_DIRS == FileDiscovery.SKIP_DIRS, (
             f"SKIP_DIRS mismatch:\n"
             f"ParallelFileDiscovery: {ParallelFileDiscovery.SKIP_DIRS}\n"
             f"FileDiscovery: {FileDiscovery.SKIP_DIRS}"
         )
-    
+
     def test_skip_dirs_comprehensive(self):
         """Test that all SKIP_DIRS entries are properly filtered."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create all SKIP_DIRS directories
             skip_dirs = [
                 ".venv", "venv", "env", "__pycache__", ".egg-info", ".eggs",
                 "node_modules", ".git", ".hg", ".svn", ".pytest_cache",
                 ".mypy_cache", ".tox", "dist", "build", ".coverage"
             ]
-            
+
             for skip_dir in skip_dirs:
                 dir_path = repo / skip_dir
                 dir_path.mkdir()
                 # Create a Python file in each skipped directory
                 (dir_path / "test.py").write_text(f"print('{skip_dir}')")
-            
+
             # Create a valid Python file
             valid_file = repo / "valid.py"
             valid_file.write_text("print('valid')")
-            
+
             discovery = ParallelFileDiscovery(repo)
             files = discovery.discover()
-            
+
             # Should only find the valid file, none from SKIP_DIRS
             assert len(files) == 1, (
                 f"Expected 1 file, found {len(files)}. "
                 f"Files: {[f.path for f in files]}"
             )
             assert files[0].path == valid_file
-    
+
     def test_circular_symlink_detection(self):
         """Test that circular symlinks are detected and skipped via inode tracking."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create a directory structure
             subdir = repo / "subdir"
             subdir.mkdir()
-            
+
             # Create a Python file in subdir
             (subdir / "test.py").write_text("print('test')")
-            
+
             # Create a circular symlink (subdir -> subdir/circular)
             try:
                 circular_link = subdir / "circular"
@@ -489,153 +489,153 @@ class TestParallelFileDiscovery:
             except (OSError, NotImplementedError):
                 # Skip test if symlinks not supported on this platform
                 pytest.skip("Symlinks not supported on this platform")
-            
+
             discovery = ParallelFileDiscovery(repo)
             files = discovery.discover()
-            
+
             # Should find the file once, not loop infinitely
             assert len(files) == 1
             assert files[0].path == subdir / "test.py"
-    
+
     def test_inode_tracking_prevents_duplicate_traversal(self):
         """Test that inode tracking prevents traversing the same directory twice."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create a directory with a file
             subdir = repo / "subdir"
             subdir.mkdir()
             test_file = subdir / "test.py"
             test_file.write_text("print('test')")
-            
+
             discovery = ParallelFileDiscovery(repo)
-            
+
             # Manually add the subdir inode to visited set
             stat = subdir.stat(follow_symlinks=False)
             discovery._visited_inodes.add(stat.st_ino)
-            
+
             # Now discover - should skip subdir since inode already visited
             files = discovery.discover()
-            
+
             # Should find no files since subdir was already "visited"
             # Note: This test verifies the inode tracking mechanism works
             # In practice, discover() resets state, so we need to test the
             # _process_directory method's behavior
             assert len(files) == 0 or len(files) == 1  # Depends on timing
-    
+
     def test_discover_ignores_non_python_files(self):
         """Test that non-Python files are ignored."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create various file types
             py_file = repo / "test.py"
             txt_file = repo / "test.txt"
             js_file = repo / "test.js"
             md_file = repo / "README.md"
-            
+
             py_file.write_text("print('python')")
             txt_file.write_text("text file")
             js_file.write_text("console.log('js')")
             md_file.write_text("# Markdown")
-            
+
             discovery = ParallelFileDiscovery(repo)
             files = discovery.discover()
-            
+
             # Should only find the Python file
             assert len(files) == 1
             assert files[0].path == py_file
-    
+
     def test_discover_handles_permission_errors(self):
         """Test that permission errors are handled gracefully."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create a valid Python file
             valid_file = repo / "valid.py"
             valid_file.write_text("print('valid')")
-            
+
             # Create a subdirectory
             subdir = repo / "subdir"
             subdir.mkdir()
             (subdir / "test.py").write_text("print('test')")
-            
+
             discovery = ParallelFileDiscovery(repo)
-            
+
             # Mock iterdir to raise PermissionError for subdir
             original_iterdir = Path.iterdir
-            
+
             def mock_iterdir(self):
                 if self == subdir:
                     raise PermissionError("Access denied")
                 return original_iterdir(self)
-            
+
             with patch.object(Path, 'iterdir', mock_iterdir):
                 files = discovery.discover()
-            
+
             # Should still find the valid file
             assert len(files) >= 1
             file_paths = {f.path for f in files}
             assert valid_file in file_paths
-    
+
     def test_discover_computes_correct_hash(self):
         """Test that file hashes are computed correctly."""
         import hashlib
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create a Python file with known content
             test_file = repo / "test.py"
             content = "print('hello world')"
             test_file.write_text(content)
-            
+
             # Compute expected hash
             expected_hash = hashlib.sha256(content.encode()).hexdigest()
-            
+
             discovery = ParallelFileDiscovery(repo)
             files = discovery.discover()
-            
+
             assert len(files) == 1
             assert files[0].hash == expected_hash
-    
+
     def test_discover_resets_state_on_multiple_calls(self):
         """Test that discover() resets state on each call."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create a Python file
             test_file = repo / "test.py"
             test_file.write_text("print('test')")
-            
+
             discovery = ParallelFileDiscovery(repo)
-            
+
             # First discovery
             files1 = discovery.discover()
             assert len(files1) == 1
-            
+
             # Second discovery should give same results
             files2 = discovery.discover()
             assert len(files2) == 1
             assert files1[0].path == files2[0].path
-    
+
     def test_discover_with_multiple_workers(self):
         """Test discovery with different worker counts."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create multiple files in nested structure
             for i in range(5):
                 subdir = repo / f"dir{i}"
                 subdir.mkdir()
                 for j in range(3):
                     (subdir / f"file{j}.py").write_text(f"print('{i}-{j}')")
-            
+
             # Test with different worker counts
             for workers in [1, 2, 4, 8]:
                 discovery = ParallelFileDiscovery(repo, workers=workers)
                 files = discovery.discover()
-                
+
                 # Should find all 15 files regardless of worker count
                 assert len(files) == 15
 
@@ -644,7 +644,7 @@ class TestParallelFileDiscovery:
 
 class TestVersionDetectorProperties:
     """Property-based tests for VersionDetector."""
-    
+
     @settings(max_examples=100)
     @given(
         major=st.integers(min_value=3, max_value=4),
@@ -662,26 +662,26 @@ class TestVersionDetectorProperties:
         otherwise it SHALL select single-threaded mode.
         """
         version = (major, minor, patch_version)
-        
+
         # Mock sys.version_info and sys._is_gil_enabled
         with patch.object(sys, 'version_info', (*version, 'final', 0)):
             with patch.object(sys, '_is_gil_enabled', return_value=gil_enabled):
                 mode = VersionDetector.detect()
-                
+
                 # Expected behavior: parallel mode only when version >= 3.14 AND GIL disabled
                 expected_parallel = (major, minor) >= (3, 14) and not gil_enabled
-                
+
                 # Verify mode selection
                 assert mode.parallel == expected_parallel, (
                     f"Version {version}, GIL enabled={gil_enabled}: "
                     f"expected parallel={expected_parallel}, got {mode.parallel}"
                 )
-                
+
                 # Verify version is correctly recorded
                 assert mode.python_version == version, (
                     f"Expected version {version}, got {mode.python_version}"
                 )
-                
+
                 # Verify GIL state is correctly recorded
                 # Note: For Python < 3.14, GIL is always enabled regardless of input
                 if (major, minor) >= (3, 14):
@@ -693,10 +693,10 @@ class TestVersionDetectorProperties:
                     assert mode.gil_enabled is True, (
                         f"Python < 3.14 should always have gil_enabled=True, got {mode.gil_enabled}"
                     )
-                
+
                 # Verify reason is provided
                 assert len(mode.reason) > 0, "Reason should not be empty"
-                
+
                 # Verify reason contains relevant information
                 if expected_parallel:
                     assert "parallel" in mode.reason.lower() or "free-threading" in mode.reason.lower(), (
@@ -716,14 +716,14 @@ class TestVersionDetectorProperties:
 
 class TestParseWorker:
     """Tests for ParseWorker class."""
-    
+
     def test_parse_valid_python_file(self):
         """Test parsing a valid Python file."""
         from siof.free_threaded_indexer import ParseWorker
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create a valid Python file
             test_file = repo / "test.py"
             test_file.write_text("""
@@ -736,45 +736,45 @@ class Greeter:
     def greet(self, name):
         return f'Hello, {name}!'
 """)
-            
+
             # Create parse task
             task = ParseTask(
                 file_path=test_file,
                 file_metadata={"size": test_file.stat().st_size},
                 task_id=1
             )
-            
+
             # Parse the file
             result = ParseWorker.parse(task, repo)
-            
+
             # Verify success
             assert result.success is True
             assert result.task_id == 1
             assert result.file_path == test_file
             assert len(result.errors) == 0
-            
+
             # Verify artifact
             assert result.artifact.parse_ok is True
             assert result.artifact.error is None
             assert len(result.artifact.hash) == 64  # SHA-256
-            
+
             # Verify nodes were extracted
             assert len(result.nodes) > 0
             node_symbols = {n.symbol for n in result.nodes}
             assert any("hello" in s for s in node_symbols)
             assert any("Greeter" in s for s in node_symbols)
             assert any("greet" in s for s in node_symbols)
-            
+
             # Verify timing
             assert result.duration_ms > 0
-    
+
     def test_parse_syntax_error(self):
         """Test parsing a file with syntax error."""
         from siof.free_threaded_indexer import ParseWorker
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create a file with syntax error
             test_file = repo / "bad.py"
             test_file.write_text("""
@@ -782,78 +782,79 @@ def broken(
     # Missing closing parenthesis
     return 'broken'
 """)
-            
+
             # Create parse task
             task = ParseTask(
                 file_path=test_file,
                 file_metadata={"size": test_file.stat().st_size},
                 task_id=2
             )
-            
+
             # Parse the file
             result = ParseWorker.parse(task, repo)
-            
+
             # Verify failure
             assert result.success is False
             assert result.task_id == 2
             assert len(result.errors) > 0
             assert any("Syntax error" in e or "SyntaxError" in e for e in result.errors)
-            
+
             # Verify artifact
             assert result.artifact.parse_ok is False
             assert result.artifact.error is not None
-            
+
             # Verify no nodes/edges extracted
             assert len(result.nodes) == 0
             assert len(result.edges) == 0
-    
+
     def test_parse_file_not_found(self):
         """Test parsing a non-existent file."""
         from siof.free_threaded_indexer import ParseWorker
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Reference a non-existent file
             test_file = repo / "nonexistent.py"
-            
+
             # Create parse task
             task = ParseTask(
                 file_path=test_file,
                 file_metadata={},
                 task_id=3
             )
-            
+
             # Parse the file
             result = ParseWorker.parse(task, repo)
-            
+
             # Verify failure
             assert result.success is False
             assert result.task_id == 3
             assert len(result.errors) > 0
             assert any("Failed to read" in e for e in result.errors)
-            
+
             # Verify artifact
             assert result.artifact.parse_ok is False
-    
+
     def test_parse_permission_error(self):
         """Test parsing a file with permission error."""
-        from siof.free_threaded_indexer import ParseWorker
         import os
-        
+
+        from siof.free_threaded_indexer import ParseWorker
+
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create a file
             test_file = repo / "restricted.py"
             test_file.write_text("print('test')")
-            
+
             # Remove read permissions (Unix-like systems only)
             try:
                 os.chmod(test_file, 0o000)
             except (OSError, NotImplementedError):
                 pytest.skip("Cannot modify file permissions on this platform")
-            
+
             try:
                 # Create parse task
                 task = ParseTask(
@@ -861,10 +862,10 @@ def broken(
                     file_metadata={},
                     task_id=4
                 )
-                
+
                 # Parse the file
                 result = ParseWorker.parse(task, repo)
-                
+
                 # Verify failure
                 assert result.success is False
                 assert len(result.errors) > 0
@@ -874,97 +875,97 @@ def broken(
                     os.chmod(test_file, 0o644)
                 except OSError:
                     pass
-    
+
     def test_parse_empty_file(self):
         """Test parsing an empty Python file."""
         from siof.free_threaded_indexer import ParseWorker
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create an empty file
             test_file = repo / "empty.py"
             test_file.write_text("")
-            
+
             # Create parse task
             task = ParseTask(
                 file_path=test_file,
                 file_metadata={"size": 0},
                 task_id=5
             )
-            
+
             # Parse the file
             result = ParseWorker.parse(task, repo)
-            
+
             # Empty file is valid Python
             assert result.success is True
             assert result.artifact.parse_ok is True
-            
+
             # No symbols to extract
             assert len(result.nodes) == 0
             assert len(result.edges) == 0
-    
+
     def test_parse_file_with_encoding_issues(self):
         """Test parsing a file with encoding issues."""
         from siof.free_threaded_indexer import ParseWorker
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create a file with non-UTF-8 content
             test_file = repo / "encoding.py"
             # Write binary content that's not valid UTF-8
             test_file.write_bytes(b"print('\xff\xfe invalid utf-8')")
-            
+
             # Create parse task
             task = ParseTask(
                 file_path=test_file,
                 file_metadata={},
                 task_id=6
             )
-            
+
             # Parse the file - should handle encoding errors gracefully
             result = ParseWorker.parse(task, repo)
-            
+
             # The file should be read with errors='ignore', so it might parse
             # or fail depending on the resulting content
             assert result.task_id == 6
             # Either success or failure is acceptable, but should not crash
-    
+
     def test_parse_file_outside_repo(self):
         """Test parsing a file outside the repository."""
         from siof.free_threaded_indexer import ParseWorker
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir) / "repo"
             repo.mkdir()
-            
+
             # Create a file outside the repo
             outside_file = Path(tmpdir) / "outside.py"
             outside_file.write_text("print('outside')")
-            
+
             # Create parse task
             task = ParseTask(
                 file_path=outside_file,
                 file_metadata={},
                 task_id=7
             )
-            
+
             # Parse the file
             result = ParseWorker.parse(task, repo)
-            
+
             # Should fail because file is not relative to repo
             assert result.success is False
             assert len(result.errors) > 0
             assert any("not relative to repository" in e for e in result.errors)
-    
+
     def test_parse_complex_python_file(self):
         """Test parsing a complex Python file with various constructs."""
         from siof.free_threaded_indexer import ParseWorker
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create a complex Python file
             test_file = repo / "complex.py"
             test_file.write_text("""
@@ -1012,80 +1013,80 @@ def generator_function():
 # Assignment with function call
 result = function_with_params(5)
 """)
-            
+
             # Create parse task
             task = ParseTask(
                 file_path=test_file,
                 file_metadata={"size": test_file.stat().st_size},
                 task_id=8
             )
-            
+
             # Parse the file
             result = ParseWorker.parse(task, repo)
-            
+
             # Verify success
             assert result.success is True
             assert len(result.errors) == 0
-            
+
             # Verify various constructs were extracted
             node_symbols = {n.symbol for n in result.nodes}
-            
+
             # Check for classes
             assert any("BaseClass" in s for s in node_symbols)
             assert any("DerivedClass" in s for s in node_symbols)
-            
+
             # Check for methods
             assert any("__init__" in s for s in node_symbols)
             assert any("display_name" in s for s in node_symbols)
             assert any("static_method" in s for s in node_symbols)
             assert any("class_method" in s for s in node_symbols)
-            
+
             # Check for functions
             assert any("function_with_params" in s for s in node_symbols)
             assert any("async_function" in s for s in node_symbols)
             assert any("generator_function" in s for s in node_symbols)
-            
+
             # Verify edges were created
             assert len(result.edges) > 0
-    
+
     def test_parse_multiple_files_isolation(self):
         """Test that errors in one file don't affect parsing of other files."""
         from siof.free_threaded_indexer import ParseWorker
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create a valid file
             valid_file = repo / "valid.py"
             valid_file.write_text("def valid(): return True")
-            
+
             # Create an invalid file
             invalid_file = repo / "invalid.py"
             invalid_file.write_text("def invalid( return False")
-            
+
             # Parse valid file
             task1 = ParseTask(file_path=valid_file, file_metadata={}, task_id=1)
             result1 = ParseWorker.parse(task1, repo)
-            
+
             # Parse invalid file
             task2 = ParseTask(file_path=invalid_file, file_metadata={}, task_id=2)
             result2 = ParseWorker.parse(task2, repo)
-            
+
             # Verify valid file parsed successfully
             assert result1.success is True
             assert len(result1.nodes) > 0
-            
+
             # Verify invalid file failed
             assert result2.success is False
             assert len(result2.errors) > 0
-            
+
             # Verify they are independent
             assert result1.task_id != result2.task_id
 
 
 class TestFileDiscoveryProperties:
     """Property-based tests for file discovery."""
-    
+
     @settings(max_examples=100, deadline=None)
     @given(
         num_dirs=st.integers(min_value=1, max_value=10),
@@ -1102,29 +1103,30 @@ class TestFileDiscoveryProperties:
         set of files with identical metadata as sequential file discovery.
         """
         import tempfile
+
         from siof.indexer import FileDiscovery
-        
+
         # Create temporary directory for this test iteration
         with tempfile.TemporaryDirectory() as tmpdir:
             # Generate random repository structure
             repo = Path(tmpdir) / "test_repo"
             repo.mkdir()
-            
+
             # Create nested directory structure
             created_files = []
             skip_dir_names = [".venv", "__pycache__", ".git"]
-            
+
             def create_nested_structure(parent_dir, level, dir_index):
                 """Recursively create nested directory structure."""
                 if level > num_nested_levels:
                     return
-                
+
                 # Create regular directories with Python files
                 for i in range(num_dirs):
                     dir_name = f"dir{level}_{dir_index}_{i}"
                     dir_path = parent_dir / dir_name
                     dir_path.mkdir()
-                    
+
                     # Create Python files in this directory
                     for j in range(num_files_per_dir):
                         file_name = f"file{j}.py"
@@ -1132,10 +1134,10 @@ class TestFileDiscoveryProperties:
                         content = f"# Level {level}, Dir {i}, File {j}\nprint('test')\n"
                         file_path.write_text(content)
                         created_files.append(file_path)
-                    
+
                     # Recursively create nested structure
                     create_nested_structure(dir_path, level + 1, i)
-                
+
                 # Create skip directories (should be excluded)
                 for i in range(min(num_skip_dirs, len(skip_dir_names))):
                     skip_dir = parent_dir / skip_dir_names[i]
@@ -1143,22 +1145,22 @@ class TestFileDiscoveryProperties:
                     # Add files to skip directories (should not be discovered)
                     skip_file = skip_dir / "skip.py"
                     skip_file.write_text("# This should be skipped\n")
-            
+
             # Build the repository structure
             create_nested_structure(repo, 1, 0)
-            
+
             # Sequential discovery using FileDiscovery
             sequential_discovery = FileDiscovery(repo)
             sequential_files = sequential_discovery.discover()
-            
+
             # Parallel discovery using ParallelFileDiscovery
             parallel_discovery = ParallelFileDiscovery(repo, workers=4)
             parallel_files = parallel_discovery.discover()
-            
+
             # Convert to sets for comparison (order doesn't matter)
             sequential_paths = {f.path for f in sequential_files}
             parallel_paths = {f.path for f in parallel_files}
-            
+
             # Verify same files discovered
             assert sequential_paths == parallel_paths, (
                 f"File sets differ:\n"
@@ -1167,40 +1169,40 @@ class TestFileDiscoveryProperties:
                 f"Sequential count: {len(sequential_paths)}\n"
                 f"Parallel count: {len(parallel_paths)}"
             )
-            
+
             # Verify metadata matches for each file
             sequential_by_path = {f.path: f for f in sequential_files}
             parallel_by_path = {f.path: f for f in parallel_files}
-            
+
             for path in sequential_paths:
                 seq_meta = sequential_by_path[path]
                 par_meta = parallel_by_path[path]
-                
+
                 # Verify size matches
                 assert seq_meta.size == par_meta.size, (
                     f"Size mismatch for {path}: "
                     f"sequential={seq_meta.size}, parallel={par_meta.size}"
                 )
-                
+
                 # Verify hash matches
                 assert seq_meta.hash == par_meta.hash, (
                     f"Hash mismatch for {path}: "
                     f"sequential={seq_meta.hash}, parallel={par_meta.hash}"
                 )
-                
+
                 # Verify language matches
                 assert seq_meta.language == par_meta.language, (
                     f"Language mismatch for {path}: "
                     f"sequential={seq_meta.language}, parallel={par_meta.language}"
                 )
-            
+
             # Verify no files from SKIP_DIRS are included
             for file_meta in sequential_files:
                 for skip_dir in skip_dir_names[:num_skip_dirs]:
                     assert skip_dir not in str(file_meta.path), (
                         f"File from SKIP_DIR found: {file_meta.path} contains {skip_dir}"
                     )
-            
+
             for file_meta in parallel_files:
                 for skip_dir in skip_dir_names[:num_skip_dirs]:
                     assert skip_dir not in str(file_meta.path), (
@@ -1210,7 +1212,7 @@ class TestFileDiscoveryProperties:
 
 class TestSkipDirsFilteringProperties:
     """Property-based tests for SKIP_DIRS filtering."""
-    
+
     @settings(max_examples=100, deadline=None)
     @given(
         num_valid_dirs=st.integers(min_value=1, max_value=5),
@@ -1242,51 +1244,51 @@ class TestSkipDirsFilteringProperties:
         no files from those directories SHALL appear in the discovered file list.
         """
         import tempfile
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir) / "test_repo"
             repo.mkdir()
-            
+
             # Track expected valid files
             expected_valid_files = set()
-            
+
             # Create valid directories with Python files
             for i in range(num_valid_dirs):
                 valid_dir = repo / f"valid_dir_{i}"
                 valid_dir.mkdir()
-                
+
                 for j in range(num_files_per_dir):
                     valid_file = valid_dir / f"file_{j}.py"
                     valid_file.write_text(f"# Valid file {i}-{j}\nprint('valid')\n")
                     expected_valid_files.add(valid_file)
-            
+
             # Create SKIP_DIRS directories with Python files
             skip_dir_paths = []
             for skip_dir_name in skip_dirs_to_create:
                 skip_dir = repo / skip_dir_name
                 skip_dir.mkdir()
                 skip_dir_paths.append(skip_dir)
-                
+
                 # Create Python files in skip directory
                 for j in range(num_files_in_skip_dirs):
                     skip_file = skip_dir / f"skip_file_{j}.py"
                     skip_file.write_text(f"# Skip file in {skip_dir_name}\nprint('skip')\n")
-            
+
             # Also create nested skip directories
             if num_valid_dirs > 0:
                 # Create a skip directory inside a valid directory
-                nested_skip_dir = repo / f"valid_dir_0" / skip_dirs_to_create[0]
+                nested_skip_dir = repo / "valid_dir_0" / skip_dirs_to_create[0]
                 nested_skip_dir.mkdir()
                 nested_skip_file = nested_skip_dir / "nested_skip.py"
                 nested_skip_file.write_text("# Nested skip file\nprint('nested skip')\n")
-            
+
             # Discover files using ParallelFileDiscovery
             discovery = ParallelFileDiscovery(repo, workers=4)
             discovered_files = discovery.discover()
-            
+
             # Convert to set of paths
             discovered_paths = {f.path for f in discovered_files}
-            
+
             # Verify all expected valid files are discovered
             assert expected_valid_files == discovered_paths, (
                 f"Discovered files don't match expected:\n"
@@ -1295,23 +1297,23 @@ class TestSkipDirsFilteringProperties:
                 f"Missing: {expected_valid_files - discovered_paths}\n"
                 f"Extra: {discovered_paths - expected_valid_files}"
             )
-            
+
             # Verify no files from SKIP_DIRS are in discovered files
             for discovered_file in discovered_files:
                 file_path_str = str(discovered_file.path)
-                
+
                 # Check that no SKIP_DIR name appears in the path
                 for skip_dir_name in skip_dirs_to_create:
                     assert skip_dir_name not in file_path_str, (
                         f"File from SKIP_DIR '{skip_dir_name}' found in results: {discovered_file.path}"
                     )
-                
+
                 # Verify the file is not in any of the skip directory paths
                 for skip_dir_path in skip_dir_paths:
                     assert not discovered_file.path.is_relative_to(skip_dir_path), (
                         f"File from SKIP_DIR found: {discovered_file.path} is inside {skip_dir_path}"
                     )
-            
+
             # Verify count matches expectations
             expected_count = len(expected_valid_files)
             actual_count = len(discovered_files)
@@ -1323,7 +1325,7 @@ class TestSkipDirsFilteringProperties:
 
 class TestLockFreeSymbolTable:
     """Tests for LockFreeSymbolTable class."""
-    
+
     @staticmethod
     def _create_symbol(name: str, kind: str, module: str = "test", location: str = "test.py:10", **kwargs):
         """Helper to create SymbolInfo with minimal required fields."""
@@ -1334,19 +1336,19 @@ class TestLockFreeSymbolTable:
             location=location,
             **kwargs
         )
-    
+
     def test_init_creates_empty_table(self):
         """Test initialization creates an empty symbol table."""
         table = LockFreeSymbolTable()
-        
+
         symbols = table.get_all_symbols()
         assert len(symbols) == 0
         assert isinstance(symbols, dict)
-    
+
     def test_add_symbol_single_symbol(self):
         """Test adding a single symbol to the table."""
         table = LockFreeSymbolTable()
-        
+
         symbol = SymbolInfo(
             name="test_func",
             kind="function",
@@ -1355,18 +1357,18 @@ class TestLockFreeSymbolTable:
             signature="def test_func():",
             docstring="Test function"
         )
-        
+
         table.add_symbol("test.test_func", symbol)
-        
+
         symbols = table.get_all_symbols()
         assert len(symbols) == 1
         assert "test.test_func" in symbols
         assert symbols["test.test_func"] == symbol
-    
+
     def test_add_symbol_multiple_symbols(self):
         """Test adding multiple symbols to the table."""
         table = LockFreeSymbolTable()
-        
+
         symbol1 = SymbolInfo(
             name="func1",
             kind="function",
@@ -1379,7 +1381,7 @@ class TestLockFreeSymbolTable:
             type_hints={},
             bases=[]
         )
-        
+
         symbol2 = SymbolInfo(
             name="func2",
             kind="function",
@@ -1392,7 +1394,7 @@ class TestLockFreeSymbolTable:
             type_hints={},
             bases=[]
         )
-        
+
         symbol3 = SymbolInfo(
             name="MyClass",
             kind="class",
@@ -1405,21 +1407,21 @@ class TestLockFreeSymbolTable:
             type_hints={},
             bases=[]
         )
-        
+
         table.add_symbol("test.func1", symbol1)
         table.add_symbol("test.func2", symbol2)
         table.add_symbol("test.MyClass", symbol3)
-        
+
         symbols = table.get_all_symbols()
         assert len(symbols) == 3
         assert "test.func1" in symbols
         assert "test.func2" in symbols
         assert "test.MyClass" in symbols
-    
+
     def test_add_symbol_duplicate_keeps_first(self):
         """Test that adding a duplicate symbol keeps the first occurrence."""
         table = LockFreeSymbolTable()
-        
+
         symbol1 = SymbolInfo(
             name="func",
             kind="function",
@@ -1432,7 +1434,7 @@ class TestLockFreeSymbolTable:
             type_hints={},
             bases=[]
         )
-        
+
         symbol2 = SymbolInfo(
             name="func",
             kind="function",
@@ -1445,18 +1447,18 @@ class TestLockFreeSymbolTable:
             type_hints={},
             bases=[]
         )
-        
+
         table.add_symbol("test.func", symbol1)
         table.add_symbol("test.func", symbol2)  # Duplicate - should be ignored
-        
+
         symbols = table.get_all_symbols()
         assert len(symbols) == 1
         assert symbols["test.func"].docstring == "First version"
-    
+
     def test_get_all_symbols_returns_copy(self):
         """Test that get_all_symbols returns a copy, not the internal dict."""
         table = LockFreeSymbolTable()
-        
+
         symbol = SymbolInfo(
             name="func",
             kind="function",
@@ -1469,28 +1471,28 @@ class TestLockFreeSymbolTable:
             type_hints={},
             bases=[]
         )
-        
+
         table.add_symbol("test.func", symbol)
-        
+
         # Get symbols
         symbols1 = table.get_all_symbols()
-        
+
         # Modify the returned dict
         symbols1["test.other"] = symbol
-        
+
         # Get symbols again - should not include the modification
         symbols2 = table.get_all_symbols()
         assert len(symbols2) == 1
         assert "test.other" not in symbols2
-    
+
     def test_add_symbol_concurrent_access(self):
         """Test concurrent symbol addition from multiple threads."""
         import threading
-        
+
         table = LockFreeSymbolTable()
         num_threads = 10
         symbols_per_thread = 10
-        
+
         def add_symbols(thread_id):
             """Add symbols from a single thread."""
             for i in range(symbols_per_thread):
@@ -1507,25 +1509,25 @@ class TestLockFreeSymbolTable:
                     bases=[]
                 )
                 table.add_symbol(f"test{thread_id}.func_{thread_id}_{i}", symbol)
-        
+
         # Create and start threads
         threads = []
         for thread_id in range(num_threads):
             thread = threading.Thread(target=add_symbols, args=(thread_id,))
             threads.append(thread)
             thread.start()
-        
+
         # Wait for all threads to complete
         for thread in threads:
             thread.join()
-        
+
         # Verify all symbols were added
         symbols = table.get_all_symbols()
         expected_count = num_threads * symbols_per_thread
         assert len(symbols) == expected_count, (
             f"Expected {expected_count} symbols, got {len(symbols)}"
         )
-        
+
         # Verify all expected symbols are present
         for thread_id in range(num_threads):
             for i in range(symbols_per_thread):
@@ -1533,14 +1535,14 @@ class TestLockFreeSymbolTable:
                 assert qualified_name in symbols, (
                     f"Missing symbol: {qualified_name}"
                 )
-    
+
     def test_add_symbol_concurrent_duplicates(self):
         """Test concurrent addition of duplicate symbols keeps first occurrence."""
         import threading
-        
+
         table = LockFreeSymbolTable()
         num_threads = 10
-        
+
         def add_duplicate_symbol(thread_id):
             """Add the same symbol from multiple threads."""
             symbol = SymbolInfo(
@@ -1556,32 +1558,32 @@ class TestLockFreeSymbolTable:
                 bases=[]
             )
             table.add_symbol("test.shared_func", symbol)
-        
+
         # Create and start threads
         threads = []
         for thread_id in range(num_threads):
             thread = threading.Thread(target=add_duplicate_symbol, args=(thread_id,))
             threads.append(thread)
             thread.start()
-        
+
         # Wait for all threads to complete
         for thread in threads:
             thread.join()
-        
+
         # Verify only one symbol was kept
         symbols = table.get_all_symbols()
         assert len(symbols) == 1
         assert "test.shared_func" in symbols
-        
+
         # Verify the docstring is from one of the threads (first occurrence wins)
         docstring = symbols["test.shared_func"].docstring
         assert docstring is not None
         assert "Version from thread" in docstring
-    
+
     def test_add_symbol_with_different_kinds(self):
         """Test adding symbols of different kinds (function, class, method, variable)."""
         table = LockFreeSymbolTable()
-        
+
         function_symbol = SymbolInfo(
             name="my_function",
             kind="function",
@@ -1594,7 +1596,7 @@ class TestLockFreeSymbolTable:
             type_hints={},
             bases=[]
         )
-        
+
         class_symbol = SymbolInfo(
             name="MyClass",
             kind="class",
@@ -1607,7 +1609,7 @@ class TestLockFreeSymbolTable:
             type_hints={},
             bases=[]
         )
-        
+
         method_symbol = SymbolInfo(
             name="my_method",
             kind="method",
@@ -1620,7 +1622,7 @@ class TestLockFreeSymbolTable:
             type_hints={},
             bases=[]
         )
-        
+
         variable_symbol = SymbolInfo(
             name="my_var",
             kind="variable",
@@ -1633,31 +1635,31 @@ class TestLockFreeSymbolTable:
             type_hints={"inferred": "int"},
             bases=[]
         )
-        
+
         table.add_symbol("test.my_function", function_symbol)
         table.add_symbol("test.MyClass", class_symbol)
         table.add_symbol("test.MyClass.my_method", method_symbol)
         table.add_symbol("test.my_var", variable_symbol)
-        
+
         symbols = table.get_all_symbols()
         assert len(symbols) == 4
         assert symbols["test.my_function"].kind == "function"
         assert symbols["test.MyClass"].kind == "class"
         assert symbols["test.MyClass.my_method"].kind == "method"
         assert symbols["test.my_var"].kind == "variable"
-    
+
     def test_get_all_symbols_empty_table(self):
         """Test get_all_symbols on an empty table."""
         table = LockFreeSymbolTable()
-        
+
         symbols = table.get_all_symbols()
         assert len(symbols) == 0
         assert isinstance(symbols, dict)
-    
+
     def test_add_symbol_with_complex_qualified_names(self):
         """Test adding symbols with complex qualified names."""
         table = LockFreeSymbolTable()
-        
+
         # Module-level function
         symbol1 = SymbolInfo(
             name="func",
@@ -1671,7 +1673,7 @@ class TestLockFreeSymbolTable:
             type_hints={},
             bases=[]
         )
-        
+
         # Nested class method
         symbol2 = SymbolInfo(
             name="method",
@@ -1685,10 +1687,10 @@ class TestLockFreeSymbolTable:
             type_hints={},
             bases=[]
         )
-        
+
         table.add_symbol("mypackage.module.func", symbol1)
         table.add_symbol("mypackage.module.OuterClass.InnerClass.method", symbol2)
-        
+
         symbols = table.get_all_symbols()
         assert len(symbols) == 2
         assert "mypackage.module.func" in symbols
@@ -1698,7 +1700,7 @@ class TestLockFreeSymbolTable:
 
 class TestSymbolTableThreadSafetyProperties:
     """Property-based tests for symbol table thread safety."""
-    
+
     @settings(max_examples=100, deadline=None)
     @given(
         num_files=st.integers(min_value=5, max_value=20),
@@ -1714,38 +1716,37 @@ class TestSymbolTableThreadSafetyProperties:
         contain all symbols without corruption (no missing symbols, no corrupted data).
         """
         import tempfile
-        import threading
         from concurrent.futures import ThreadPoolExecutor, as_completed
-        
+
         # Create a lock-free symbol table
         table = LockFreeSymbolTable()
-        
+
         # Generate random Python files with symbols
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir) / "test_repo"
             repo.mkdir()
-            
+
             # Track all expected symbols
             expected_symbols = {}
-            
+
             # Generate Python files with random symbols
             for file_idx in range(num_files):
                 file_path = repo / f"module_{file_idx}.py"
                 file_content = []
-                
+
                 # Generate random symbols for this file
                 for sym_idx in range(num_symbols_per_file):
                     # Generate different types of symbols
                     symbol_type = sym_idx % 4
-                    
+
                     if symbol_type == 0:
                         # Function
                         func_name = f"func_{file_idx}_{sym_idx}"
                         file_content.append(f"def {func_name}():")
                         file_content.append(f"    '''Function {file_idx}-{sym_idx}'''")
-                        file_content.append(f"    pass")
+                        file_content.append("    pass")
                         file_content.append("")
-                        
+
                         qualified_name = f"module_{file_idx}.{func_name}"
                         expected_symbols[qualified_name] = {
                             "name": func_name,
@@ -1754,15 +1755,15 @@ class TestSymbolTableThreadSafetyProperties:
                             "file_idx": file_idx,
                             "sym_idx": sym_idx
                         }
-                    
+
                     elif symbol_type == 1:
                         # Class
                         class_name = f"Class_{file_idx}_{sym_idx}"
                         file_content.append(f"class {class_name}:")
                         file_content.append(f"    '''Class {file_idx}-{sym_idx}'''")
-                        file_content.append(f"    pass")
+                        file_content.append("    pass")
                         file_content.append("")
-                        
+
                         qualified_name = f"module_{file_idx}.{class_name}"
                         expected_symbols[qualified_name] = {
                             "name": class_name,
@@ -1771,13 +1772,13 @@ class TestSymbolTableThreadSafetyProperties:
                             "file_idx": file_idx,
                             "sym_idx": sym_idx
                         }
-                    
+
                     elif symbol_type == 2:
                         # Variable
                         var_name = f"var_{file_idx}_{sym_idx}"
                         file_content.append(f"{var_name} = {sym_idx}")
                         file_content.append("")
-                        
+
                         qualified_name = f"module_{file_idx}.{var_name}"
                         expected_symbols[qualified_name] = {
                             "name": var_name,
@@ -1786,7 +1787,7 @@ class TestSymbolTableThreadSafetyProperties:
                             "file_idx": file_idx,
                             "sym_idx": sym_idx
                         }
-                    
+
                     else:
                         # Method in a class
                         class_name = f"ClassWithMethod_{file_idx}_{sym_idx}"
@@ -1794,9 +1795,9 @@ class TestSymbolTableThreadSafetyProperties:
                         file_content.append(f"class {class_name}:")
                         file_content.append(f"    def {method_name}(self):")
                         file_content.append(f"        '''Method {file_idx}-{sym_idx}'''")
-                        file_content.append(f"        pass")
+                        file_content.append("        pass")
                         file_content.append("")
-                        
+
                         # Add both class and method to expected symbols
                         class_qualified_name = f"module_{file_idx}.{class_name}"
                         expected_symbols[class_qualified_name] = {
@@ -1806,7 +1807,7 @@ class TestSymbolTableThreadSafetyProperties:
                             "file_idx": file_idx,
                             "sym_idx": sym_idx
                         }
-                        
+
                         method_qualified_name = f"module_{file_idx}.{class_name}.{method_name}"
                         expected_symbols[method_qualified_name] = {
                             "name": method_name,
@@ -1815,27 +1816,27 @@ class TestSymbolTableThreadSafetyProperties:
                             "file_idx": file_idx,
                             "sym_idx": sym_idx
                         }
-                
+
                 # Write the file
                 file_path.write_text("\n".join(file_content))
-            
+
             # Parse files concurrently and extract symbols
             def parse_and_extract_symbols(file_path: Path):
                 """Parse a file and extract symbols into the shared table."""
                 import ast
-                
+
                 try:
                     content = file_path.read_text()
                     tree = ast.parse(content, filename=str(file_path))
-                    
+
                     module_name = file_path.stem
-                    
+
                     # Extract symbols from AST
                     for node in ast.walk(tree):
                         if isinstance(node, ast.FunctionDef):
                             # Function or method
                             qualified_name = f"{module_name}.{node.name}"
-                            
+
                             # Check if it's a method (inside a class)
                             is_method = False
                             for parent in ast.walk(tree):
@@ -1844,7 +1845,7 @@ class TestSymbolTableThreadSafetyProperties:
                                         qualified_name = f"{module_name}.{parent.name}.{node.name}"
                                         is_method = True
                                         break
-                            
+
                             symbol = SymbolInfo(
                                 name=node.name,
                                 kind="method" if is_method else "function",
@@ -1856,13 +1857,13 @@ class TestSymbolTableThreadSafetyProperties:
                                 parameters=[],
                                 type_hints={}
                             )
-                            
+
                             table.add_symbol(qualified_name, symbol)
-                        
+
                         elif isinstance(node, ast.ClassDef):
                             # Class
                             qualified_name = f"{module_name}.{node.name}"
-                            
+
                             symbol = SymbolInfo(
                                 name=node.name,
                                 kind="class",
@@ -1874,15 +1875,15 @@ class TestSymbolTableThreadSafetyProperties:
                                 bases=[],
                                 type_hints={}
                             )
-                            
+
                             table.add_symbol(qualified_name, symbol)
-                        
+
                         elif isinstance(node, ast.Assign):
                             # Variable assignment
                             for target in node.targets:
                                 if isinstance(target, ast.Name):
                                     qualified_name = f"{module_name}.{target.id}"
-                                    
+
                                     symbol = SymbolInfo(
                                         name=target.id,
                                         kind="variable",
@@ -1893,24 +1894,24 @@ class TestSymbolTableThreadSafetyProperties:
                                         decorators=[],
                                         type_hints={}
                                     )
-                                    
+
                                     table.add_symbol(qualified_name, symbol)
-                
+
                 except Exception as exc:
                     # Log but don't fail - error handling is tested separately
                     import logging
                     logging.warning(f"Error parsing {file_path}: {exc}")
-            
+
             # Get all Python files
             python_files = list(repo.glob("*.py"))
-            
+
             # Parse files concurrently using ThreadPoolExecutor
             with ThreadPoolExecutor(max_workers=num_threads) as executor:
                 futures = [
                     executor.submit(parse_and_extract_symbols, file_path)
                     for file_path in python_files
                 ]
-                
+
                 # Wait for all parsing to complete
                 for future in as_completed(futures):
                     try:
@@ -1919,10 +1920,10 @@ class TestSymbolTableThreadSafetyProperties:
                         # Log but don't fail
                         import logging
                         logging.warning(f"Thread execution error: {exc}")
-            
+
             # Get all symbols from the table
             actual_symbols = table.get_all_symbols()
-            
+
             # Verify no symbol corruption
             for qualified_name, symbol_info in actual_symbols.items():
                 # Verify symbol has required attributes
@@ -1935,7 +1936,7 @@ class TestSymbolTableThreadSafetyProperties:
                 assert hasattr(symbol_info, 'location'), (
                     f"Symbol {qualified_name} missing 'location' attribute"
                 )
-                
+
                 # Verify symbol name is not corrupted (not empty, not None)
                 assert symbol_info.name is not None, (
                     f"Symbol {qualified_name} has None name"
@@ -1943,12 +1944,12 @@ class TestSymbolTableThreadSafetyProperties:
                 assert len(symbol_info.name) > 0, (
                     f"Symbol {qualified_name} has empty name"
                 )
-                
+
                 # Verify kind is valid
                 assert symbol_info.kind in ["function", "class", "method", "variable"], (
                     f"Symbol {qualified_name} has invalid kind: {symbol_info.kind}"
                 )
-                
+
                 # Verify location is not corrupted
                 assert symbol_info.location is not None, (
                     f"Symbol {qualified_name} has None location"
@@ -1956,24 +1957,24 @@ class TestSymbolTableThreadSafetyProperties:
                 assert len(symbol_info.location) > 0, (
                     f"Symbol {qualified_name} has empty location"
                 )
-            
+
             # Verify all expected symbols are present (no missing symbols)
             actual_symbol_names = set(actual_symbols.keys())
             expected_symbol_names = set(expected_symbols.keys())
-            
+
             # Check for missing symbols
             missing_symbols = expected_symbol_names - actual_symbol_names
-            
+
             # Note: Due to the complexity of AST parsing and method detection,
             # we allow some flexibility. The key property is that:
             # 1. No symbols are corrupted (verified above)
             # 2. The majority of expected symbols are present
             # 3. No unexpected symbols appear (all actual symbols should be valid)
-            
+
             # Verify at least 80% of expected symbols are present
             # (This accounts for edge cases in AST parsing logic)
             coverage_ratio = len(actual_symbol_names & expected_symbol_names) / len(expected_symbol_names) if expected_symbol_names else 1.0
-            
+
             assert coverage_ratio >= 0.8, (
                 f"Too many missing symbols: {len(missing_symbols)} missing out of {len(expected_symbol_names)}\n"
                 f"Coverage: {coverage_ratio:.2%}\n"
@@ -1981,21 +1982,21 @@ class TestSymbolTableThreadSafetyProperties:
                 f"Expected: {expected_symbol_names}\n"
                 f"Actual: {actual_symbol_names}"
             )
-            
+
             # Verify no duplicate symbols (each symbol should appear exactly once)
             # This is implicitly verified by the dict structure, but we can check
             # that the count matches
             assert len(actual_symbols) == len(actual_symbol_names), (
                 f"Symbol count mismatch: {len(actual_symbols)} symbols but {len(actual_symbol_names)} unique names"
             )
-            
+
             # Verify thread safety: run the same test multiple times to catch race conditions
             # This is done by hypothesis running 100+ iterations
 
 
 class TestSymbolExtractionEquivalenceProperties:
     """Property-based tests for symbol extraction equivalence."""
-    
+
     @settings(max_examples=100, deadline=None)
     @given(
         num_files=st.integers(min_value=5, max_value=20),
@@ -2019,64 +2020,65 @@ class TestSymbolExtractionEquivalenceProperties:
         For any set of Python files, parallel symbol extraction SHALL produce
         the same symbols as sequential extraction.
         """
-        import tempfile
         import ast
+        import tempfile
         from concurrent.futures import ThreadPoolExecutor, as_completed
+
         from siof.indexer import SymbolExtractor
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir) / "test_repo"
             repo.mkdir()
-            
+
             # Generate random Python files with various symbols
             generated_files = []
-            
+
             for file_idx in range(num_files):
                 file_path = repo / f"module_{file_idx}.py"
                 file_content = []
-                
+
                 # Add module docstring
                 file_content.append(f'"""Module {file_idx} for testing."""')
                 file_content.append("")
-                
+
                 # Generate module-level variables
                 file_content.append(f"MODULE_VAR_{file_idx} = {file_idx}")
                 file_content.append(f"MODULE_CONST_{file_idx}: int = {file_idx * 10}")
                 file_content.append("")
-                
+
                 # Generate functions
                 for func_idx in range(num_functions_per_file):
                     func_name = f"function_{file_idx}_{func_idx}"
                     file_content.append(f"def {func_name}(arg1: int, arg2: str = 'default') -> bool:")
                     file_content.append(f"    '''Function {file_idx}-{func_idx} docstring.'''")
                     file_content.append(f"    result = arg1 + {func_idx}")
-                    file_content.append(f"    return result > 0")
+                    file_content.append("    return result > 0")
                     file_content.append("")
-                
+
                 # Generate async functions
                 if file_idx % 2 == 0:
                     file_content.append(f"async def async_function_{file_idx}() -> None:")
                     file_content.append(f"    '''Async function {file_idx}.'''")
-                    file_content.append(f"    pass")
+                    file_content.append("    pass")
                     file_content.append("")
-                
+
                 # Generate classes with methods
                 for class_idx in range(num_classes_per_file):
                     class_name = f"Class_{file_idx}_{class_idx}"
                     file_content.append(f"class {class_name}:")
                     file_content.append(f"    '''Class {file_idx}-{class_idx} docstring.'''")
                     file_content.append("")
-                    
+
                     # Class variable
                     file_content.append(f"    class_var_{class_idx} = {class_idx}")
                     file_content.append("")
-                    
+
                     # Constructor
-                    file_content.append(f"    def __init__(self, value: int):")
+                    file_content.append("    def __init__(self, value: int):")
                     file_content.append(f"        '''Initialize {class_name}.'''")
-                    file_content.append(f"        self.value = value")
+                    file_content.append("        self.value = value")
                     file_content.append("")
-                    
+
                     # Methods
                     for method_idx in range(num_methods_per_class):
                         method_name = f"method_{method_idx}"
@@ -2084,65 +2086,65 @@ class TestSymbolExtractionEquivalenceProperties:
                         file_content.append(f"        '''Method {method_idx} of {class_name}.'''")
                         file_content.append(f"        return len(param) + {method_idx}")
                         file_content.append("")
-                    
+
                     # Property
-                    file_content.append(f"    @property")
+                    file_content.append("    @property")
                     file_content.append(f"    def prop_{class_idx}(self) -> int:")
                     file_content.append(f"        '''Property {class_idx}.'''")
                     file_content.append(f"        return self.value * {class_idx}")
                     file_content.append("")
-                
+
                 # Write file
                 file_path.write_text("\n".join(file_content))
                 generated_files.append(file_path)
-            
+
             # Sequential extraction using SymbolExtractor
             sequential_symbols = {}
-            
+
             for file_path in generated_files:
                 try:
                     content = file_path.read_text()
                     tree = ast.parse(content, filename=str(file_path))
                     module_name = file_path.stem
-                    
+
                     extractor = SymbolExtractor(module_name, str(file_path))
                     file_symbols = extractor.extract(tree)
-                    
+
                     # Merge into sequential_symbols
                     sequential_symbols.update(file_symbols)
-                    
+
                 except Exception as exc:
                     import logging
                     logging.warning(f"Sequential extraction error for {file_path}: {exc}")
-            
+
             # Parallel extraction using LockFreeSymbolTable
             parallel_table = LockFreeSymbolTable()
-            
+
             def extract_symbols_parallel(file_path: Path):
                 """Extract symbols from a file and add to parallel table."""
                 try:
                     content = file_path.read_text()
                     tree = ast.parse(content, filename=str(file_path))
                     module_name = file_path.stem
-                    
+
                     extractor = SymbolExtractor(module_name, str(file_path))
                     file_symbols = extractor.extract(tree)
-                    
+
                     # Add symbols to parallel table
                     for qualified_name, symbol in file_symbols.items():
                         parallel_table.add_symbol(qualified_name, symbol)
-                    
+
                 except Exception as exc:
                     import logging
                     logging.warning(f"Parallel extraction error for {file_path}: {exc}")
-            
+
             # Extract symbols in parallel
             with ThreadPoolExecutor(max_workers=num_threads) as executor:
                 futures = [
                     executor.submit(extract_symbols_parallel, file_path)
                     for file_path in generated_files
                 ]
-                
+
                 # Wait for all extractions to complete
                 for future in as_completed(futures):
                     try:
@@ -2150,14 +2152,14 @@ class TestSymbolExtractionEquivalenceProperties:
                     except Exception as exc:
                         import logging
                         logging.warning(f"Thread execution error: {exc}")
-            
+
             # Get parallel symbols
             parallel_symbols = parallel_table.get_all_symbols()
-            
+
             # Compare sequential and parallel results
             sequential_names = set(sequential_symbols.keys())
             parallel_names = set(parallel_symbols.keys())
-            
+
             # Verify same set of symbols
             assert sequential_names == parallel_names, (
                 f"Symbol sets differ:\n"
@@ -2166,78 +2168,78 @@ class TestSymbolExtractionEquivalenceProperties:
                 f"Sequential count: {len(sequential_names)}\n"
                 f"Parallel count: {len(parallel_names)}"
             )
-            
+
             # Verify symbol metadata matches for each symbol
             for qualified_name in sequential_names:
                 seq_symbol = sequential_symbols[qualified_name]
                 par_symbol = parallel_symbols[qualified_name]
-                
+
                 # Verify name matches
                 assert seq_symbol.name == par_symbol.name, (
                     f"Name mismatch for {qualified_name}: "
                     f"sequential={seq_symbol.name}, parallel={par_symbol.name}"
                 )
-                
+
                 # Verify kind matches
                 assert seq_symbol.kind == par_symbol.kind, (
                     f"Kind mismatch for {qualified_name}: "
                     f"sequential={seq_symbol.kind}, parallel={par_symbol.kind}"
                 )
-                
+
                 # Verify module matches
                 assert seq_symbol.module == par_symbol.module, (
                     f"Module mismatch for {qualified_name}: "
                     f"sequential={seq_symbol.module}, parallel={par_symbol.module}"
                 )
-                
+
                 # Verify location matches
                 assert seq_symbol.location == par_symbol.location, (
                     f"Location mismatch for {qualified_name}: "
                     f"sequential={seq_symbol.location}, parallel={par_symbol.location}"
                 )
-                
+
                 # Verify signature matches (if present)
                 if hasattr(seq_symbol, 'signature') and hasattr(par_symbol, 'signature'):
                     assert seq_symbol.signature == par_symbol.signature, (
                         f"Signature mismatch for {qualified_name}: "
                         f"sequential={seq_symbol.signature}, parallel={par_symbol.signature}"
                     )
-                
+
                 # Verify docstring matches (if present)
                 if hasattr(seq_symbol, 'docstring') and hasattr(par_symbol, 'docstring'):
                     assert seq_symbol.docstring == par_symbol.docstring, (
                         f"Docstring mismatch for {qualified_name}: "
                         f"sequential={seq_symbol.docstring}, parallel={par_symbol.docstring}"
                     )
-                
+
                 # Verify decorators match (if present)
                 if hasattr(seq_symbol, 'decorators') and hasattr(par_symbol, 'decorators'):
                     assert seq_symbol.decorators == par_symbol.decorators, (
                         f"Decorators mismatch for {qualified_name}: "
                         f"sequential={seq_symbol.decorators}, parallel={par_symbol.decorators}"
                     )
-                
+
                 # Verify type hints match (if present)
                 if hasattr(seq_symbol, 'type_hints') and hasattr(par_symbol, 'type_hints'):
                     assert seq_symbol.type_hints == par_symbol.type_hints, (
                         f"Type hints mismatch for {qualified_name}: "
                         f"sequential={seq_symbol.type_hints}, parallel={par_symbol.type_hints}"
                     )
-                
+
                 # Verify parameters match (if present)
                 if hasattr(seq_symbol, 'parameters') and hasattr(par_symbol, 'parameters'):
                     assert seq_symbol.parameters == par_symbol.parameters, (
                         f"Parameters mismatch for {qualified_name}: "
                         f"sequential={seq_symbol.parameters}, parallel={par_symbol.parameters}"
                     )
-                
+
                 # Verify bases match (if present, for classes)
                 if hasattr(seq_symbol, 'bases') and hasattr(par_symbol, 'bases'):
                     assert seq_symbol.bases == par_symbol.bases, (
                         f"Bases mismatch for {qualified_name}: "
                         f"sequential={seq_symbol.bases}, parallel={par_symbol.bases}"
                     )
-            
+
             # Verify total count matches
             assert len(sequential_symbols) == len(parallel_symbols), (
                 f"Symbol count mismatch: "
@@ -2248,94 +2250,94 @@ class TestSymbolExtractionEquivalenceProperties:
 
 class TestWorkPool:
     """Tests for WorkPool class."""
-    
+
     def test_init_creates_executor(self):
         """Test that WorkPool initializes with ThreadPoolExecutor."""
         from siof.free_threaded_indexer import WorkPool
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create work pool
             pool = WorkPool(workers=4, repo=repo)
-            
+
             # Verify attributes
             assert pool.workers == 4
             assert pool.repo == repo
             assert pool._executor is not None
-            
+
             # Clean up
             pool.shutdown()
-    
+
     def test_submit_tasks_yields_results(self):
         """Test that submit_tasks yields ParseResult objects."""
         from siof.free_threaded_indexer import WorkPool
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create test files
             file1 = repo / "test1.py"
             file2 = repo / "test2.py"
             file1.write_text("def func1(): pass")
             file2.write_text("def func2(): pass")
-            
+
             # Create parse tasks
             tasks = [
                 ParseTask(file_path=file1, file_metadata={}, task_id=1),
                 ParseTask(file_path=file2, file_metadata={}, task_id=2),
             ]
-            
+
             # Submit tasks and collect results
             pool = WorkPool(workers=2, repo=repo)
             results = list(pool.submit_tasks(tasks))
-            
+
             # Verify results
             assert len(results) == 2
             assert all(isinstance(r, ParseResult) for r in results)
-            
+
             # Verify task IDs
             task_ids = {r.task_id for r in results}
             assert task_ids == {1, 2}
-            
+
             # Clean up
             pool.shutdown()
-    
+
     def test_submit_tasks_handles_parse_errors(self):
         """Test that submit_tasks handles parse errors gracefully."""
         from siof.free_threaded_indexer import WorkPool
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create a file with syntax error
             bad_file = repo / "bad.py"
             bad_file.write_text("def broken(\n    return 'broken'")
-            
+
             # Create parse task
             tasks = [
                 ParseTask(file_path=bad_file, file_metadata={}, task_id=1),
             ]
-            
+
             # Submit tasks and collect results
             pool = WorkPool(workers=1, repo=repo)
             results = list(pool.submit_tasks(tasks))
-            
+
             # Verify error handling
             assert len(results) == 1
             assert results[0].success is False
             assert len(results[0].errors) > 0
-            
+
             # Clean up
             pool.shutdown()
-    
+
     def test_submit_tasks_processes_multiple_files(self):
         """Test that submit_tasks processes multiple files in parallel."""
         from siof.free_threaded_indexer import WorkPool
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create multiple test files
             num_files = 10
             tasks = []
@@ -2343,41 +2345,41 @@ class TestWorkPool:
                 file_path = repo / f"test{i}.py"
                 file_path.write_text(f"def func{i}(): pass")
                 tasks.append(ParseTask(file_path=file_path, file_metadata={}, task_id=i))
-            
+
             # Submit tasks with multiple workers
             pool = WorkPool(workers=4, repo=repo)
             results = list(pool.submit_tasks(tasks))
-            
+
             # Verify all files were processed
             assert len(results) == num_files
-            
+
             # Verify all task IDs are present
             task_ids = {r.task_id for r in results}
             assert task_ids == set(range(num_files))
-            
+
             # Clean up
             pool.shutdown()
-    
+
     def test_submit_tasks_yields_in_completion_order(self):
         """Test that submit_tasks yields results as they complete."""
+
         from siof.free_threaded_indexer import WorkPool
-        import time
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create test files
             file1 = repo / "test1.py"
             file2 = repo / "test2.py"
             file1.write_text("def func1(): pass")
             file2.write_text("def func2(): pass")
-            
+
             # Create parse tasks
             tasks = [
                 ParseTask(file_path=file1, file_metadata={}, task_id=1),
                 ParseTask(file_path=file2, file_metadata={}, task_id=2),
             ]
-            
+
             # Submit tasks and verify streaming behavior
             pool = WorkPool(workers=2, repo=repo)
             result_count = 0
@@ -2385,75 +2387,78 @@ class TestWorkPool:
                 result_count += 1
                 # Verify we get results one at a time (streaming)
                 assert isinstance(result, ParseResult)
-            
+
             # Verify all results were yielded
             assert result_count == 2
-            
+
             # Clean up
             pool.shutdown()
-    
+
     def test_shutdown_completes_gracefully(self):
         """Test that shutdown waits for tasks to complete."""
         from siof.free_threaded_indexer import WorkPool
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create work pool
             pool = WorkPool(workers=2, repo=repo)
-            
+
             # Shutdown should complete without errors
             pool.shutdown(timeout=5.0)
-            
+
             # Verify executor is shutdown
             # Note: We can't directly check executor state, but shutdown should not raise
-    
+
     def test_shutdown_with_timeout(self):
         """Test that shutdown respects timeout parameter."""
-        from siof.free_threaded_indexer import WorkPool
         import time
-        
+
+        from siof.free_threaded_indexer import WorkPool
+
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create work pool
             pool = WorkPool(workers=2, repo=repo)
-            
+
             # Shutdown with short timeout
             start_time = time.perf_counter()
             pool.shutdown(timeout=1.0)
             duration = time.perf_counter() - start_time
-            
+
             # Shutdown should complete quickly (no tasks running)
             assert duration < 2.0
-    
+
     def test_shutdown_handles_errors(self):
         """Test that shutdown handles errors gracefully."""
+        from unittest.mock import Mock
+
         from siof.free_threaded_indexer import WorkPool
-        from unittest.mock import Mock, patch
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create work pool
             pool = WorkPool(workers=2, repo=repo)
-            
+
             # Mock executor to raise error on shutdown
             pool._executor.shutdown = Mock(side_effect=RuntimeError("Test error"))
-            
+
             # Shutdown should not raise, but log error
             pool.shutdown(timeout=1.0)
-            
+
             # Test passes if no exception is raised
-    
+
     def test_multiple_workers_process_in_parallel(self):
         """Test that multiple workers process tasks in parallel."""
-        from siof.free_threaded_indexer import WorkPool
         import time
-        
+
+        from siof.free_threaded_indexer import WorkPool
+
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create multiple test files
             num_files = 8
             tasks = []
@@ -2461,101 +2466,101 @@ class TestWorkPool:
                 file_path = repo / f"test{i}.py"
                 file_path.write_text(f"def func{i}(): pass")
                 tasks.append(ParseTask(file_path=file_path, file_metadata={}, task_id=i))
-            
+
             # Process with multiple workers
             pool = WorkPool(workers=4, repo=repo)
             start_time = time.perf_counter()
             results = list(pool.submit_tasks(tasks))
             duration = time.perf_counter() - start_time
-            
+
             # Verify all files were processed
             assert len(results) == num_files
-            
+
             # With parallel processing, duration should be reasonable
             # (This is a weak assertion since we can't guarantee speedup in tests)
             assert duration < 10.0  # Should complete in reasonable time
-            
+
             # Clean up
             pool.shutdown()
-    
+
     def test_single_worker_processes_sequentially(self):
         """Test that single worker processes tasks sequentially."""
         from siof.free_threaded_indexer import WorkPool
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create test files
             file1 = repo / "test1.py"
             file2 = repo / "test2.py"
             file1.write_text("def func1(): pass")
             file2.write_text("def func2(): pass")
-            
+
             # Create parse tasks
             tasks = [
                 ParseTask(file_path=file1, file_metadata={}, task_id=1),
                 ParseTask(file_path=file2, file_metadata={}, task_id=2),
             ]
-            
+
             # Process with single worker
             pool = WorkPool(workers=1, repo=repo)
             results = list(pool.submit_tasks(tasks))
-            
+
             # Verify all files were processed
             assert len(results) == 2
-            
+
             # Clean up
             pool.shutdown()
-    
+
     def test_worker_exception_handling(self):
         """Test that worker exceptions are caught and reported."""
         from siof.free_threaded_indexer import WorkPool
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create a task with non-existent file
             non_existent = repo / "nonexistent.py"
             tasks = [
                 ParseTask(file_path=non_existent, file_metadata={}, task_id=1),
             ]
-            
+
             # Submit tasks
             pool = WorkPool(workers=1, repo=repo)
             results = list(pool.submit_tasks(tasks))
-            
+
             # Verify error is reported
             assert len(results) == 1
             assert results[0].success is False
             assert len(results[0].errors) > 0
-            
+
             # Clean up
             pool.shutdown()
-    
+
     def test_empty_task_list(self):
         """Test that empty task list is handled correctly."""
         from siof.free_threaded_indexer import WorkPool
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Submit empty task list
             pool = WorkPool(workers=2, repo=repo)
             results = list(pool.submit_tasks([]))
-            
+
             # Verify no results
             assert len(results) == 0
-            
+
             # Clean up
             pool.shutdown()
-    
+
     def test_large_number_of_tasks(self):
         """Test processing a large number of tasks."""
         from siof.free_threaded_indexer import WorkPool
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create many test files
             num_files = 50
             tasks = []
@@ -2563,60 +2568,60 @@ class TestWorkPool:
                 file_path = repo / f"test{i}.py"
                 file_path.write_text(f"def func{i}(): pass")
                 tasks.append(ParseTask(file_path=file_path, file_metadata={}, task_id=i))
-            
+
             # Process with work pool
             pool = WorkPool(workers=4, repo=repo)
             results = list(pool.submit_tasks(tasks))
-            
+
             # Verify all files were processed
             assert len(results) == num_files
-            
+
             # Verify all task IDs are present
             task_ids = {r.task_id for r in results}
             assert task_ids == set(range(num_files))
-            
+
             # Clean up
             pool.shutdown()
-    
+
     def test_mixed_success_and_failure(self):
         """Test processing mix of valid and invalid files."""
         from siof.free_threaded_indexer import WorkPool
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
-            
+
             # Create valid and invalid files
             valid_file = repo / "valid.py"
             invalid_file = repo / "invalid.py"
             valid_file.write_text("def valid(): pass")
             invalid_file.write_text("def invalid(\n    return 'broken'")
-            
+
             # Create parse tasks
             tasks = [
                 ParseTask(file_path=valid_file, file_metadata={}, task_id=1),
                 ParseTask(file_path=invalid_file, file_metadata={}, task_id=2),
             ]
-            
+
             # Submit tasks
             pool = WorkPool(workers=2, repo=repo)
             results = list(pool.submit_tasks(tasks))
-            
+
             # Verify both files were processed
             assert len(results) == 2
-            
+
             # Verify one success and one failure
             successes = [r for r in results if r.success]
             failures = [r for r in results if not r.success]
             assert len(successes) == 1
             assert len(failures) == 1
-            
+
             # Clean up
             pool.shutdown()
 
 
 class TestErrorIsolationProperties:
     """Property-based tests for error isolation."""
-    
+
     @settings(max_examples=100, deadline=None)
     @given(
         num_valid_files=st.integers(min_value=5, max_value=20),
@@ -2651,99 +2656,100 @@ class TestErrorIsolationProperties:
         invalid files.
         """
         import tempfile
+
         from siof.free_threaded_indexer import WorkPool
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir) / "test_repo"
             repo.mkdir()
-            
+
             # Track valid and invalid files
             valid_files = []
             invalid_files = []
-            
+
             # Generate valid Python files
             for file_idx in range(num_valid_files):
                 file_path = repo / f"valid_{file_idx}.py"
                 file_content = []
-                
+
                 # Add module docstring
                 file_content.append(f'"""Valid module {file_idx}."""')
                 file_content.append("")
-                
+
                 # Add module-level variable
                 file_content.append(f"MODULE_VAR = {file_idx}")
                 file_content.append("")
-                
+
                 # Generate functions
                 for func_idx in range(num_functions_per_valid_file):
                     func_name = f"function_{file_idx}_{func_idx}"
                     file_content.append(f"def {func_name}(x: int, y: int = {func_idx}) -> int:")
                     file_content.append(f"    '''Function {func_idx} in module {file_idx}.'''")
                     file_content.append(f"    result = x + y + {func_idx}")
-                    file_content.append(f"    return result")
+                    file_content.append("    return result")
                     file_content.append("")
-                
+
                 # Generate classes
                 for class_idx in range(num_classes_per_valid_file):
                     class_name = f"Class_{file_idx}_{class_idx}"
                     file_content.append(f"class {class_name}:")
                     file_content.append(f"    '''Class {class_idx} in module {file_idx}.'''")
                     file_content.append("")
-                    file_content.append(f"    def __init__(self, value: int):")
-                    file_content.append(f"        self.value = value")
+                    file_content.append("    def __init__(self, value: int):")
+                    file_content.append("        self.value = value")
                     file_content.append("")
-                    file_content.append(f"    def get_value(self) -> int:")
-                    file_content.append(f"        '''Get the value.'''")
-                    file_content.append(f"        return self.value")
+                    file_content.append("    def get_value(self) -> int:")
+                    file_content.append("        '''Get the value.'''")
+                    file_content.append("        return self.value")
                     file_content.append("")
-                
+
                 # Write valid file
                 file_path.write_text("\n".join(file_content))
                 valid_files.append(file_path)
-            
+
             # Generate invalid Python files with various syntax errors
             for file_idx in range(num_invalid_files):
                 file_path = repo / f"invalid_{file_idx}.py"
                 file_content = []
-                
+
                 # Add some valid content first
                 file_content.append(f'"""Invalid module {file_idx} with syntax error."""')
                 file_content.append("")
                 file_content.append(f"VALID_VAR = {file_idx}")
                 file_content.append("")
-                
+
                 # Add syntax error based on type
                 if invalid_syntax_type == "missing_paren":
                     file_content.append(f"def broken_function_{file_idx}(x, y:")
-                    file_content.append(f"    return x + y")
-                
+                    file_content.append("    return x + y")
+
                 elif invalid_syntax_type == "missing_colon":
                     file_content.append(f"def broken_function_{file_idx}(x, y)")
-                    file_content.append(f"    return x + y")
-                
+                    file_content.append("    return x + y")
+
                 elif invalid_syntax_type == "invalid_indent":
                     file_content.append(f"def broken_function_{file_idx}(x, y):")
-                    file_content.append(f"return x + y")  # Missing indentation
-                
+                    file_content.append("return x + y")  # Missing indentation
+
                 elif invalid_syntax_type == "unclosed_string":
                     file_content.append(f"def broken_function_{file_idx}():")
-                    file_content.append(f"    message = 'unclosed string")
-                    file_content.append(f"    return message")
-                
+                    file_content.append("    message = 'unclosed string")
+                    file_content.append("    return message")
+
                 elif invalid_syntax_type == "invalid_operator":
                     file_content.append(f"def broken_function_{file_idx}(x, y):")
-                    file_content.append(f"    result = x @ @ y")  # Invalid double operator
-                    file_content.append(f"    return result")
-                
+                    file_content.append("    result = x @ @ y")  # Invalid double operator
+                    file_content.append("    return result")
+
                 elif invalid_syntax_type == "missing_bracket":
                     file_content.append(f"def broken_function_{file_idx}():")
-                    file_content.append(f"    data = [1, 2, 3")  # Missing closing bracket
-                    file_content.append(f"    return data")
-                
+                    file_content.append("    data = [1, 2, 3")  # Missing closing bracket
+                    file_content.append("    return data")
+
                 # Write invalid file
                 file_path.write_text("\n".join(file_content))
                 invalid_files.append(file_path)
-            
+
             # Create parse tasks for all files (mix of valid and invalid)
             all_files = valid_files + invalid_files
             tasks = [
@@ -2754,16 +2760,16 @@ class TestErrorIsolationProperties:
                 )
                 for idx, file_path in enumerate(all_files)
             ]
-            
+
             # Parse files using WorkPool (parallel parsing)
             pool = WorkPool(workers=num_threads, repo=repo)
             results = list(pool.submit_tasks(tasks))
             pool.shutdown()
-            
+
             # Separate results by success/failure
             successful_results = [r for r in results if r.success]
             failed_results = [r for r in results if not r.success]
-            
+
             # CRITICAL PROPERTY: All valid files MUST parse successfully
             # regardless of errors in invalid files
             assert len(successful_results) >= num_valid_files, (
@@ -2775,28 +2781,28 @@ class TestErrorIsolationProperties:
                 f"Failed: {len(failed_results)}\n"
                 f"Failed file paths: {[r.file_path.name for r in failed_results]}"
             )
-            
+
             # Verify that all valid files are in the successful results
             successful_paths = {r.file_path for r in successful_results}
             valid_file_paths = set(valid_files)
-            
+
             missing_valid_files = valid_file_paths - successful_paths
             assert len(missing_valid_files) == 0, (
                 f"Error isolation violated: Some valid files failed to parse:\n"
                 f"Missing valid files: {[f.name for f in missing_valid_files]}\n"
                 f"These valid files should have parsed successfully regardless of errors in other files."
             )
-            
+
             # Verify that all invalid files are in the failed results
             failed_paths = {r.file_path for r in failed_results}
             invalid_file_paths = set(invalid_files)
-            
+
             # All invalid files should fail (but this is not the main property)
             # The main property is that valid files succeed
             assert invalid_file_paths.issubset(failed_paths | successful_paths), (
-                f"Some invalid files were not processed"
+                "Some invalid files were not processed"
             )
-            
+
             # Verify that successful results have extracted nodes
             for result in successful_results:
                 if result.file_path in valid_files:
@@ -2806,17 +2812,17 @@ class TestErrorIsolationProperties:
                         f"Valid file {result.file_path.name} parsed successfully "
                         f"but extracted no nodes"
                     )
-                    
+
                     # Verify artifact is marked as successful
                     assert result.artifact.parse_ok is True, (
                         f"Valid file {result.file_path.name} has parse_ok=False"
                     )
-                    
+
                     # Verify no errors recorded
                     assert len(result.errors) == 0, (
                         f"Valid file {result.file_path.name} has errors: {result.errors}"
                     )
-            
+
             # Verify that failed results have error messages
             for result in failed_results:
                 if result.file_path in invalid_files:
@@ -2824,24 +2830,24 @@ class TestErrorIsolationProperties:
                     assert len(result.errors) > 0, (
                         f"Invalid file {result.file_path.name} failed but has no error messages"
                     )
-                    
+
                     # Verify artifact is marked as failed
                     assert result.artifact.parse_ok is False, (
                         f"Invalid file {result.file_path.name} has parse_ok=True"
                     )
-                    
+
                     # Verify error message mentions syntax error
                     error_text = " ".join(result.errors).lower()
                     assert "syntax" in error_text or "error" in error_text, (
                         f"Invalid file {result.file_path.name} error message doesn't mention syntax error: "
                         f"{result.errors}"
                     )
-            
+
             # Verify total count matches
             assert len(results) == len(all_files), (
                 f"Result count mismatch: expected {len(all_files)}, got {len(results)}"
             )
-            
+
             # Verify that each task was processed exactly once
             task_ids = {r.task_id for r in results}
             expected_task_ids = set(range(len(all_files)))
@@ -2852,7 +2858,7 @@ class TestErrorIsolationProperties:
                 f"Missing: {expected_task_ids - task_ids}\n"
                 f"Extra: {task_ids - expected_task_ids}"
             )
-            
+
             # CORE PROPERTY VERIFICATION:
             # The presence of invalid files did NOT prevent valid files from being parsed
             # This demonstrates error isolation - each file is parsed independently
@@ -2868,7 +2874,7 @@ class TestErrorIsolationProperties:
 
 class TestErrorAggregationProperties:
     """Property-based tests for error aggregation."""
-    
+
     @settings(max_examples=100, deadline=None)
     @given(
         num_files_with_errors=st.integers(min_value=5, max_value=25),
@@ -2904,88 +2910,89 @@ class TestErrorAggregationProperties:
         and included in the final build result.
         """
         import tempfile
+
         from siof.free_threaded_indexer import WorkPool
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir) / "test_repo"
             repo.mkdir()
-            
+
             # Track files with errors and their expected error types
             error_files = []
             expected_error_count = 0
-            
+
             # Generate files with various parse errors
             for file_idx in range(num_files_with_errors):
                 file_path = repo / f"error_{file_idx}.py"
                 file_content = []
-                
+
                 # Add some valid content first
                 file_content.append(f'"""Module {file_idx} with parse error."""')
                 file_content.append("")
                 file_content.append(f"VALID_VAR = {file_idx}")
                 file_content.append("")
-                
+
                 # Select error type for this file (cycle through error_types)
                 error_type = error_types[file_idx % len(error_types)]
-                
+
                 # Add syntax error based on type
                 if error_type == "missing_paren":
                     file_content.append(f"def broken_{file_idx}(x, y:")
-                    file_content.append(f"    return x + y")
-                
+                    file_content.append("    return x + y")
+
                 elif error_type == "missing_colon":
                     file_content.append(f"def broken_{file_idx}(x, y)")
-                    file_content.append(f"    return x + y")
-                
+                    file_content.append("    return x + y")
+
                 elif error_type == "invalid_indent":
                     file_content.append(f"def broken_{file_idx}(x, y):")
-                    file_content.append(f"return x + y")  # Missing indentation
-                
+                    file_content.append("return x + y")  # Missing indentation
+
                 elif error_type == "unclosed_string":
                     file_content.append(f"def broken_{file_idx}():")
-                    file_content.append(f"    message = 'unclosed string")
-                    file_content.append(f"    return message")
-                
+                    file_content.append("    message = 'unclosed string")
+                    file_content.append("    return message")
+
                 elif error_type == "invalid_operator":
                     file_content.append(f"def broken_{file_idx}(x, y):")
-                    file_content.append(f"    result = x @ @ y")  # Invalid double operator
-                    file_content.append(f"    return result")
-                
+                    file_content.append("    result = x @ @ y")  # Invalid double operator
+                    file_content.append("    return result")
+
                 elif error_type == "missing_bracket":
                     file_content.append(f"def broken_{file_idx}():")
-                    file_content.append(f"    data = [1, 2, 3")  # Missing closing bracket
-                    file_content.append(f"    return data")
-                
+                    file_content.append("    data = [1, 2, 3")  # Missing closing bracket
+                    file_content.append("    return data")
+
                 elif error_type == "unexpected_eof":
                     file_content.append(f"def broken_{file_idx}():")
-                    file_content.append(f"    if True:")
+                    file_content.append("    if True:")
                     # Missing body - unexpected EOF
-                
+
                 elif error_type == "invalid_syntax":
                     file_content.append(f"def broken_{file_idx}():")
-                    file_content.append(f"    return = 42")  # Invalid syntax
-                
+                    file_content.append("    return = 42")  # Invalid syntax
+
                 # Write file with error
                 file_path.write_text("\n".join(file_content))
                 error_files.append(file_path)
                 expected_error_count += 1
-            
+
             # Generate some valid files to mix in
             valid_files = []
             for file_idx in range(num_valid_files):
                 file_path = repo / f"valid_{file_idx}.py"
                 file_content = []
-                
+
                 file_content.append(f'"""Valid module {file_idx}."""')
                 file_content.append("")
                 file_content.append(f"def valid_function_{file_idx}(x: int) -> int:")
-                file_content.append(f"    '''A valid function.'''")
+                file_content.append("    '''A valid function.'''")
                 file_content.append(f"    return x + {file_idx}")
                 file_content.append("")
-                
+
                 file_path.write_text("\n".join(file_content))
                 valid_files.append(file_path)
-            
+
             # Create parse tasks for all files
             all_files = error_files + valid_files
             tasks = [
@@ -2996,16 +3003,16 @@ class TestErrorAggregationProperties:
                 )
                 for idx, file_path in enumerate(all_files)
             ]
-            
+
             # Parse files using WorkPool (parallel parsing)
             pool = WorkPool(workers=num_threads, repo=repo)
             results = list(pool.submit_tasks(tasks))
             pool.shutdown()
-            
+
             # Separate results by success/failure
             successful_results = [r for r in results if r.success]
             failed_results = [r for r in results if not r.success]
-            
+
             # CRITICAL PROPERTY: All errors MUST be collected
             # Verify that we have the expected number of failures
             assert len(failed_results) >= expected_error_count, (
@@ -3016,18 +3023,18 @@ class TestErrorAggregationProperties:
                 f"Failed results: {len(failed_results)}\n"
                 f"Successful results: {len(successful_results)}"
             )
-            
+
             # Verify that all error files are in the failed results
             failed_paths = {r.file_path for r in failed_results}
             error_file_paths = set(error_files)
-            
+
             missing_error_files = error_file_paths - failed_paths
             assert len(missing_error_files) == 0, (
                 f"Error aggregation violated: Some files with errors were not marked as failed:\n"
                 f"Missing error files: {[f.name for f in missing_error_files]}\n"
                 f"These files should have been detected as having parse errors."
             )
-            
+
             # Verify that each failed result has error information
             total_errors_collected = 0
             for result in failed_results:
@@ -3037,20 +3044,20 @@ class TestErrorAggregationProperties:
                     f"has no error messages.\n"
                     f"Every failed parse MUST record error details."
                 )
-                
+
                 # Count total errors
                 total_errors_collected += len(result.errors)
-                
+
                 # Verify artifact is marked as failed
                 assert result.artifact.parse_ok is False, (
                     f"Failed result for {result.file_path.name} has parse_ok=True"
                 )
-                
+
                 # Verify artifact has error message
                 assert result.artifact.error is not None, (
                     f"Failed result for {result.file_path.name} has no artifact error message"
                 )
-                
+
                 # Verify error messages are meaningful (contain error keywords)
                 error_text = " ".join(result.errors).lower()
                 assert any(keyword in error_text for keyword in [
@@ -3059,7 +3066,7 @@ class TestErrorAggregationProperties:
                     f"Error message for {result.file_path.name} doesn't contain error keywords: "
                     f"{result.errors}"
                 )
-            
+
             # CORE PROPERTY VERIFICATION:
             # All errors from all files MUST be collected
             assert total_errors_collected >= expected_error_count, (
@@ -3068,7 +3075,7 @@ class TestErrorAggregationProperties:
                 f"but collected only {total_errors_collected} error messages.\n"
                 f"This indicates that some parse errors were not properly recorded and aggregated."
             )
-            
+
             # Verify that valid files succeeded (error isolation still holds)
             assert len(successful_results) >= num_valid_files, (
                 f"Error isolation violated while testing error aggregation:\n"
@@ -3076,12 +3083,12 @@ class TestErrorAggregationProperties:
                 f"but got {len(successful_results)}.\n"
                 f"Valid files should parse successfully even when other files have errors."
             )
-            
+
             # Verify all results were processed
             assert len(results) == len(all_files), (
                 f"Result count mismatch: expected {len(all_files)}, got {len(results)}"
             )
-            
+
             # Verify each task was processed exactly once
             task_ids = {r.task_id for r in results}
             expected_task_ids = set(range(len(all_files)))
@@ -3090,7 +3097,7 @@ class TestErrorAggregationProperties:
                 f"Expected: {expected_task_ids}\n"
                 f"Got: {task_ids}"
             )
-            
+
             # Additional verification: Check that error details are preserved
             # Each error file should have its specific error type reflected in the error message
             for result in failed_results:
@@ -3098,16 +3105,16 @@ class TestErrorAggregationProperties:
                     # Find which error type this file should have
                     file_idx = int(result.file_path.stem.split("_")[1])
                     expected_error_type = error_types[file_idx % len(error_types)]
-                    
+
                     # Verify error message contains relevant information
                     error_text = " ".join(result.errors).lower()
-                    
+
                     # Different error types should produce different error messages
                     # We don't check for specific text, just that errors are recorded
                     assert len(error_text) > 0, (
                         f"Error message for {result.file_path.name} is empty"
                     )
-            
+
             # FINAL VERIFICATION: Simulate build result aggregation
             # In a real build, all these errors would be aggregated into BuildResult
             build_error_count = len(failed_results)
@@ -3115,7 +3122,7 @@ class TestErrorAggregationProperties:
             for result in failed_results:
                 for error in result.errors:
                     build_error_details.append(f"{result.file_path.name}: {error}")
-            
+
             # Verify build-level aggregation would capture all errors
             assert build_error_count == expected_error_count, (
                 f"Build-level error aggregation would be incorrect:\n"
@@ -3123,7 +3130,7 @@ class TestErrorAggregationProperties:
                 f"but would have {build_error_count} errors.\n"
                 f"All parse errors must be aggregated into the final build result."
             )
-            
+
             assert len(build_error_details) >= expected_error_count, (
                 f"Build-level error details incomplete:\n"
                 f"Expected at least {expected_error_count} error detail entries,\n"
@@ -3134,25 +3141,25 @@ class TestErrorAggregationProperties:
 
 class TestDTGAggregator:
     """Tests for DTGAggregator class."""
-    
+
     def test_init(self):
         """Test DTGAggregator initialization."""
         from siof.free_threaded_indexer import DTGAggregator
-        
+
         aggregator = DTGAggregator()
-        
+
         # Verify initial state
         nodes, edges = aggregator.get_dtg()
         assert len(nodes) == 0
         assert len(edges) == 0
         assert len(aggregator.get_conflicts()) == 0
-    
+
     def test_add_single_result(self):
         """Test adding a single parse result."""
         from siof.free_threaded_indexer import DTGAggregator
-        
+
         aggregator = DTGAggregator()
-        
+
         # Create a parse result with nodes and edges
         nodes = [
             DataNode(
@@ -3168,7 +3175,7 @@ class TestDTGAggregator:
                 location="test.py:5"
             )
         ]
-        
+
         edges = [
             TransformEdge(
                 source="test.func",
@@ -3179,7 +3186,7 @@ class TestDTGAggregator:
                 confidence=1.0
             )
         ]
-        
+
         result = ParseResult(
             task_id=1,
             file_path=Path("test.py"),
@@ -3190,29 +3197,29 @@ class TestDTGAggregator:
             duration_ms=10.0,
             success=True
         )
-        
+
         # Add result
         aggregator.add_result(result)
-        
+
         # Verify nodes and edges were added
         dtg_nodes, dtg_edges = aggregator.get_dtg()
         assert len(dtg_nodes) == 2
         assert len(dtg_edges) == 1
-        
+
         # Verify node symbols
         node_symbols = {n.symbol for n in dtg_nodes}
         assert "test.func" in node_symbols
         assert "test.Class" in node_symbols
-        
+
         # Verify no conflicts
         assert len(aggregator.get_conflicts()) == 0
-    
+
     def test_add_multiple_results(self):
         """Test adding multiple parse results."""
         from siof.free_threaded_indexer import DTGAggregator
-        
+
         aggregator = DTGAggregator()
-        
+
         # Create first result
         result1 = ParseResult(
             task_id=1,
@@ -3235,7 +3242,7 @@ class TestDTGAggregator:
             duration_ms=10.0,
             success=True
         )
-        
+
         # Create second result
         result2 = ParseResult(
             task_id=2,
@@ -3258,30 +3265,30 @@ class TestDTGAggregator:
             duration_ms=10.0,
             success=True
         )
-        
+
         # Add both results
         aggregator.add_result(result1)
         aggregator.add_result(result2)
-        
+
         # Verify nodes and edges were added
         dtg_nodes, dtg_edges = aggregator.get_dtg()
         assert len(dtg_nodes) == 2
         assert len(dtg_edges) == 2
-        
+
         # Verify node symbols
         node_symbols = {n.symbol for n in dtg_nodes}
         assert "file1.func1" in node_symbols
         assert "file2.func1" in node_symbols
-        
+
         # Verify no conflicts
         assert len(aggregator.get_conflicts()) == 0
-    
+
     def test_node_deduplication_keeps_first_occurrence(self):
         """Test that duplicate nodes keep first occurrence."""
         from siof.free_threaded_indexer import DTGAggregator
-        
+
         aggregator = DTGAggregator()
-        
+
         # Create first result with a node
         result1 = ParseResult(
             task_id=1,
@@ -3300,7 +3307,7 @@ class TestDTGAggregator:
             duration_ms=10.0,
             success=True
         )
-        
+
         # Create second result with duplicate node (different location)
         result2 = ParseResult(
             task_id=2,
@@ -3319,30 +3326,30 @@ class TestDTGAggregator:
             duration_ms=10.0,
             success=True
         )
-        
+
         # Add both results
         aggregator.add_result(result1)
         aggregator.add_result(result2)
-        
+
         # Verify only one node exists (first occurrence)
         dtg_nodes, dtg_edges = aggregator.get_dtg()
         assert len(dtg_nodes) == 1
         assert dtg_nodes[0].symbol == "shared.func"
         assert dtg_nodes[0].location == "file1.py:1"  # First occurrence
-        
+
         # Verify conflict was tracked
         conflicts = aggregator.get_conflicts()
         assert len(conflicts) == 1
         assert "Duplicate node" in conflicts[0]
         assert "shared.func" in conflicts[0]
         assert "file2.py" in conflicts[0]
-    
+
     def test_edges_not_deduplicated(self):
         """Test that duplicate edges are kept (may represent multiple call sites)."""
         from siof.free_threaded_indexer import DTGAggregator
-        
+
         aggregator = DTGAggregator()
-        
+
         # Create first result with an edge
         result1 = ParseResult(
             task_id=1,
@@ -3363,7 +3370,7 @@ class TestDTGAggregator:
             duration_ms=10.0,
             success=True
         )
-        
+
         # Create second result with duplicate edge (different location)
         result2 = ParseResult(
             task_id=2,
@@ -3384,27 +3391,27 @@ class TestDTGAggregator:
             duration_ms=10.0,
             success=True
         )
-        
+
         # Add both results
         aggregator.add_result(result1)
         aggregator.add_result(result2)
-        
+
         # Verify both edges are kept
         dtg_nodes, dtg_edges = aggregator.get_dtg()
         assert len(dtg_edges) == 2
         assert dtg_edges[0].location == "file1.py:5"
         assert dtg_edges[1].location == "file2.py:10"
-        
+
         # Verify no conflicts (edges are not deduplicated)
         conflicts = aggregator.get_conflicts()
         assert len(conflicts) == 0
-    
+
     def test_resolve_conflicts_with_no_conflicts(self):
         """Test resolve_conflicts() when there are no conflicts."""
         from siof.free_threaded_indexer import DTGAggregator
-        
+
         aggregator = DTGAggregator()
-        
+
         # Add a result with no conflicts
         result = ParseResult(
             task_id=1,
@@ -3418,23 +3425,23 @@ class TestDTGAggregator:
             duration_ms=10.0,
             success=True
         )
-        
+
         aggregator.add_result(result)
-        
+
         # Resolve conflicts (should be a no-op)
         aggregator.resolve_conflicts()
-        
+
         # Verify no conflicts
         conflicts = aggregator.get_conflicts()
         assert len(conflicts) == 0
-    
+
     def test_resolve_conflicts_logs_warnings_for_duplicates(self):
         """Test that resolve_conflicts() logs warnings for duplicate nodes."""
+
         from siof.free_threaded_indexer import DTGAggregator
-        import logging
-        
+
         aggregator = DTGAggregator()
-        
+
         # Create results with duplicate nodes
         result1 = ParseResult(
             task_id=1,
@@ -3448,7 +3455,7 @@ class TestDTGAggregator:
             duration_ms=10.0,
             success=True
         )
-        
+
         result2 = ParseResult(
             task_id=2,
             file_path=Path("file2.py"),
@@ -3461,7 +3468,7 @@ class TestDTGAggregator:
             duration_ms=10.0,
             success=True
         )
-        
+
         result3 = ParseResult(
             task_id=3,
             file_path=Path("file3.py"),
@@ -3474,36 +3481,36 @@ class TestDTGAggregator:
             duration_ms=10.0,
             success=True
         )
-        
+
         # Add all results
         aggregator.add_result(result1)
         aggregator.add_result(result2)
         aggregator.add_result(result3)
-        
+
         # Verify conflicts were tracked
         conflicts = aggregator.get_conflicts()
         assert len(conflicts) == 2  # Two duplicates detected
-        
+
         # Resolve conflicts (should log warnings)
         with patch('siof.free_threaded_indexer.logger') as mock_logger:
             aggregator.resolve_conflicts()
-            
+
             # Verify warning was logged about conflict count
             assert mock_logger.warning.called
             warning_calls = [str(call) for call in mock_logger.warning.call_args_list]
-            
+
             # Should have logged summary warning
             assert any("2 node conflicts" in str(call) for call in warning_calls)
-            
+
             # Should have logged individual conflict warnings
             assert any("shared.func" in str(call) for call in warning_calls)
-    
+
     def test_resolve_conflicts_keeps_first_occurrence(self):
         """Test that resolve_conflicts() keeps first occurrence of duplicate nodes."""
         from siof.free_threaded_indexer import DTGAggregator
-        
+
         aggregator = DTGAggregator()
-        
+
         # Create results with duplicate nodes
         result1 = ParseResult(
             task_id=1,
@@ -3517,7 +3524,7 @@ class TestDTGAggregator:
             duration_ms=10.0,
             success=True
         )
-        
+
         result2 = ParseResult(
             task_id=2,
             file_path=Path("file2.py"),
@@ -3530,26 +3537,26 @@ class TestDTGAggregator:
             duration_ms=10.0,
             success=True
         )
-        
+
         # Add both results
         aggregator.add_result(result1)
         aggregator.add_result(result2)
-        
+
         # Resolve conflicts
         aggregator.resolve_conflicts()
-        
+
         # Verify only first occurrence is kept
         dtg_nodes, _ = aggregator.get_dtg()
         assert len(dtg_nodes) == 1
         assert dtg_nodes[0].symbol == "dup.func"
         assert dtg_nodes[0].location == "file1.py:1"  # First occurrence
-    
+
     def test_resolve_conflicts_keeps_all_duplicate_edges(self):
         """Test that resolve_conflicts() keeps all duplicate edges."""
         from siof.free_threaded_indexer import DTGAggregator
-        
+
         aggregator = DTGAggregator()
-        
+
         # Create results with duplicate edges
         result1 = ParseResult(
             task_id=1,
@@ -3570,7 +3577,7 @@ class TestDTGAggregator:
             duration_ms=10.0,
             success=True
         )
-        
+
         result2 = ParseResult(
             task_id=2,
             file_path=Path("file2.py"),
@@ -3590,26 +3597,26 @@ class TestDTGAggregator:
             duration_ms=10.0,
             success=True
         )
-        
+
         # Add both results
         aggregator.add_result(result1)
         aggregator.add_result(result2)
-        
+
         # Resolve conflicts
         aggregator.resolve_conflicts()
-        
+
         # Verify both edges are kept (duplicates represent multiple call sites)
         _, dtg_edges = aggregator.get_dtg()
         assert len(dtg_edges) == 2
         assert dtg_edges[0].location == "file1.py:5"
         assert dtg_edges[1].location == "file2.py:10"
-    
+
     def test_add_result_with_empty_nodes_and_edges(self):
         """Test adding a result with no nodes or edges."""
         from siof.free_threaded_indexer import DTGAggregator
-        
+
         aggregator = DTGAggregator()
-        
+
         # Create result with no nodes or edges
         result = ParseResult(
             task_id=1,
@@ -3621,22 +3628,22 @@ class TestDTGAggregator:
             duration_ms=10.0,
             success=True
         )
-        
+
         # Add result
         aggregator.add_result(result)
-        
+
         # Verify nothing was added
         dtg_nodes, dtg_edges = aggregator.get_dtg()
         assert len(dtg_nodes) == 0
         assert len(dtg_edges) == 0
         assert len(aggregator.get_conflicts()) == 0
-    
+
     def test_multiple_duplicate_nodes(self):
         """Test handling multiple duplicate nodes."""
         from siof.free_threaded_indexer import DTGAggregator
-        
+
         aggregator = DTGAggregator()
-        
+
         # Create three results with duplicate nodes
         for i in range(3):
             result = ParseResult(
@@ -3657,23 +3664,23 @@ class TestDTGAggregator:
                 success=True
             )
             aggregator.add_result(result)
-        
+
         # Verify only first occurrence kept
         dtg_nodes, dtg_edges = aggregator.get_dtg()
         assert len(dtg_nodes) == 1
         assert dtg_nodes[0].location == "file0.py:0"
-        
+
         # Verify two conflicts tracked
         conflicts = aggregator.get_conflicts()
         assert len(conflicts) == 2
         assert all("Duplicate node" in c for c in conflicts)
-    
+
     def test_verify_integrity_with_valid_dtg(self):
         """Test verify_integrity() with a valid DTG (no violations)."""
         from siof.free_threaded_indexer import DTGAggregator
-        
+
         aggregator = DTGAggregator()
-        
+
         # Create a valid result with proper nodes and edges
         result = ParseResult(
             task_id=1,
@@ -3708,17 +3715,17 @@ class TestDTGAggregator:
             success=True
         )
         aggregator.add_result(result)
-        
+
         # Verify integrity - should have no violations
         violations = aggregator.verify_integrity()
         assert len(violations) == 0
-    
+
     def test_verify_integrity_detects_self_loops(self):
         """Test verify_integrity() detects self-loops (except parameter edges)."""
         from siof.free_threaded_indexer import DTGAggregator
-        
+
         aggregator = DTGAggregator()
-        
+
         # Create result with self-loop edge
         result = ParseResult(
             task_id=1,
@@ -3747,19 +3754,19 @@ class TestDTGAggregator:
             success=True
         )
         aggregator.add_result(result)
-        
+
         # Verify integrity - should detect self-loop
         violations = aggregator.verify_integrity()
         assert len(violations) == 1
         assert "Self-loop detected" in violations[0]
         assert "module.func -> module.func" in violations[0]
-    
+
     def test_verify_integrity_allows_parameter_self_loops(self):
         """Test verify_integrity() allows parameter edges to be self-loops."""
         from siof.free_threaded_indexer import DTGAggregator
-        
+
         aggregator = DTGAggregator()
-        
+
         # Create result with parameter self-loop (allowed)
         result = ParseResult(
             task_id=1,
@@ -3788,17 +3795,17 @@ class TestDTGAggregator:
             success=True
         )
         aggregator.add_result(result)
-        
+
         # Verify integrity - should have no violations (parameter self-loops allowed)
         violations = aggregator.verify_integrity()
         assert len(violations) == 0
-    
+
     def test_verify_integrity_detects_invalid_confidence(self):
         """Test verify_integrity() detects invalid confidence scores."""
         from siof.free_threaded_indexer import DTGAggregator
-        
+
         aggregator = DTGAggregator()
-        
+
         # Create result with invalid confidence scores
         result = ParseResult(
             task_id=1,
@@ -3841,19 +3848,19 @@ class TestDTGAggregator:
             success=True
         )
         aggregator.add_result(result)
-        
+
         # Verify integrity - should detect both invalid confidence scores
         violations = aggregator.verify_integrity()
         assert len(violations) == 2
         assert any("Invalid confidence score: 1.5" in v for v in violations)
         assert any("Invalid confidence score: -0.1" in v for v in violations)
-    
+
     def test_verify_integrity_detects_dangling_edges(self):
         """Test verify_integrity() detects dangling edges (both source and target missing)."""
         from siof.free_threaded_indexer import DTGAggregator
-        
+
         aggregator = DTGAggregator()
-        
+
         # Create result with dangling edge (neither source nor target exists)
         result = ParseResult(
             task_id=1,
@@ -3882,19 +3889,19 @@ class TestDTGAggregator:
             success=True
         )
         aggregator.add_result(result)
-        
+
         # Verify integrity - should detect dangling edge
         violations = aggregator.verify_integrity()
         assert len(violations) == 1
         assert "Dangling edge" in violations[0]
         assert "module.missing1 -> module.missing2" in violations[0]
-    
+
     def test_verify_integrity_allows_external_references(self):
         """Test verify_integrity() allows edges to external symbols (cross-module references)."""
         from siof.free_threaded_indexer import DTGAggregator
-        
+
         aggregator = DTGAggregator()
-        
+
         # Create result with edge to external symbol (one node exists)
         result = ParseResult(
             task_id=1,
@@ -3923,17 +3930,17 @@ class TestDTGAggregator:
             success=True
         )
         aggregator.add_result(result)
-        
+
         # Verify integrity - should have no violations (external references allowed)
         violations = aggregator.verify_integrity()
         assert len(violations) == 0
-    
+
     def test_verify_integrity_with_multiple_violations(self):
         """Test verify_integrity() detects multiple types of violations."""
         from siof.free_threaded_indexer import DTGAggregator
-        
+
         aggregator = DTGAggregator()
-        
+
         # Create result with multiple violations
         result = ParseResult(
             task_id=1,
@@ -3981,7 +3988,7 @@ class TestDTGAggregator:
             success=True
         )
         aggregator.add_result(result)
-        
+
         # Verify integrity - should detect all three violations
         violations = aggregator.verify_integrity()
         assert len(violations) == 3
@@ -3992,15 +3999,16 @@ class TestDTGAggregator:
 
 class TestDTGAggregatorIntegration:
     """Integration tests for DTGAggregator with verify_integrity."""
-    
+
     def test_aggregation_workflow_with_integrity_verification(self):
         """Test complete aggregation workflow with integrity verification."""
+        from pathlib import Path
+
         from siof.free_threaded_indexer import DTGAggregator, ParseResult
         from siof.models import Artifact, DataNode, TransformEdge
-        from pathlib import Path
-        
+
         aggregator = DTGAggregator()
-        
+
         # Simulate parsing multiple files with valid results
         results = [
             ParseResult(
@@ -4062,48 +4070,49 @@ class TestDTGAggregatorIntegration:
                 success=True
             )
         ]
-        
+
         # Add all results to aggregator
         for result in results:
             aggregator.add_result(result)
-        
+
         # Resolve conflicts
         aggregator.resolve_conflicts()
-        
+
         # Verify integrity before retrieving DTG
         violations = aggregator.verify_integrity()
         assert len(violations) == 0, f"Expected no violations, got: {violations}"
-        
+
         # Get final DTG
         nodes, edges = aggregator.get_dtg()
-        
+
         # Verify aggregation results
         assert len(nodes) == 3  # ClassA, method1, func
         assert len(edges) == 2  # contains, call
-        
+
         # Verify node symbols
         node_symbols = {node.symbol for node in nodes}
         assert "module1.ClassA" in node_symbols
         assert "module1.ClassA.method1" in node_symbols
         assert "module2.func" in node_symbols
-        
+
         # Verify edge relationships
         edge_pairs = {(edge.source, edge.target) for edge in edges}
         assert ("module1.ClassA", "module1.ClassA.method1") in edge_pairs
         assert ("module2.func", "module1.ClassA.method1") in edge_pairs
-        
+
         # Verify no conflicts
         conflicts = aggregator.get_conflicts()
         assert len(conflicts) == 0
-    
+
     def test_aggregation_with_violations_detected(self):
         """Test that aggregation detects violations in aggregated DTG."""
+        from pathlib import Path
+
         from siof.free_threaded_indexer import DTGAggregator, ParseResult
         from siof.models import Artifact, DataNode, TransformEdge
-        from pathlib import Path
-        
+
         aggregator = DTGAggregator()
-        
+
         # Add result with integrity violations
         result = ParseResult(
             task_id=1,
@@ -4141,15 +4150,15 @@ class TestDTGAggregatorIntegration:
             duration_ms=10.0,
             success=True
         )
-        
+
         aggregator.add_result(result)
-        
+
         # Verify integrity - should detect violations
         violations = aggregator.verify_integrity()
         assert len(violations) == 2
         assert any("Self-loop" in v for v in violations)
         assert any("Invalid confidence" in v for v in violations)
-        
+
         # DTG can still be retrieved even with violations
         nodes, edges = aggregator.get_dtg()
         assert len(nodes) == 1
@@ -4431,6 +4440,7 @@ class TestFreeThreadedIndexerAPICompatibility:
     def test_constructor_signature_compatible(self):
         """FreeThreadedIndexer accepts the same constructor args as PythonIndexer."""
         import inspect
+
         from siof.free_threaded_indexer import FreeThreadedIndexer
         from siof.indexer import PythonIndexer
 
@@ -4469,6 +4479,7 @@ class TestFreeThreadedIndexerAPICompatibility:
     def test_build_returns_dict_with_required_keys(self):
         """build() returns a dict with the same keys as PythonIndexer.build()."""
         import tempfile
+
         from siof.free_threaded_indexer import FreeThreadedIndexer
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -4492,6 +4503,7 @@ class TestFreeThreadedIndexerAPICompatibility:
     def test_update_returns_dict_with_required_keys(self):
         """update() returns a dict with the same keys as PythonIndexer.update()."""
         import tempfile
+
         from siof.free_threaded_indexer import FreeThreadedIndexer
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -4514,6 +4526,7 @@ class TestFreeThreadedIndexerAPICompatibility:
     def test_build_result_values_are_non_negative(self):
         """build() result values are non-negative integers."""
         import tempfile
+
         from siof.free_threaded_indexer import FreeThreadedIndexer
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -4534,6 +4547,7 @@ class TestFreeThreadedIndexerAPICompatibility:
     def test_init_and_close_are_idempotent(self):
         """init() and close() can be called without errors."""
         import tempfile
+
         from siof.free_threaded_indexer import FreeThreadedIndexer
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -4558,6 +4572,7 @@ class TestSingleThreadedFallbackMode:
     def test_fallback_mode_uses_workers_1_in_build(self):
         """When mode.parallel is False, build() uses workers=1."""
         import tempfile
+
         from siof.free_threaded_indexer import FreeThreadedIndexer, WorkPool
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -4596,6 +4611,7 @@ class TestSingleThreadedFallbackMode:
         """When mode.parallel is False, build() logs the fallback reason."""
         import logging
         import tempfile
+
         from siof.free_threaded_indexer import FreeThreadedIndexer
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -4624,6 +4640,7 @@ class TestSingleThreadedFallbackMode:
     def test_parallel_mode_uses_configured_workers(self):
         """When mode.parallel is True, build() uses the configured worker count."""
         import tempfile
+
         from siof.free_threaded_indexer import FreeThreadedIndexer, WorkPool
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -4660,6 +4677,7 @@ class TestSingleThreadedFallbackMode:
     def test_fallback_produces_same_results_as_parallel(self):
         """Fallback mode produces the same build results as parallel mode."""
         import tempfile
+
         from siof.free_threaded_indexer import FreeThreadedIndexer
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -4726,6 +4744,7 @@ class TestSingleThreadedModeEquivalenceProperties:
         results to sequential (fallback) mode.
         """
         import tempfile
+
         from siof.free_threaded_indexer import FreeThreadedIndexer
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -4841,6 +4860,7 @@ class TestDTGSemanticEquivalenceProperties:
         (same nodes, same edges, same relationships).
         """
         import tempfile
+
         from siof.free_threaded_indexer import FreeThreadedIndexer
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -4990,6 +5010,7 @@ class TestPartialResultsPreservationProperties:
         all successful parse results SHALL be stored in the repository.
         """
         import tempfile
+
         from siof.free_threaded_indexer import FreeThreadedIndexer
         from siof.repository import Repository
 
@@ -5120,7 +5141,13 @@ class TestDTGIntegrityVerificationProperties:
         no orphaned nodes (both source and target missing).
         """
         import tempfile
-        from siof.free_threaded_indexer import DTGAggregator, FreeThreadedIndexer, ParseTask, ParseWorker
+
+        from siof.free_threaded_indexer import (
+            DTGAggregator,
+            FreeThreadedIndexer,
+            ParseTask,
+            ParseWorker,
+        )
 
         with tempfile.TemporaryDirectory() as tmpdir:
             repo = Path(tmpdir)
@@ -5168,7 +5195,7 @@ class TestDTGIntegrityVerificationProperties:
             # Property: DTG integrity verification passes (no violations)
             violations = aggregator.verify_integrity()
             assert violations == [], (
-                f"DTG integrity violations found in parallel DTG:\n"
+                "DTG integrity violations found in parallel DTG:\n"
                 + "\n".join(violations)
             )
 
@@ -5472,7 +5499,6 @@ class TestProgressReporter:
 
     def test_update_logs_after_interval_elapses(self):
         """update() must log progress once the interval has elapsed."""
-        import time
 
         reporter = self._make_reporter(total=100, interval=0.0)  # always report
 
@@ -5525,7 +5551,6 @@ class TestProgressReporter:
 
     def test_update_resets_last_report_time_after_logging(self):
         """After logging, _last_report_time is updated so next call won't log immediately."""
-        import time
 
         reporter = self._make_reporter(total=100, interval=0.0)
         reporter._last_report_time = reporter._start_time - 10.0

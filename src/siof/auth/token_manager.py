@@ -2,8 +2,6 @@
 
 import logging
 import time
-import uuid
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +37,7 @@ class TokenManager:
         }
         logger.debug(f"Stored refresh token {jti} for user {user_id}")
 
-    def validate_refresh_token(self, jti: str) -> Optional[dict]:
+    def validate_refresh_token(self, jti: str) -> dict | None:
         """Validate a refresh token.
 
         Args:
@@ -131,7 +129,7 @@ class TokenManager:
         logger.debug(f"Cleaned up {len(expired_tokens)} expired refresh tokens")
         return len(expired_tokens)
 
-    def get_token_status(self, jti: str) -> Optional[dict]:
+    def get_token_status(self, jti: str) -> dict | None:
         """Get status of a refresh token.
 
         Args:

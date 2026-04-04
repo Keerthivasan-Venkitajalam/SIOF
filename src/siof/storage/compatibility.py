@@ -2,7 +2,7 @@
 
 import logging
 import warnings
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from siof.storage.backend import Edge, Node
 from siof.storage.distributed_repository import DistributedRepository, IsolationLevel
@@ -45,7 +45,7 @@ class RepositoryAdapter:
         node_id: str,
         node_type: str,
         name: str,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """Add a node to the repository (v1.0 API).
         
@@ -73,7 +73,7 @@ class RepositoryAdapter:
         self._repository.create_node(node)
         logger.debug(f"Added node: {node_id}")
 
-    def get_node(self, node_id: str) -> Optional[Dict[str, Any]]:
+    def get_node(self, node_id: str) -> dict[str, Any] | None:
         """Get a node from the repository (v1.0 API).
         
         This method provides backward compatibility with v1.0 Repository.get_node().
@@ -99,7 +99,7 @@ class RepositoryAdapter:
     def update_node(
         self,
         node_id: str,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """Update a node in the repository (v1.0 API).
         
@@ -143,7 +143,7 @@ class RepositoryAdapter:
         self._repository.delete_node(node_id)
         logger.debug(f"Deleted node: {node_id}")
 
-    def get_all_nodes(self) -> List[Dict[str, Any]]:
+    def get_all_nodes(self) -> list[dict[str, Any]]:
         """Get all nodes from the repository (v1.0 API).
         
         This method provides backward compatibility with v1.0 Repository.get_all_nodes().
@@ -172,7 +172,7 @@ class RepositoryAdapter:
         source_id: str,
         target_id: str,
         edge_type: str,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """Add an edge to the repository (v1.0 API).
         
@@ -204,7 +204,7 @@ class RepositoryAdapter:
         self,
         source_id: str,
         target_id: str,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Get an edge from the repository (v1.0 API).
         
         This method provides backward compatibility with v1.0 Repository.get_edge().
@@ -248,7 +248,7 @@ class RepositoryAdapter:
         self._repository.delete_edge(source_id, target_id)
         logger.debug(f"Deleted edge: {source_id} -> {target_id}")
 
-    def get_all_edges(self) -> List[Dict[str, Any]]:
+    def get_all_edges(self) -> list[dict[str, Any]]:
         """Get all edges from the repository (v1.0 API).
         
         This method provides backward compatibility with v1.0 Repository.get_all_edges().
@@ -272,7 +272,7 @@ class RepositoryAdapter:
     # Query Operations (v1.0 API)
     # ========================================================================
 
-    def get_lineage(self, node_id: str) -> List[Dict[str, Any]]:
+    def get_lineage(self, node_id: str) -> list[dict[str, Any]]:
         """Get lineage for a node (v1.0 API).
         
         This method provides backward compatibility with v1.0 Repository.get_lineage().
@@ -295,7 +295,7 @@ class RepositoryAdapter:
             for node in nodes
         ]
 
-    def get_dependents(self, node_id: str) -> List[Dict[str, Any]]:
+    def get_dependents(self, node_id: str) -> list[dict[str, Any]]:
         """Get dependents for a node (v1.0 API).
         
         This method provides backward compatibility with v1.0 Repository.get_dependents().
@@ -318,7 +318,7 @@ class RepositoryAdapter:
             for node in nodes
         ]
 
-    def find_path(self, source_id: str, target_id: str) -> Optional[List[Dict[str, Any]]]:
+    def find_path(self, source_id: str, target_id: str) -> list[dict[str, Any]] | None:
         """Find path between two nodes (v1.0 API).
         
         This method provides backward compatibility with v1.0 Repository.find_path().
@@ -345,7 +345,7 @@ class RepositoryAdapter:
             for node in path
         ]
 
-    def find_cycles(self) -> List[List[Dict[str, Any]]]:
+    def find_cycles(self) -> list[list[dict[str, Any]]]:
         """Find cycles in the graph (v1.0 API).
         
         This method provides backward compatibility with v1.0 Repository.find_cycles().
@@ -372,7 +372,7 @@ class RepositoryAdapter:
     # Deprecated Methods (v1.0 API with warnings)
     # ========================================================================
 
-    def query(self, query_str: str, params: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    def query(self, query_str: str, params: dict[str, Any] | None = None) -> list[dict[str, Any]]:
         """Execute a query (v1.0 API - DEPRECATED).
         
         This method is deprecated. Use find_lineage, find_dependents, or find_path instead.
@@ -437,7 +437,7 @@ class RepositoryAdapter:
     # Backend Information
     # ========================================================================
 
-    def get_backend_info(self) -> Dict[str, Any]:
+    def get_backend_info(self) -> dict[str, Any]:
         """Get information about the underlying backend.
         
         Args:
@@ -447,7 +447,7 @@ class RepositoryAdapter:
         """
         return self._repository.get_backend_info()
 
-    def get_cache_metrics(self) -> Dict[str, Any]:
+    def get_cache_metrics(self) -> dict[str, Any]:
         """Get cache performance metrics.
         
         Args:
@@ -457,7 +457,7 @@ class RepositoryAdapter:
         """
         return self._repository.get_cache_metrics()
 
-    def get_transaction_metrics(self) -> Dict[str, Any]:
+    def get_transaction_metrics(self) -> dict[str, Any]:
         """Get transaction metrics.
         
         Args:

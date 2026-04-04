@@ -3,7 +3,7 @@
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from siof.storage.backend import Edge, Node, StorageBackend
 from siof.storage.exceptions import StorageException
@@ -44,12 +44,12 @@ class MigrationTool:
 
         self.source_backend = source_backend
         self.target_backend = target_backend
-        self._exported_nodes: List[Dict[str, Any]] = []
-        self._exported_edges: List[Dict[str, Any]] = []
-        self._imported_nodes: List[str] = []
-        self._imported_edges: List[tuple[str, str]] = []
+        self._exported_nodes: list[dict[str, Any]] = []
+        self._exported_edges: list[dict[str, Any]] = []
+        self._imported_nodes: list[str] = []
+        self._imported_edges: list[tuple[str, str]] = []
 
-    def export(self, output_file: str) -> Dict[str, Any]:
+    def export(self, output_file: str) -> dict[str, Any]:
         """Export all nodes and edges from source backend.
         
         Args:
@@ -115,7 +115,7 @@ class MigrationTool:
             logger.error(f"Export failed: {e}")
             raise StorageException(f"Export failed: {e}") from e
 
-    def import_data(self, input_file: str) -> Dict[str, Any]:
+    def import_data(self, input_file: str) -> dict[str, Any]:
         """Import nodes and edges from JSON file to target backend.
         
         Args:
@@ -135,7 +135,7 @@ class MigrationTool:
 
         try:
             # Load data from file
-            with open(input_file, "r") as f:
+            with open(input_file) as f:
                 import_data = json.load(f)
 
             nodes_data = import_data.get("nodes", [])
@@ -171,7 +171,7 @@ class MigrationTool:
                 logger.error(f"Rollback failed: {rollback_error}")
             raise StorageException(f"Import failed: {e}") from e
 
-    def validate_import(self) -> Dict[str, Any]:
+    def validate_import(self) -> dict[str, Any]:
         """Validate that imported data matches exported data.
         
         Returns:
@@ -256,7 +256,7 @@ class MigrationTool:
             logger.error(f"Rollback failed: {e}")
             raise StorageException(f"Rollback failed: {e}") from e
 
-    def _export_nodes(self) -> List[Dict[str, Any]]:
+    def _export_nodes(self) -> list[dict[str, Any]]:
         """Export all nodes from source backend.
         
         Returns:
@@ -282,7 +282,7 @@ class MigrationTool:
             logger.error(f"Failed to export nodes: {e}")
             raise
 
-    def _export_edges(self) -> List[Dict[str, Any]]:
+    def _export_edges(self) -> list[dict[str, Any]]:
         """Export all edges from source backend.
         
         Returns:
@@ -308,7 +308,7 @@ class MigrationTool:
             logger.error(f"Failed to export edges: {e}")
             raise
 
-    def _node_to_dict(self, result: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def _node_to_dict(self, result: dict[str, Any]) -> dict[str, Any] | None:
         """Convert query result to node dictionary.
         
         Args:
@@ -351,7 +351,7 @@ class MigrationTool:
             logger.debug(f"Failed to convert result to node dict: {e}")
             return None
 
-    def _edge_to_dict(self, result: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def _edge_to_dict(self, result: dict[str, Any]) -> dict[str, Any] | None:
         """Convert query result to edge dictionary.
         
         Args:
@@ -401,7 +401,7 @@ class MigrationTool:
             logger.debug(f"Failed to convert result to edge dict: {e}")
             return None
 
-    def _import_nodes(self, nodes_data: List[Dict[str, Any]]) -> int:
+    def _import_nodes(self, nodes_data: list[dict[str, Any]]) -> int:
         """Import nodes to target backend.
         
         Args:
@@ -425,7 +425,7 @@ class MigrationTool:
         logger.debug(f"Imported {imported} nodes")
         return imported
 
-    def _import_edges(self, edges_data: List[Dict[str, Any]]) -> int:
+    def _import_edges(self, edges_data: list[dict[str, Any]]) -> int:
         """Import edges to target backend.
         
         Args:
@@ -452,7 +452,7 @@ class MigrationTool:
         logger.debug(f"Imported {imported} edges")
         return imported
 
-    def _dict_to_node(self, data: Dict[str, Any]) -> Node:
+    def _dict_to_node(self, data: dict[str, Any]) -> Node:
         """Convert dictionary to Node object.
         
         Args:
@@ -468,7 +468,7 @@ class MigrationTool:
             metadata=data.get("metadata", {}),
         )
 
-    def _dict_to_edge(self, data: Dict[str, Any]) -> Edge:
+    def _dict_to_edge(self, data: dict[str, Any]) -> Edge:
         """Convert dictionary to Edge object.
         
         Args:
@@ -486,8 +486,8 @@ class MigrationTool:
 
     def _validate_export(
         self,
-        nodes_data: List[Dict[str, Any]],
-        edges_data: List[Dict[str, Any]],
+        nodes_data: list[dict[str, Any]],
+        edges_data: list[dict[str, Any]],
     ) -> None:
         """Validate exported data for consistency.
         
@@ -521,8 +521,8 @@ class MigrationTool:
 
     def _validate_import(
         self,
-        nodes_data: List[Dict[str, Any]],
-        edges_data: List[Dict[str, Any]],
+        nodes_data: list[dict[str, Any]],
+        edges_data: list[dict[str, Any]],
     ) -> str:
         """Validate imported data matches exported data.
         

@@ -3,8 +3,9 @@
 import logging
 import random
 import time
+from collections.abc import Callable
 from enum import Enum
-from typing import Any, Callable, Optional, Type, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +36,7 @@ class RetryPolicy:
     """
 
     # Errors that are considered transient and should be retried
-    TRANSIENT_ERRORS: Tuple[Type[Exception], ...] = (
+    TRANSIENT_ERRORS: tuple[type[Exception], ...] = (
         ConnectionError,
         TimeoutError,
         OSError,
@@ -45,7 +46,7 @@ class RetryPolicy:
     )
 
     # Errors that are permanent and should fail immediately
-    PERMANENT_ERRORS: Tuple[Type[Exception], ...] = (
+    PERMANENT_ERRORS: tuple[type[Exception], ...] = (
         ValueError,
         KeyError,
         TypeError,
@@ -121,7 +122,7 @@ class RetryPolicy:
             The original exception if all retries are exhausted or
             a permanent error occurs
         """
-        last_error: Optional[Exception] = None
+        last_error: Exception | None = None
         func_name = getattr(func, "__name__", str(func))
 
         for attempt in range(self.max_retries + 1):

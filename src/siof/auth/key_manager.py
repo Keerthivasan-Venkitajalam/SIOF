@@ -3,7 +3,6 @@
 import logging
 import time
 import uuid
-from typing import Optional
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -28,7 +27,7 @@ class KeyManager:
         # Storage for active keys
         # Maps key_id -> {"private_key_pem": str, "public_key_pem": str, "created_at": int, "expires_at": Optional[int]}
         self._keys: dict[str, dict] = {}
-        self._current_key_id: Optional[str] = None
+        self._current_key_id: str | None = None
 
     def generate_key_pair(self, key_size: int = 4096) -> tuple[str, str]:
         """Generate RSA key pair.
@@ -153,7 +152,7 @@ class KeyManager:
         )
         return new_key_id
 
-    def get_private_key(self, key_id: Optional[str] = None) -> Optional[str]:
+    def get_private_key(self, key_id: str | None = None) -> str | None:
         """Get private key for signing.
 
         Args:
@@ -170,7 +169,7 @@ class KeyManager:
 
         return self._keys[key_id]["private_key_pem"]
 
-    def get_public_key(self, key_id: str) -> Optional[str]:
+    def get_public_key(self, key_id: str) -> str | None:
         """Get public key for verification.
 
         Args:
@@ -200,7 +199,7 @@ class KeyManager:
 
         return active_keys
 
-    def get_current_key_id(self) -> Optional[str]:
+    def get_current_key_id(self) -> str | None:
         """Get the current key ID used for signing.
 
         Returns:
@@ -227,7 +226,7 @@ class KeyManager:
 
         return len(expired_keys)
 
-    def get_key_status(self, key_id: str) -> Optional[dict]:
+    def get_key_status(self, key_id: str) -> dict | None:
         """Get status of a key.
 
         Args:

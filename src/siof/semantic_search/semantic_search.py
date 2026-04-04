@@ -6,7 +6,7 @@ import time
 from typing import Any
 
 from .code_embedder import CodeEmbedder
-from .models import CodeSymbol, SearchResult, SearchResults
+from .models import CodeSymbol, SearchResults
 from .vector_store import VectorStore
 
 

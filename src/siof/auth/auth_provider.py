@@ -3,11 +3,10 @@
 import logging
 import time
 import uuid
-from typing import Optional
 
 import jwt
 
-from .models import PublicKey, TokenPayload, TokenPair
+from .models import PublicKey, TokenPair, TokenPayload
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +40,7 @@ class AuthProvider:
         # In-memory storage for public keys
         # Maps key_id -> PublicKey
         self._public_keys: dict[str, PublicKey] = {}
-        self._current_key_id: Optional[str] = None
+        self._current_key_id: str | None = None
 
     def generate_tokens(
         self, user_id: str, org_id: str, roles: list[str]
@@ -113,7 +112,7 @@ class AuthProvider:
             refresh_token_expires_in=self.refresh_token_expiry_seconds,
         )
 
-    def verify_token(self, token: str) -> Optional[TokenPayload]:
+    def verify_token(self, token: str) -> TokenPayload | None:
         """Verify JWT token signature and expiry.
 
         Args:
@@ -225,7 +224,7 @@ class AuthProvider:
         """
         return list(self._public_keys.values())
 
-    def get_current_key_id(self) -> Optional[str]:
+    def get_current_key_id(self) -> str | None:
         """Get the current key ID used for signing.
 
         Returns:

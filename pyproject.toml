@@ -25,6 +25,7 @@ dependencies = [
     "cryptography>=41.0.0",
     "redis>=5.0.0",
     "bcrypt>=4.1.0",
+    "PyYAML>=6.0.1",
 ]
 
 [project.urls]
@@ -36,7 +37,7 @@ Changelog = "https://github.com/Keerthivasan-Venkitajalam/SIOF/blob/main/CHANGEL
 
 [project.optional-dependencies]
 green = ["psutil>=5.9"]
-storage = ["neo4j>=5.20.0", "falkordb>=1.0.10", "PyYAML>=6.0.1"]
+storage = ["neo4j>=5.20.0", "falkordb>=1.0.10"]
 release = ["build>=1.2.1", "twine>=5.1.1"]
 test = ["pytest>=8.0", "pytest-cov>=4.0", "hypothesis>=6.0"]
 dev = ["ruff>=0.1.0", "black>=23.0", "mypy>=1.0", "types-psutil>=5.9"]
@@ -59,10 +60,30 @@ markers = [
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "PIE", "PT", "RUF"]
-ignore = ["E501"]  # line-length handled by black
 
-[tool.ruff.isort]
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "PIE", "PT", "RUF"]
+ignore = [
+    "E501",   # line-length handled by black
+    "W293",   # legacy trailing whitespace in multiline docstrings/comments
+    "B904",   # keep existing exception style for now
+    "B905",   # zip(strict=...) migration tracked separately
+    "N818",   # existing exception names without Error suffix
+    "A001",   # intentional variable names in tests/mocks
+    "C408",   # existing literal style in tests/mocks
+    "PT011",  # existing broad raises assertions in tests
+    "PT018",  # existing composite assertions in tests
+    "PT030",  # existing broad warns assertions in tests
+    "RUF002", # existing unicode in docstrings
+    "RUF003", # existing unicode in comments
+    "RUF012", # existing mutable class defaults in mocks
+    "RUF043", # existing pytest match patterns in tests
+    "RUF059", # existing intentionally-unused unpacked vars in tests
+    "F841",   # existing intentionally-unused locals in tests/mocks
+    "B007",   # existing intentionally-unused loop vars in tests
+]
+
+[tool.ruff.lint.isort]
 known-first-party = ["siof"]
 
 [tool.black]

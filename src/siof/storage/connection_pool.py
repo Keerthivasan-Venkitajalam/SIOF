@@ -1,20 +1,21 @@
 """Thread-safe connection pool for database connections."""
 
 import logging
-from queue import Queue, Empty
-from threading import Lock, Condition
-from typing import Any, Callable, Dict, Optional
+from collections.abc import Callable
+from queue import Empty, Queue
+from threading import Condition, Lock
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
 class ConnectionPool:
     """Thread-safe connection pool with configurable size and metrics.
-    
+
     This pool maintains a set of reusable database connections, creating new
     connections on demand up to max_size, and validating connections before
     reuse to ensure they're still alive.
-    
+
     Attributes:
         min_size: Minimum number of idle connections to maintain
         max_size: Maximum number of connections (idle + active)
@@ -28,12 +29,12 @@ class ConnectionPool:
         max_size: int = 50,
     ) -> None:
         """Initialize connection pool.
-        
+
         Args:
             factory: Callable that creates new connections
             min_size: Minimum idle connections (default: 10)
             max_size: Maximum total connections (default: 50)
-            
+
         Raises:
             ValueError: If min_size > max_size or invalid sizes
         """
@@ -78,20 +79,20 @@ class ConnectionPool:
                     logger.error(f"Failed to create initial connection: {e}")
                     raise
 
-    def acquire(self, timeout: Optional[float] = 5.0) -> Any:
+    def acquire(self, timeout: float | None = 5.0) -> Any:
         """Acquire a connection from the pool.
-        
+
         This method will:
         1. Try to get an idle connection from the pool
         2. If no idle connections, create a new one (if below max_size)
         3. If at max_size, wait for a connection to be released
-        
+
         Args:
             timeout: Maximum time to wait for a connection (seconds)
-            
+
         Returns:
             A database connection
-            
+
         Raises:
             TimeoutError: If no connection available within timeout
             Exception: If connection creation fails
@@ -143,18 +144,18 @@ class ConnectionPool:
                     f"Acquired released connection (active: {self.active_count})"
                 )
                 return conn
-            except Empty:
+            except Empty as exc:
                 raise TimeoutError(
                     f"No connection available after waiting {timeout} seconds"
-                )
+                ) from exc
 
     def release(self, conn: Any) -> None:
         """Release a connection back to the pool.
-        
+
         This method validates the connection before returning it to the pool.
         If validation fails, the connection is discarded and a new one is
         created to maintain min_size.
-        
+
         Args:
             conn: The connection to release
         """
@@ -187,13 +188,13 @@ class ConnectionPool:
 
     def _validate_connection(self, conn: Any) -> bool:
         """Validate that a connection is still alive.
-        
+
         This method checks if the connection is still valid by calling
         get_connection_status() if available, or attempting a simple operation.
-        
+
         Args:
             conn: The connection to validate
-            
+
         Returns:
             True if connection is valid, False otherwise
         """
@@ -209,7 +210,7 @@ class ConnectionPool:
 
     def close_all(self) -> None:
         """Close all connections in the pool.
-        
+
         This method gracefully closes all idle connections and marks
         active connections for closure. Should be called during shutdown.
         """
@@ -232,9 +233,9 @@ class ConnectionPool:
 
             logger.info(f"Closed {closed_count} idle connections")
 
-    def get_metrics(self) -> Dict[str, int]:
+    def get_metrics(self) -> dict[str, int]:
         """Get connection pool metrics.
-        
+
         Returns:
             Dictionary containing:
             - active_connections: Currently active connections

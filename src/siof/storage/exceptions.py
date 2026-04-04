@@ -1,6 +1,6 @@
 """Exception hierarchy for storage backend operations."""
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class StorageException(Exception):
@@ -15,8 +15,8 @@ class StorageException(Exception):
     def __init__(
         self,
         message: str,
-        context: Optional[Dict[str, Any]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """Initialize StorageException.
         
@@ -44,7 +44,6 @@ class StorageException(Exception):
 class ConnectionError(StorageException):
     """Base exception for connection-related errors."""
 
-    pass
 
 
 class ConnectionRefused(ConnectionError):
@@ -54,7 +53,6 @@ class ConnectionRefused(ConnectionError):
     connections on the specified address/port.
     """
 
-    pass
 
 
 class ConnectionTimeout(ConnectionError):
@@ -63,7 +61,6 @@ class ConnectionTimeout(ConnectionError):
     This typically indicates network issues or the backend is overloaded.
     """
 
-    pass
 
 
 class ConnectionLost(ConnectionError):
@@ -72,7 +69,6 @@ class ConnectionLost(ConnectionError):
     This typically indicates a network issue or the backend crashed.
     """
 
-    pass
 
 
 # Query-related exceptions
@@ -81,7 +77,6 @@ class ConnectionLost(ConnectionError):
 class QueryError(StorageException):
     """Base exception for query execution errors."""
 
-    pass
 
 
 class InvalidQuery(QueryError):
@@ -90,7 +85,6 @@ class InvalidQuery(QueryError):
     This indicates a programming error in the query string.
     """
 
-    pass
 
 
 class QueryTimeout(QueryError):
@@ -99,7 +93,6 @@ class QueryTimeout(QueryError):
     This typically indicates the query is too complex or the backend is slow.
     """
 
-    pass
 
 
 class QueryFailed(QueryError):
@@ -108,7 +101,6 @@ class QueryFailed(QueryError):
     This could indicate data inconsistency, missing nodes/edges, etc.
     """
 
-    pass
 
 
 # Data-related exceptions
@@ -117,7 +109,6 @@ class QueryFailed(QueryError):
 class DataError(StorageException):
     """Base exception for data consistency errors."""
 
-    pass
 
 
 class DuplicateNode(DataError):
@@ -126,7 +117,6 @@ class DuplicateNode(DataError):
     This indicates a programming error or race condition.
     """
 
-    pass
 
 
 class ReferentialIntegrityError(DataError):
@@ -137,7 +127,6 @@ class ReferentialIntegrityError(DataError):
     - Deleting a node that has incoming or outgoing edges
     """
 
-    pass
 
 
 class DataConsistencyError(DataError):
@@ -146,7 +135,6 @@ class DataConsistencyError(DataError):
     This indicates the graph has become corrupted or inconsistent.
     """
 
-    pass
 
 
 # Transaction-related exceptions
@@ -155,7 +143,6 @@ class DataConsistencyError(DataError):
 class TransactionError(StorageException):
     """Base exception for transaction-related errors."""
 
-    pass
 
 
 class TransactionFailed(TransactionError):
@@ -164,7 +151,6 @@ class TransactionFailed(TransactionError):
     This could indicate a programming error or backend issue.
     """
 
-    pass
 
 
 class TransactionTimeout(TransactionError):
@@ -173,7 +159,6 @@ class TransactionTimeout(TransactionError):
     This typically indicates the transaction is taking too long.
     """
 
-    pass
 
 
 class TransactionRolledBack(TransactionError):
@@ -182,4 +167,3 @@ class TransactionRolledBack(TransactionError):
     This could be due to explicit rollback or automatic rollback on error.
     """
 
-    pass

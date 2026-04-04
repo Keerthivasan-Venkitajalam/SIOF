@@ -2,7 +2,6 @@
 
 import logging
 import re
-from typing import Optional
 
 import bcrypt
 
@@ -38,7 +37,7 @@ class PasswordManager:
         self.require_special = require_special
         self.bcrypt_cost = bcrypt_cost
 
-    def validate_password(self, password: str) -> tuple[bool, Optional[str]]:
+    def validate_password(self, password: str) -> tuple[bool, str | None]:
         """Validate password against requirements.
 
         Args:

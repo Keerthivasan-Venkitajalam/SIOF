@@ -1,14 +1,12 @@
 """FalkorDB (Redis-based) graph database backend implementation."""
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from siof.storage.backend import Edge, Node, StorageBackend
 from siof.storage.exceptions import (
-    ConnectionLost,
     ConnectionRefused,
     ConnectionTimeout,
-    DataConsistencyError,
     DuplicateNode,
     InvalidQuery,
     QueryFailed,
@@ -114,7 +112,7 @@ class FalkorDBBackend(StorageBackend):
                 )
             elif "timeout" in error_msg.lower():
                 raise ConnectionTimeout(
-                    f"Connection to FalkorDB timed out",
+                    "Connection to FalkorDB timed out",
                     context={"connection_string": self.connection_string},
                 )
             else:
@@ -248,7 +246,7 @@ class FalkorDBBackend(StorageBackend):
                 context={"node_id": node.id},
             )
 
-    def read_node(self, node_id: str) -> Optional[Node]:
+    def read_node(self, node_id: str) -> Node | None:
         """Read a node from FalkorDB.
         
         Args:
@@ -436,7 +434,7 @@ class FalkorDBBackend(StorageBackend):
 
             if not result.result_set:
                 raise ReferentialIntegrityError(
-                    f"Source or target node not found",
+                    "Source or target node not found",
                     context={
                         "source_id": edge.source_id,
                         "target_id": edge.target_id,
@@ -463,7 +461,7 @@ class FalkorDBBackend(StorageBackend):
                 },
             )
 
-    def read_edge(self, source_id: str, target_id: str) -> Optional[Edge]:
+    def read_edge(self, source_id: str, target_id: str) -> Edge | None:
         """Read an edge between two nodes from FalkorDB.
         
         Args:
@@ -555,7 +553,7 @@ class FalkorDBBackend(StorageBackend):
                 context={"source_id": source_id, "target_id": target_id},
             )
 
-    def query(self, query_str: str, params: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def query(self, query_str: str, params: dict[str, Any]) -> list[dict[str, Any]]:
         """Execute a query against FalkorDB.
         
         Args:
@@ -601,7 +599,7 @@ class FalkorDBBackend(StorageBackend):
                 )
             elif "timeout" in error_msg.lower():
                 raise QueryTimeout(
-                    f"Query execution timed out",
+                    "Query execution timed out",
                     context={"query": query_str[:100]},
                 )
             else:
@@ -665,7 +663,7 @@ class FalkorDBBackend(StorageBackend):
 
             if "timeout" in error_msg.lower():
                 raise TransactionTimeout(
-                    f"Transaction commit timed out",
+                    "Transaction commit timed out",
                     context={"error": error_msg},
                 )
             else:
@@ -703,7 +701,7 @@ class FalkorDBBackend(StorageBackend):
                 context={"error": error_msg},
             )
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """Get performance metrics from the backend.
         
         Returns:

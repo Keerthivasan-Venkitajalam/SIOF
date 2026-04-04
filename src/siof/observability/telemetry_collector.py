@@ -55,7 +55,7 @@ class SpanRecord:
 class SpanContext:
     """Context manager for safe span lifecycle handling."""
 
-    def __init__(self, collector: "TelemetryCollector", span: SpanRecord):
+    def __init__(self, collector: TelemetryCollector, span: SpanRecord):
         self.collector = collector
         self.span = span
 
@@ -100,7 +100,7 @@ class TelemetryCollector:
         self.config = config
         self._initialized = True
 
-    def get_tracer(self, _name: str) -> "TelemetryCollector":
+    def get_tracer(self, _name: str) -> TelemetryCollector:
         """Return tracer-compatible object.
 
         This lightweight collector acts as its own tracer instance.

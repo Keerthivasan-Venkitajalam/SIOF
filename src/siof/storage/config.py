@@ -2,8 +2,8 @@
 
 import logging
 import os
-from dataclasses import dataclass, field, asdict
-from typing import Any, Dict, List, Optional
+from dataclasses import asdict, dataclass, field
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -138,7 +138,7 @@ class BackendConfig:
     name: str
     type: str
     connection_string: str
-    options: Dict[str, Any] = field(default_factory=dict)
+    options: dict[str, Any] = field(default_factory=dict)
     is_primary: bool = True
 
     def validate(self) -> None:
@@ -173,7 +173,7 @@ class StorageConfig:
         log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
     """
 
-    backends: List[BackendConfig] = field(default_factory=list)
+    backends: list[BackendConfig] = field(default_factory=list)
     connection_pool: ConnectionPoolConfig = field(default_factory=ConnectionPoolConfig)
     retry_policy: RetryPolicyConfig = field(default_factory=RetryPolicyConfig)
     cache: CacheConfig = field(default_factory=CacheConfig)
@@ -239,7 +239,7 @@ class StorageConfig:
 
         logger.info(f"Loading configuration from {yaml_file}")
 
-        with open(yaml_file, "r") as f:
+        with open(yaml_file) as f:
             data = yaml.safe_load(f)
 
         if not data:
@@ -301,7 +301,7 @@ class StorageConfig:
         return config
 
     @classmethod
-    def _from_dict(cls, data: Dict[str, Any]) -> "StorageConfig":
+    def _from_dict(cls, data: dict[str, Any]) -> "StorageConfig":
         """Create StorageConfig from dictionary.
         
         Args:
@@ -373,7 +373,7 @@ class StorageConfig:
         config.validate()
         return config
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert configuration to dictionary.
         
         Returns:

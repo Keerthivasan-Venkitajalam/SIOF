@@ -7,10 +7,10 @@ enabling different implementations and easy testing.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterator
-
+from typing import Any
 
 # ============================================================================
 # Storage Interfaces
@@ -62,42 +62,34 @@ class StorageBackend(ABC):
     @abstractmethod
     def connect(self) -> None:
         """Establish connection to storage."""
-        pass
 
     @abstractmethod
     def disconnect(self) -> None:
         """Close connection to storage."""
-        pass
 
     @abstractmethod
     def add_node(self, node: Node) -> None:
         """Add a node to the graph."""
-        pass
 
     @abstractmethod
     def add_edge(self, edge: Edge) -> None:
         """Add an edge to the graph."""
-        pass
 
     @abstractmethod
     def get_node(self, node_id: str) -> Node | None:
         """Retrieve a node by ID."""
-        pass
 
     @abstractmethod
     def query(self, cypher: str, params: dict[str, Any] | None = None) -> QueryResult:
         """Execute a Cypher query."""
-        pass
 
     @abstractmethod
     def batch_insert(self, nodes: list[Node], edges: list[Edge]) -> None:
         """Bulk insert nodes and edges."""
-        pass
 
     @abstractmethod
     def clear(self) -> None:
         """Clear all data."""
-        pass
 
 
 # ============================================================================
@@ -116,27 +108,22 @@ class CacheBackend(ABC):
     @abstractmethod
     def get(self, key: str) -> Any | None:
         """Get value from cache."""
-        pass
 
     @abstractmethod
     def set(self, key: str, value: Any, ttl: int | None = None) -> None:
         """Set value in cache with optional TTL."""
-        pass
 
     @abstractmethod
     def delete(self, key: str) -> None:
         """Delete key from cache."""
-        pass
 
     @abstractmethod
     def clear(self) -> None:
         """Clear all cache entries."""
-        pass
 
     @abstractmethod
     def exists(self, key: str) -> bool:
         """Check if key exists."""
-        pass
 
 
 # ============================================================================
@@ -178,22 +165,18 @@ class AuthProvider(ABC):
     @abstractmethod
     def authenticate(self, credentials: dict[str, Any]) -> AuthToken:
         """Authenticate user and return token."""
-        pass
 
     @abstractmethod
     def validate_token(self, token: str) -> User | None:
         """Validate token and return user."""
-        pass
 
     @abstractmethod
     def revoke_token(self, token: str) -> None:
         """Revoke a token."""
-        pass
 
     @abstractmethod
     def refresh_token(self, token: str) -> AuthToken:
         """Refresh an expiring token."""
-        pass
 
 
 # ============================================================================
@@ -231,24 +214,20 @@ class VectorStore(ABC):
     @abstractmethod
     def add_embedding(self, embedding: CodeEmbedding) -> None:
         """Add a code embedding."""
-        pass
 
     @abstractmethod
     def search(
         self, query_vector: list[float], top_k: int = 10, filters: dict[str, Any] | None = None
     ) -> list[SearchResult]:
         """Search for similar code."""
-        pass
 
     @abstractmethod
     def delete_embedding(self, symbol: str) -> None:
         """Delete an embedding."""
-        pass
 
     @abstractmethod
     def clear(self) -> None:
         """Clear all embeddings."""
-        pass
 
 
 class CodeEmbedder(ABC):
@@ -262,12 +241,10 @@ class CodeEmbedder(ABC):
     @abstractmethod
     def embed_code(self, code: str, metadata: dict[str, Any] | None = None) -> list[float]:
         """Generate embedding for code."""
-        pass
 
     @abstractmethod
     def embed_query(self, query: str) -> list[float]:
         """Generate embedding for search query."""
-        pass
 
 
 # ============================================================================
@@ -305,22 +282,18 @@ class ParallelExecutor(ABC):
     @abstractmethod
     def submit(self, task: ParseTask) -> None:
         """Submit a task for execution."""
-        pass
 
     @abstractmethod
     def get_results(self) -> Iterator[ParseResult]:
         """Get completed results."""
-        pass
 
     @abstractmethod
     def shutdown(self) -> None:
         """Shutdown executor."""
-        pass
 
     @abstractmethod
     def get_stats(self) -> dict[str, Any]:
         """Get execution statistics."""
-        pass
 
 
 # ============================================================================
@@ -361,24 +334,20 @@ class MetricsCollector(ABC):
     @abstractmethod
     def record_counter(self, name: str, value: float, labels: dict[str, str] | None = None) -> None:
         """Record a counter metric."""
-        pass
 
     @abstractmethod
     def record_gauge(self, name: str, value: float, labels: dict[str, str] | None = None) -> None:
         """Record a gauge metric."""
-        pass
 
     @abstractmethod
     def record_histogram(
         self, name: str, value: float, labels: dict[str, str] | None = None
     ) -> None:
         """Record a histogram metric."""
-        pass
 
     @abstractmethod
     def get_metrics(self) -> list[Metric]:
         """Get all recorded metrics."""
-        pass
 
 
 class TracingProvider(ABC):
@@ -392,19 +361,15 @@ class TracingProvider(ABC):
     @abstractmethod
     def start_span(self, operation: str, parent_span_id: str | None = None) -> Span:
         """Start a new span."""
-        pass
 
     @abstractmethod
     def end_span(self, span: Span) -> None:
         """End a span."""
-        pass
 
     @abstractmethod
     def add_span_tag(self, span: Span, key: str, value: Any) -> None:
         """Add a tag to a span."""
-        pass
 
     @abstractmethod
     def get_trace(self, trace_id: str) -> list[Span]:
         """Get all spans for a trace."""
-        pass

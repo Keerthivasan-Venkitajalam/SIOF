@@ -11,7 +11,8 @@ from __future__ import annotations
 import time
 import uuid
 from collections import defaultdict
-from typing import Any, Iterator
+from collections.abc import Iterator
+from typing import Any
 
 from .interfaces import (
     AuthProvider,
@@ -34,7 +35,6 @@ from .interfaces import (
     User,
     VectorStore,
 )
-
 
 # ============================================================================
 # Mock Storage

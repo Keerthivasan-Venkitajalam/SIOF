@@ -2,12 +2,13 @@
 
 import logging
 import time
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Any, Dict, List, Optional, Generator
 from enum import Enum
+from typing import Any
 
 from siof.storage.backend import Edge, Node, StorageBackend
-from siof.storage.exceptions import StorageException, TransactionFailed
+from siof.storage.exceptions import TransactionFailed
 from siof.storage.retry import RetryPolicy
 
 logger = logging.getLogger(__name__)
@@ -23,11 +24,11 @@ class IsolationLevel(Enum):
 
 class DistributedRepository:
     """Unified query interface for distributed graph storage.
-    
+
     This class provides a high-level API for interacting with distributed
     graph backends (Neo4j, FalkorDB, etc.) while abstracting away backend
     specifics. It integrates retry logic, caching, and query optimization.
-    
+
     Attributes:
         backend: The underlying StorageBackend instance
         retry_policy: RetryPolicy for handling transient failures
@@ -41,18 +42,18 @@ class DistributedRepository:
         backend: StorageBackend,
         cache_size: int = 1000,
         cache_ttl_seconds: int = 600,
-        retry_policy: Optional[RetryPolicy] = None,
+        retry_policy: RetryPolicy | None = None,
         transaction_timeout_seconds: int = 300,
     ) -> None:
         """Initialize DistributedRepository.
-        
+
         Args:
             backend: StorageBackend instance to use
             cache_size: Maximum number of cached items (default: 1000)
             cache_ttl_seconds: Cache TTL in seconds (default: 600)
             retry_policy: RetryPolicy instance (default: new instance with defaults)
             transaction_timeout_seconds: Transaction timeout in seconds (default: 300)
-            
+
         Raises:
             ValueError: If parameters are invalid
         """
@@ -72,7 +73,7 @@ class DistributedRepository:
         self.transaction_timeout_seconds = transaction_timeout_seconds
 
         # Cache structure: {key: (value, timestamp)}
-        self.cache: Dict[str, tuple[Any, float]] = {}
+        self.cache: dict[str, tuple[Any, float]] = {}
 
         # Cache statistics
         self._cache_hits = 0
@@ -81,8 +82,8 @@ class DistributedRepository:
 
         # Transaction state
         self._transaction_active = False
-        self._transaction_start_time: Optional[float] = None
-        self._transaction_savepoints: List[str] = []
+        self._transaction_start_time: float | None = None
+        self._transaction_savepoints: list[str] = []
         self._isolation_level = IsolationLevel.READ_COMMITTED
 
         # Transaction metrics
@@ -92,10 +93,10 @@ class DistributedRepository:
 
     def create_node(self, node: Node) -> None:
         """Create a new node with retry logic.
-        
+
         Args:
             node: Node object to create
-            
+
         Raises:
             StorageException: If creation fails after retries
         """
@@ -109,15 +110,15 @@ class DistributedRepository:
             logger.error(f"Failed to create node {node.id}: {e}")
             raise
 
-    def read_node(self, node_id: str) -> Optional[Node]:
+    def read_node(self, node_id: str) -> Node | None:
         """Read a node with caching and retry logic.
-        
+
         Args:
             node_id: The node ID to read
-            
+
         Returns:
             Node object if found, None otherwise
-            
+
         Raises:
             StorageException: If read fails after retries
         """
@@ -149,10 +150,10 @@ class DistributedRepository:
 
     def update_node(self, node: Node) -> None:
         """Update an existing node with retry logic.
-        
+
         Args:
             node: Node object with updated properties
-            
+
         Raises:
             StorageException: If update fails after retries
         """
@@ -168,10 +169,10 @@ class DistributedRepository:
 
     def delete_node(self, node_id: str) -> None:
         """Delete a node with retry logic.
-        
+
         Args:
             node_id: The node ID to delete
-            
+
         Raises:
             StorageException: If deletion fails after retries
         """
@@ -187,10 +188,10 @@ class DistributedRepository:
 
     def create_edge(self, edge: Edge) -> None:
         """Create a new edge with retry logic.
-        
+
         Args:
             edge: Edge object to create
-            
+
         Raises:
             StorageException: If creation fails after retries
         """
@@ -206,11 +207,11 @@ class DistributedRepository:
 
     def delete_edge(self, source_id: str, target_id: str) -> None:
         """Delete an edge with retry logic.
-        
+
         Args:
             source_id: ID of the source node
             target_id: ID of the target node
-            
+
         Raises:
             StorageException: If deletion fails after retries
         """
@@ -224,18 +225,18 @@ class DistributedRepository:
             logger.error(f"Failed to delete edge {source_id} -> {target_id}: {e}")
             raise
 
-    def find_lineage(self, node_id: str) -> List[Node]:
+    def find_lineage(self, node_id: str) -> list[Node]:
         """Find all upstream nodes in the data lineage.
-        
+
         This method finds all nodes that contribute to the given node
         by traversing incoming edges recursively.
-        
+
         Args:
             node_id: The node ID to find lineage for
-            
+
         Returns:
             List of upstream Node objects
-            
+
         Raises:
             StorageException: If query fails
         """
@@ -266,18 +267,18 @@ class DistributedRepository:
             logger.error(f"Failed to find lineage for {node_id}: {e}")
             raise
 
-    def find_dependents(self, node_id: str) -> List[Node]:
+    def find_dependents(self, node_id: str) -> list[Node]:
         """Find all downstream nodes that depend on this node.
-        
+
         This method finds all nodes that are affected by the given node
         by traversing outgoing edges recursively.
-        
+
         Args:
             node_id: The node ID to find dependents for
-            
+
         Returns:
             List of downstream Node objects
-            
+
         Raises:
             StorageException: If query fails
         """
@@ -308,19 +309,19 @@ class DistributedRepository:
             logger.error(f"Failed to find dependents for {node_id}: {e}")
             raise
 
-    def find_path(self, source_id: str, target_id: str) -> Optional[List[Node]]:
+    def find_path(self, source_id: str, target_id: str) -> list[Node] | None:
         """Find the shortest path between two nodes.
-        
+
         This method finds the shortest path from source to target node
         by traversing edges.
-        
+
         Args:
             source_id: ID of the source node
             target_id: ID of the target node
-            
+
         Returns:
             List of Node objects representing the path, or None if no path exists
-            
+
         Raises:
             StorageException: If query fails
         """
@@ -347,13 +348,13 @@ class DistributedRepository:
             # Extract path nodes from first result
             path_nodes = []
             first_result = results[0]
-            
+
             # Handle different result formats
             path_data = first_result.get("path_nodes")
             if not path_data:
-                logger.debug(f"No path_nodes in result")
+                logger.debug("No path_nodes in result")
                 return None
-            
+
             for node_data in path_data:
                 node = self._result_to_node({"n": node_data})
                 if node:
@@ -366,15 +367,15 @@ class DistributedRepository:
             logger.error(f"Failed to find path from {source_id} to {target_id}: {e}")
             raise
 
-    def find_cycles(self) -> List[List[Node]]:
+    def find_cycles(self) -> list[list[Node]]:
         """Find all circular dependencies in the graph.
-        
+
         This method detects cycles in the graph which indicate circular
         dependencies that should be resolved.
-        
+
         Returns:
             List of cycles, where each cycle is a list of Node objects
-            
+
         Raises:
             StorageException: If query fails
         """
@@ -406,15 +407,15 @@ class DistributedRepository:
             logger.error(f"Failed to find cycles: {e}")
             raise
 
-    def query_nodes(self, filters: Dict[str, Any]) -> List[Node]:
+    def query_nodes(self, filters: dict[str, Any]) -> list[Node]:
         """Query nodes with flexible filtering.
-        
+
         Args:
             filters: Dictionary of filter conditions (e.g., {"type": "Symbol"})
-            
+
         Returns:
             List of matching Node objects
-            
+
         Raises:
             StorageException: If query fails
         """
@@ -456,15 +457,15 @@ class DistributedRepository:
             logger.error(f"Failed to query nodes: {e}")
             raise
 
-    def query_edges(self, filters: Dict[str, Any]) -> List[Edge]:
+    def query_edges(self, filters: dict[str, Any]) -> list[Edge]:
         """Query edges with flexible filtering.
-        
+
         Args:
             filters: Dictionary of filter conditions (e.g., {"edge_type": "CALLS"})
-            
+
         Returns:
             List of matching Edge objects
-            
+
         Raises:
             StorageException: If query fails
         """
@@ -511,10 +512,10 @@ class DistributedRepository:
         isolation_level: IsolationLevel = IsolationLevel.READ_COMMITTED,
     ) -> None:
         """Begin a new transaction.
-        
+
         Args:
             isolation_level: Transaction isolation level (default: READ_COMMITTED)
-            
+
         Raises:
             TransactionFailed: If transaction is already active or backend fails
         """
@@ -536,7 +537,7 @@ class DistributedRepository:
 
     def commit_transaction(self) -> None:
         """Commit the current transaction.
-        
+
         Raises:
             TransactionFailed: If no transaction is active or backend fails
         """
@@ -570,7 +571,7 @@ class DistributedRepository:
 
     def rollback_transaction(self) -> None:
         """Rollback the current transaction.
-        
+
         Raises:
             TransactionFailed: If no transaction is active or backend fails
         """
@@ -598,18 +599,18 @@ class DistributedRepository:
         isolation_level: IsolationLevel = IsolationLevel.READ_COMMITTED,
     ) -> Generator[None, None, None]:
         """Context manager for transactions.
-        
+
         Usage:
             with repository.transaction():
                 repository.create_node(node)
                 repository.create_edge(edge)
-        
+
         Args:
             isolation_level: Transaction isolation level
-            
+
         Yields:
             None
-            
+
         Raises:
             TransactionFailed: If transaction fails
         """
@@ -627,12 +628,12 @@ class DistributedRepository:
 
     def create_savepoint(self, savepoint_name: str) -> None:
         """Create a savepoint within the current transaction.
-        
+
         Savepoints allow partial rollback within a transaction.
-        
+
         Args:
             savepoint_name: Name of the savepoint
-            
+
         Raises:
             TransactionFailed: If no transaction is active
         """
@@ -653,10 +654,10 @@ class DistributedRepository:
 
     def rollback_to_savepoint(self, savepoint_name: str) -> None:
         """Rollback to a specific savepoint.
-        
+
         Args:
             savepoint_name: Name of the savepoint to rollback to
-            
+
         Raises:
             TransactionFailed: If savepoint doesn't exist or rollback fails
         """
@@ -672,11 +673,11 @@ class DistributedRepository:
             # Execute rollback query on backend
             query = f"ROLLBACK TO SAVEPOINT {savepoint_name}"
             self.retry_policy.execute(self.backend.query, query, {})
-            
+
             # Remove savepoints after this one
             idx = self._transaction_savepoints.index(savepoint_name)
             self._transaction_savepoints = self._transaction_savepoints[:idx + 1]
-            
+
             logger.debug(f"Rolled back to savepoint: {savepoint_name}")
         except Exception as e:
             logger.error(f"Failed to rollback to savepoint: {e}")
@@ -684,10 +685,10 @@ class DistributedRepository:
 
     def set_isolation_level(self, isolation_level: IsolationLevel) -> None:
         """Set the isolation level for the current transaction.
-        
+
         Args:
             isolation_level: The isolation level to set
-            
+
         Raises:
             TransactionFailed: If no transaction is active
         """
@@ -697,9 +698,9 @@ class DistributedRepository:
         logger.debug(f"Setting isolation level to: {isolation_level.value}")
         self._isolation_level = isolation_level
 
-    def get_transaction_metrics(self) -> Dict[str, Any]:
+    def get_transaction_metrics(self) -> dict[str, Any]:
         """Get transaction metrics.
-        
+
         Returns:
             Dictionary containing:
             - active_transactions: Number of active transactions
@@ -725,7 +726,7 @@ class DistributedRepository:
 
     def _cache_put(self, key: str, value: Any) -> None:
         """Add item to cache with LRU eviction.
-        
+
         Args:
             key: Cache key
             value: Value to cache
@@ -742,12 +743,12 @@ class DistributedRepository:
         self.cache[key] = (value, time.time())
         logger.debug(f"Cached item: {key}")
 
-    def _cache_get(self, key: str) -> Optional[Any]:
+    def _cache_get(self, key: str) -> Any | None:
         """Get item from cache if not expired.
-        
+
         Args:
             key: Cache key
-            
+
         Returns:
             Cached value if found and not expired, None otherwise
         """
@@ -769,9 +770,9 @@ class DistributedRepository:
         self.cache.clear()
         logger.debug("Cache invalidated")
 
-    def get_cache_metrics(self) -> Dict[str, Any]:
+    def get_cache_metrics(self) -> dict[str, Any]:
         """Get cache performance metrics.
-        
+
         Returns:
             Dictionary containing:
             - hits: Total cache hits
@@ -795,12 +796,12 @@ class DistributedRepository:
             "max_size": self.cache_size,
         }
 
-    def _result_to_node(self, result: Dict[str, Any]) -> Optional[Node]:
+    def _result_to_node(self, result: dict[str, Any]) -> Node | None:
         """Convert query result to Node object.
-        
+
         Args:
             result: Query result dictionary
-            
+
         Returns:
             Node object or None if conversion fails
         """
@@ -842,12 +843,12 @@ class DistributedRepository:
             logger.debug(f"Failed to convert result to node: {e}")
             return None
 
-    def _result_to_edge(self, result: Dict[str, Any]) -> Optional[Edge]:
+    def _result_to_edge(self, result: dict[str, Any]) -> Edge | None:
         """Convert query result to Edge object.
-        
+
         Args:
             result: Query result dictionary
-            
+
         Returns:
             Edge object or None if conversion fails
         """
@@ -881,9 +882,9 @@ class DistributedRepository:
             logger.debug(f"Failed to convert result to edge: {e}")
             return None
 
-    def get_backend_info(self) -> Dict[str, Any]:
+    def get_backend_info(self) -> dict[str, Any]:
         """Get information about the underlying backend.
-        
+
         Returns:
             Dictionary containing backend name, version, and status
         """

@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -19,7 +19,7 @@ class Node:
     id: str
     type: str
     name: str
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         """Validate node properties."""
@@ -45,7 +45,7 @@ class Edge:
     source_id: str
     target_id: str
     edge_type: str
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         """Validate edge properties."""
@@ -80,7 +80,6 @@ class StorageBackend(ABC):
             ConnectionTimeout: If connection attempt times out
             StorageException: For other connection-related errors
         """
-        pass
 
     @abstractmethod
     def disconnect(self) -> None:
@@ -92,7 +91,6 @@ class StorageBackend(ABC):
         Raises:
             StorageException: If disconnection fails
         """
-        pass
 
     @abstractmethod
     def create_node(self, node: Node) -> None:
@@ -105,10 +103,9 @@ class StorageBackend(ABC):
             DuplicateNode: If a node with the same id already exists
             StorageException: For other creation errors
         """
-        pass
 
     @abstractmethod
-    def read_node(self, node_id: str) -> Optional[Node]:
+    def read_node(self, node_id: str) -> Node | None:
         """Read a node by its ID.
         
         Args:
@@ -120,7 +117,6 @@ class StorageBackend(ABC):
         Raises:
             StorageException: For read errors
         """
-        pass
 
     @abstractmethod
     def update_node(self, node: Node) -> None:
@@ -132,7 +128,6 @@ class StorageBackend(ABC):
         Raises:
             StorageException: If node not found or update fails
         """
-        pass
 
     @abstractmethod
     def delete_node(self, node_id: str) -> None:
@@ -148,7 +143,6 @@ class StorageBackend(ABC):
             ReferentialIntegrityError: If node has edges
             StorageException: For deletion errors
         """
-        pass
 
     @abstractmethod
     def create_edge(self, edge: Edge) -> None:
@@ -161,10 +155,9 @@ class StorageBackend(ABC):
             ReferentialIntegrityError: If source or target node doesn't exist
             StorageException: For creation errors
         """
-        pass
 
     @abstractmethod
-    def read_edge(self, source_id: str, target_id: str) -> Optional[Edge]:
+    def read_edge(self, source_id: str, target_id: str) -> Edge | None:
         """Read an edge between two nodes.
         
         Args:
@@ -177,7 +170,6 @@ class StorageBackend(ABC):
         Raises:
             StorageException: For read errors
         """
-        pass
 
     @abstractmethod
     def delete_edge(self, source_id: str, target_id: str) -> None:
@@ -190,10 +182,9 @@ class StorageBackend(ABC):
         Raises:
             StorageException: For deletion errors
         """
-        pass
 
     @abstractmethod
-    def query(self, query_str: str, params: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def query(self, query_str: str, params: dict[str, Any]) -> list[dict[str, Any]]:
         """Execute a query against the backend.
         
         The query language depends on the backend (Cypher for Neo4j, etc.).
@@ -211,7 +202,6 @@ class StorageBackend(ABC):
             QueryTimeout: If query execution times out
             QueryFailed: For other query execution errors
         """
-        pass
 
     @abstractmethod
     def begin_transaction(self) -> None:
@@ -223,7 +213,6 @@ class StorageBackend(ABC):
         Raises:
             TransactionFailed: If transaction cannot be started
         """
-        pass
 
     @abstractmethod
     def commit_transaction(self) -> None:
@@ -235,7 +224,6 @@ class StorageBackend(ABC):
             TransactionFailed: If commit fails
             TransactionTimeout: If commit times out
         """
-        pass
 
     @abstractmethod
     def rollback_transaction(self) -> None:
@@ -246,7 +234,6 @@ class StorageBackend(ABC):
         Raises:
             TransactionFailed: If rollback fails
         """
-        pass
 
     @abstractmethod
     def get_backend_name(self) -> str:
@@ -255,7 +242,6 @@ class StorageBackend(ABC):
         Returns:
             Backend name (e.g., 'Neo4j', 'FalkorDB', 'SQLite')
         """
-        pass
 
     @abstractmethod
     def get_backend_version(self) -> str:
@@ -264,7 +250,6 @@ class StorageBackend(ABC):
         Returns:
             Version string (e.g., '5.0.0', '1.0.0')
         """
-        pass
 
     @abstractmethod
     def get_connection_status(self) -> bool:
@@ -275,10 +260,9 @@ class StorageBackend(ABC):
         Returns:
             True if connected and healthy, False otherwise
         """
-        pass
 
     @abstractmethod
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """Get performance metrics from the backend.
         
         Returns a dictionary containing metrics such as:
@@ -292,4 +276,3 @@ class StorageBackend(ABC):
         Returns:
             Dictionary of metrics
         """
-        pass

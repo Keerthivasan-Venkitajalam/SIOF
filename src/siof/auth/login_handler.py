@@ -2,7 +2,6 @@
 
 import logging
 import time
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +27,7 @@ class LoginHandler:
         # Maps user_id -> {"failed_attempts": int, "locked_until": Optional[int]}
         self._login_attempts: dict[str, dict] = {}
 
-    def check_account_lockout(self, user_id: str) -> tuple[bool, Optional[str]]:
+    def check_account_lockout(self, user_id: str) -> tuple[bool, str | None]:
         """Check if account is locked.
 
         Args:
@@ -57,7 +56,7 @@ class LoginHandler:
 
         return False, None
 
-    def record_failed_attempt(self, user_id: str) -> tuple[bool, Optional[str]]:
+    def record_failed_attempt(self, user_id: str) -> tuple[bool, str | None]:
         """Record a failed login attempt.
 
         Args:

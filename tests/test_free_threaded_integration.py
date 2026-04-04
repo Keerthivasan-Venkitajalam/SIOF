@@ -12,7 +12,6 @@ Requirements covered:
 from __future__ import annotations
 
 import logging
-import tempfile
 import threading
 import time
 from pathlib import Path
@@ -20,12 +19,10 @@ from pathlib import Path
 import pytest
 
 from siof.free_threaded_indexer import (
-    DTGAggregator,
     FreeThreadedIndexer,
     ProgressReporter,
     WorkPool,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers

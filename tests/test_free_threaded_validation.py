@@ -13,11 +13,8 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
 from siof.free_threaded_indexer import FreeThreadedIndexer, VersionDetector
 from siof.indexer import PythonIndexer
-
 
 # ---------------------------------------------------------------------------
 # Helpers

@@ -7,8 +7,9 @@ import logging
 import secrets
 import time
 import uuid
-from dataclasses import asdict, dataclass, field
-from typing import Any, Callable
+from collections.abc import Callable
+from dataclasses import asdict, dataclass
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +58,7 @@ class APIKeyManager:
         return int(time.time())
 
     def _hash_key(self, *, raw_key: str, salt: str) -> str:
-        return hashlib.sha256(f"{salt}:{raw_key}".encode("utf-8")).hexdigest()
+        return hashlib.sha256(f"{salt}:{raw_key}".encode()).hexdigest()
 
     @classmethod
     def validate_key_format(cls, raw_key: str) -> bool:
