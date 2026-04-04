@@ -1,0 +1,14 @@
+{{- if .Values.monitoring.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: siof
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: siof-app
+  endpoints:
+    - port: http
+      path: /metrics
+{{- end }}

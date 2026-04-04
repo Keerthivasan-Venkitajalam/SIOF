@@ -1,0 +1,24 @@
+{{- if .Values.istio.enabled }}
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: siof
+  namespace: {{ .Values.namespace }}
+spec:
+  hosts:
+    - {{ .Values.ingress.hostname }}
+  gateways:
+    - mesh
+  http:
+    - route:
+        - destination:
+            host: siof-app
+            port:
+              number: {{ .Values.service.port }}
+          weight: 90
+        - destination:
+            host: siof-app-canary
+            port:
+              number: {{ .Values.service.port }}
+          weight: 10
+{{- end }}

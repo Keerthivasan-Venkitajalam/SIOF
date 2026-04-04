@@ -1,0 +1,6 @@
+# Example: canary deployment with traffic split
+istio:
+  enabled: true
+
+deployment:
+  replicas: 6

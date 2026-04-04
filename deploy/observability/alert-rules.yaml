@@ -1,0 +1,12 @@
+groups:
+  - name: siof.rules
+    rules:
+      - alert: HighErrorRate
+        expr: rate(errors_total[5m]) > 0.05
+        for: 5m
+      - alert: HighLatencyP95
+        expr: request_duration_seconds_p95 > 1
+        for: 5m
+      - alert: LowCacheHitRate
+        expr: cache_hit_rate < 0.7
+        for: 10m

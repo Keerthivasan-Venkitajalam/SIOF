@@ -1,0 +1,4 @@
+cluster:
+  enabled: false
+cache:
+  cache_size: 4GB

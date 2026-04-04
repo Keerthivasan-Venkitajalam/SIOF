@@ -1,0 +1,6 @@
+# Example: blue-green deployment profile
+image:
+  tag: blue
+
+ingress:
+  hostname: siof-blue.example.com

@@ -1,0 +1,9 @@
+{
+  "title": "SIOF System Health",
+  "timezone": "browser",
+  "panels": [
+    {"title": "Service Availability", "type": "stat"},
+    {"title": "Queue Depth", "type": "timeseries"},
+    {"title": "Active Connections", "type": "timeseries"}
+  ]
+}

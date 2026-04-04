@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: siof-edge-config
+data:
+  REGION: edge-default
+  CACHE_TTL: "3600"

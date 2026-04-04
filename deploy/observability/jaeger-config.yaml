@@ -1,0 +1,6 @@
+collector:
+  enabled: true
+query:
+  enabled: true
+storage:
+  type: memory

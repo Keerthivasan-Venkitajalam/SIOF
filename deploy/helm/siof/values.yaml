@@ -1,0 +1,67 @@
+namespace: siof
+
+image:
+  repository: siof/app
+  tag: "2.0.0"
+  pullPolicy: IfNotPresent
+
+deployment:
+  replicas: 3
+  strategy:
+    maxSurge: 1
+    maxUnavailable: 0
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 512Mi
+  limits:
+    cpu: 2000m
+    memory: 2Gi
+
+storage:
+  backend: neo4j
+  size: 20Gi
+  storageClass: standard
+
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  enabled: true
+  className: nginx
+  hostname: siof.example.com
+  tls:
+    enabled: true
+    secretName: siof-tls
+
+hpa:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  cpuUtilization: 70
+  memoryUtilization: 80
+
+pdb:
+  minAvailable: 2
+
+istio:
+  enabled: false
+  mtlsMode: STRICT
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+  prometheusRule:
+    enabled: true
+
+vault:
+  enabled: false
+  address: ""
+  role: siof-role
+
+secrets:
+  jwtSecret: change-me
+  dbPassword: change-me
+  redisPassword: change-me

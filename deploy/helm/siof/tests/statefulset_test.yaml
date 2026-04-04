@@ -1,0 +1,10 @@
+suite: statefulset
+release:
+  name: siof
+templates:
+  - templates/statefulset.yaml
+tests:
+  - it: should create storage volume claim
+    asserts:
+      - isNotNull:
+          path: spec.volumeClaimTemplates[0]

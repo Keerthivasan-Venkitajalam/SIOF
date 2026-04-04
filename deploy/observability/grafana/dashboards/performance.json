@@ -1,0 +1,9 @@
+{
+  "title": "SIOF Performance",
+  "timezone": "browser",
+  "panels": [
+    {"title": "Request Throughput", "type": "timeseries"},
+    {"title": "CPU", "type": "timeseries"},
+    {"title": "Memory", "type": "timeseries"}
+  ]
+}

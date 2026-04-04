@@ -1,0 +1,13 @@
+suite: deployment
+release:
+  name: siof
+templates:
+  - templates/deployment.yaml
+tests:
+  - it: should set replicas from values
+    set:
+      deployment.replicas: 3
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 3

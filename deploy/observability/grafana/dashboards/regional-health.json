@@ -1,0 +1,9 @@
+{
+  "title": "SIOF Regional Health",
+  "timezone": "browser",
+  "panels": [
+    {"title": "Error Rate", "type": "timeseries"},
+    {"title": "P95 Latency", "type": "timeseries"},
+    {"title": "Replication Lag", "type": "timeseries"}
+  ]
+}

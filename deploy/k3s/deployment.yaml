@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: siof-edge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: siof-edge
+  template:
+    metadata:
+      labels:
+        app: siof-edge
+    spec:
+      terminationGracePeriodSeconds: 45
+      containers:
+        - name: siof-edge
+          image: siof/app:2.0.0
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 8080

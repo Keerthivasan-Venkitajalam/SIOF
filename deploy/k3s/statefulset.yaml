@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: siof-edge-storage
+spec:
+  serviceName: siof-edge-storage
+  replicas: 1
+  selector:
+    matchLabels:
+      app: siof-edge-storage
+  template:
+    metadata:
+      labels:
+        app: siof-edge-storage
+    spec:
+      containers:
+        - name: siof-edge-storage
+          image: siof/app:2.0.0
+          volumeMounts:
+            - mountPath: /var/lib/siof
+              name: data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 20Gi

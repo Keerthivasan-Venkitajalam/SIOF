@@ -1,0 +1,8 @@
+{
+  "title": "SIOF Cost Tracking",
+  "timezone": "browser",
+  "panels": [
+    {"title": "Storage Growth", "type": "timeseries"},
+    {"title": "Egress Bandwidth", "type": "timeseries"}
+  ]
+}

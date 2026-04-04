@@ -4,34 +4,41 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "siof"
-version = "1.0.0"
+version = "2.0.0"
 description = "Semantic Integrity and Orchestration Framework - AI-native Python toolkit for maintaining codebase integrity"
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [{name = "Keerthivasan S V", email = "keerthivasansv2006@outlook.com"}]
-license = {text = "MIT"}
+license = "MIT"
 keywords = ["ai", "code-analysis", "graph", "mcp", "sustainability", "semantic-integrity", "autonomous-coding"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Code Generators",
     "Topic :: Software Development :: Quality Assurance",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
 ]
-dependencies = []
+dependencies = [
+    "PyJWT>=2.8.0",
+    "cryptography>=41.0.0",
+    "redis>=5.0.0",
+    "bcrypt>=4.1.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/Keerthivasan-Venkitajalam/SIOF"
 Documentation = "https://github.com/Keerthivasan-Venkitajalam/SIOF#readme"
 Repository = "https://github.com/Keerthivasan-Venkitajalam/SIOF"
 "Bug Tracker" = "https://github.com/Keerthivasan-Venkitajalam/SIOF/issues"
+Changelog = "https://github.com/Keerthivasan-Venkitajalam/SIOF/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 green = ["psutil>=5.9"]
-test = ["pytest>=8.0", "pytest-cov>=4.0"]
+storage = ["neo4j>=5.20.0", "falkordb>=1.0.10", "PyYAML>=6.0.1"]
+release = ["build>=1.2.1", "twine>=5.1.1"]
+test = ["pytest>=8.0", "pytest-cov>=4.0", "hypothesis>=6.0"]
 dev = ["ruff>=0.1.0", "black>=23.0", "mypy>=1.0", "types-psutil>=5.9"]
 
 [project.scripts]
@@ -45,6 +52,9 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
 
 [tool.ruff]
 line-length = 100
