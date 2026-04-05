@@ -7,7 +7,7 @@ import re
 import time
 import uuid
 from dataclasses import asdict, dataclass, field
-from typing import Any
+from typing import Any, cast
 
 from siof.auth.password_manager import PasswordManager
 
@@ -528,7 +528,7 @@ class ServiceAccountManager:
         if not record.enabled:
             raise ValueError("Service account disabled")
 
-        return api_key_manager.create_api_key(
+        created_key = api_key_manager.create_api_key(
             org_id=record.org_id,
             service_account_id=record.service_account_id,
             name=name,
@@ -536,3 +536,4 @@ class ServiceAccountManager:
             owner_email=owner_email,
             roles=record.roles,
         )
+        return cast(dict[str, Any], created_key)

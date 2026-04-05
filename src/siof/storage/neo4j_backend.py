@@ -53,9 +53,9 @@ class Neo4jBackend(StorageBackend):
         self.connection_string = connection_string
         self.username = username
         self.password = password
-        self.driver = None
-        self.session = None
-        self.transaction = None
+        self.driver: Any = None
+        self.session: Any = None
+        self.transaction: Any = None
         self._operation_count = 0
         self._error_count = 0
         self._total_latency_ms = 0.0
@@ -73,7 +73,7 @@ class Neo4jBackend(StorageBackend):
 
             # Import neo4j driver
             try:
-                from neo4j import GraphDatabase
+                from neo4j import GraphDatabase  # type: ignore[import-not-found]
             except ImportError:
                 raise ImportError("neo4j driver is required. Install with: pip install neo4j")
 

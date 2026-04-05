@@ -139,7 +139,7 @@ class QueryOptimizer:
         Returns:
             List of filter strings
         """
-        filters = []
+        filters: list[str] = []
 
         try:
             # Simple extraction: find WHERE clause

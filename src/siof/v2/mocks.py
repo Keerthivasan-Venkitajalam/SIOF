@@ -130,8 +130,8 @@ class MockAuthProvider(AuthProvider):
         self.tokens: dict[str, AuthToken] = {}
 
     def authenticate(self, credentials: dict[str, Any]) -> AuthToken:
-        username = credentials.get("username")
-        password = credentials.get("password")
+        raw_username = credentials.get("username")
+        username = raw_username if isinstance(raw_username, str) and raw_username else "mock-user"
 
         # Mock: accept any username/password
         user_id = str(uuid.uuid4())
@@ -198,7 +198,7 @@ class MockVectorStore(VectorStore):
         self, query_vector: list[float], top_k: int = 10, filters: dict[str, Any] | None = None
     ) -> list[SearchResult]:
         # Mock: return random results
-        results = []
+        results: list[SearchResult] = []
         for symbol, embedding in list(self.embeddings.items())[:top_k]:
             # Mock similarity score
             score = 0.9 - (len(results) * 0.1)

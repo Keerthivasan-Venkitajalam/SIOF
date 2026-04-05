@@ -3,11 +3,21 @@
 import logging
 import time
 import uuid
+from typing import Any, TypedDict
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
 logger = logging.getLogger(__name__)
+
+
+class StoredKey(TypedDict):
+    """In-memory representation of a registered key pair."""
+
+    private_key_pem: str
+    public_key_pem: str
+    created_at: int
+    expires_at: int | None
 
 
 class KeyManager:
@@ -26,7 +36,7 @@ class KeyManager:
 
         # Storage for active keys
         # Maps key_id -> {"private_key_pem": str, "public_key_pem": str, "created_at": int, "expires_at": Optional[int]}
-        self._keys: dict[str, dict] = {}
+        self._keys: dict[str, StoredKey] = {}
         self._current_key_id: str | None = None
 
     def generate_key_pair(self, key_size: int = 4096) -> tuple[str, str]:
@@ -186,7 +196,7 @@ class KeyManager:
             Dictionary mapping key_id -> public_key_pem
         """
         now = int(time.time())
-        active_keys = {}
+        active_keys: dict[str, str] = {}
 
         for key_id, key_data in self._keys.items():
             # Include keys that haven't expired yet
@@ -222,7 +232,7 @@ class KeyManager:
 
         return len(expired_keys)
 
-    def get_key_status(self, key_id: str) -> dict | None:
+    def get_key_status(self, key_id: str) -> dict[str, Any] | None:
         """Get status of a key.
 
         Args:
@@ -237,7 +247,7 @@ class KeyManager:
         key_data = self._keys[key_id]
         now = int(time.time())
 
-        status = {
+        status: dict[str, Any] = {
             "key_id": key_id,
             "created_at": key_data["created_at"],
             "expires_at": key_data["expires_at"],

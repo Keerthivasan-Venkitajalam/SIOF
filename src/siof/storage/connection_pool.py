@@ -190,7 +190,7 @@ class ConnectionPool:
         try:
             # Try to call get_connection_status if available
             if hasattr(conn, "get_connection_status"):
-                return conn.get_connection_status()
+                return bool(conn.get_connection_status())
             # Otherwise assume valid (for simple connection objects)
             return True
         except Exception as e:

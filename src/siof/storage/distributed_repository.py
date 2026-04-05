@@ -76,7 +76,7 @@ class DistributedRepository:
         self.transaction_timeout_seconds = transaction_timeout_seconds
 
         # Cache structure: {key: (value, timestamp)}
-        self.cache: dict[str, tuple[Any, float]] = {}
+        self.cache: dict[str, tuple[Node, float]] = {}
 
         # Cache statistics
         self._cache_hits = 0
@@ -140,9 +140,18 @@ class DistributedRepository:
         try:
             node = self.retry_policy.execute(self.backend.read_node, node_id)
 
+            if node is None:
+                logger.debug(f"Node not found: {node_id}")
+                return None
+
+            if not isinstance(node, Node):
+                logger.warning(
+                    f"Unexpected node type from backend for {node_id}: {type(node).__name__}"
+                )
+                return None
+
             # Cache result if found
-            if node:
-                self._cache_put(node_id, node)
+            self._cache_put(node_id, node)
 
             logger.debug(f"Successfully read node: {node_id}")
             return node
@@ -729,7 +738,7 @@ class DistributedRepository:
             "savepoints": len(self._transaction_savepoints),
         }
 
-    def _cache_put(self, key: str, value: Any) -> None:
+    def _cache_put(self, key: str, value: Node) -> None:
         """Add item to cache with LRU eviction.
 
         Args:
@@ -748,7 +757,7 @@ class DistributedRepository:
         self.cache[key] = (value, time.time())
         logger.debug(f"Cached item: {key}")
 
-    def _cache_get(self, key: str) -> Any | None:
+    def _cache_get(self, key: str) -> Node | None:
         """Get item from cache if not expired.
 
         Args:
@@ -799,6 +808,13 @@ class DistributedRepository:
             "max_size": self.cache_size,
         }
 
+    @staticmethod
+    def _required_str(value: Any) -> str | None:
+        """Return non-empty string values, otherwise None."""
+        if isinstance(value, str) and value:
+            return value
+        return None
+
     def _result_to_node(self, result: dict[str, Any]) -> Node | None:
         """Convert query result to Node object.
 
@@ -827,19 +843,37 @@ class DistributedRepository:
 
             # Extract node properties
             if isinstance(n, dict):
+                node_id = self._required_str(n.get("id"))
+                node_type = self._required_str(n.get("type"))
+                node_name = self._required_str(n.get("name"))
+                metadata_raw = n.get("metadata", {})
+                metadata = metadata_raw if isinstance(metadata_raw, dict) else {}
+
+                if node_id is None or node_type is None or node_name is None:
+                    return None
+
                 return Node(
-                    id=n.get("id"),
-                    type=n.get("type"),
-                    name=n.get("name"),
-                    metadata=n.get("metadata", {}),
+                    id=node_id,
+                    type=node_type,
+                    name=node_name,
+                    metadata=metadata,
                 )
             else:
                 # Handle backend-specific node objects
+                node_id = self._required_str(getattr(n, "id", None))
+                node_type = self._required_str(getattr(n, "type", None))
+                node_name = self._required_str(getattr(n, "name", None))
+                metadata_raw = getattr(n, "metadata", {})
+                metadata = metadata_raw if isinstance(metadata_raw, dict) else {}
+
+                if node_id is None or node_type is None or node_name is None:
+                    return None
+
                 return Node(
-                    id=getattr(n, "id", None),
-                    type=getattr(n, "type", None),
-                    name=getattr(n, "name", None),
-                    metadata=getattr(n, "metadata", {}),
+                    id=node_id,
+                    type=node_type,
+                    name=node_name,
+                    metadata=metadata,
                 )
 
         except Exception as e:
@@ -865,20 +899,43 @@ class DistributedRepository:
                 return None
 
             # Extract edge properties
+            source_id_raw = (
+                source.get("id") if isinstance(source, dict) else getattr(source, "id", None)
+            )
+            target_id_raw = (
+                target.get("id") if isinstance(target, dict) else getattr(target, "id", None)
+            )
+            edge_type_raw = (
+                edge.get("edge_type")
+                if isinstance(edge, dict)
+                else getattr(edge, "edge_type", None)
+            )
+
+            source_id = self._required_str(source_id_raw)
+            target_id = self._required_str(target_id_raw)
+            edge_type = self._required_str(edge_type_raw)
+
+            if source_id is None or target_id is None or edge_type is None:
+                return None
+
             if isinstance(edge, dict):
+                metadata_raw = edge.get("metadata", {})
+                metadata = metadata_raw if isinstance(metadata_raw, dict) else {}
                 return Edge(
-                    source_id=source.get("id") if isinstance(source, dict) else source.id,
-                    target_id=target.get("id") if isinstance(target, dict) else target.id,
-                    edge_type=edge.get("edge_type"),
-                    metadata=edge.get("metadata", {}),
+                    source_id=source_id,
+                    target_id=target_id,
+                    edge_type=edge_type,
+                    metadata=metadata,
                 )
             else:
                 # Handle backend-specific edge objects
+                metadata_raw = getattr(edge, "metadata", {})
+                metadata = metadata_raw if isinstance(metadata_raw, dict) else {}
                 return Edge(
-                    source_id=source.get("id") if isinstance(source, dict) else source.id,
-                    target_id=target.get("id") if isinstance(target, dict) else target.id,
-                    edge_type=getattr(edge, "edge_type", None),
-                    metadata=getattr(edge, "metadata", {}),
+                    source_id=source_id,
+                    target_id=target_id,
+                    edge_type=edge_type,
+                    metadata=metadata,
                 )
 
         except Exception as e:

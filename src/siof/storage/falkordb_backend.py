@@ -49,9 +49,9 @@ class FalkorDBBackend(StorageBackend):
         """
         self.connection_string = connection_string
         self.graph_name = graph_name
-        self.db = None
-        self.graph = None
-        self.transaction = None
+        self.db: Any = None
+        self.graph: Any = None
+        self.transaction: Any = None
         self._operation_count = 0
         self._error_count = 0
         self._total_latency_ms = 0.0
@@ -69,7 +69,7 @@ class FalkorDBBackend(StorageBackend):
 
             # Import falkordb client
             try:
-                from falkordb import FalkorDB
+                from falkordb import FalkorDB  # type: ignore[import-not-found]
             except ImportError:
                 raise ImportError("falkordb driver is required. Install with: pip install falkordb")
 

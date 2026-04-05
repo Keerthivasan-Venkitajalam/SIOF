@@ -36,7 +36,7 @@ class MilvusBackend(VectorStore):
         self._connected = False
         self._lock = threading.RLock()
         self._collections: dict[str, dict[str, Any]] = {}
-        self._pool = deque(maxlen=pool_size)
+        self._pool: deque[str] = deque(maxlen=pool_size)
         self._searches = 0
         self._inserts = 0
         self._deletes = 0

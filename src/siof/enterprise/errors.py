@@ -91,7 +91,7 @@ def to_error_response(
 ) -> tuple[int, dict[str, Any]]:
     """Convert internal exception to client-safe response payload."""
     if isinstance(error, EnterpriseError):
-        payload = {
+        payload: dict[str, Any] = {
             "error": {
                 "code": error.code,
                 "message": error.safe_message,

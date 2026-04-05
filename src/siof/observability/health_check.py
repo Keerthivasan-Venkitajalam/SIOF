@@ -21,7 +21,7 @@ class ObservabilityHealthChecker:
         return {"status": "ok"}
 
     def check(self) -> tuple[int, dict[str, Any]]:
-        payload = {
+        payload: dict[str, Any] = {
             "metrics_exporter": self._component_status(self.metrics_exporter),
             "trace_exporter": self._component_status(self.trace_exporter),
             "log_aggregator": self._component_status(self.log_aggregator),

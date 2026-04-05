@@ -186,4 +186,4 @@ class RetryPolicy:
             delay += jitter
 
         # Ensure delay is non-negative
-        return max(0, delay)
+        return float(max(0.0, delay))

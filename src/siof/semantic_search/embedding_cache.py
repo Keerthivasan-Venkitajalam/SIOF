@@ -67,6 +67,8 @@ class EmbeddingCache:
         self.persist_path.write_text(json.dumps(data), encoding="utf-8")
 
     def _load(self) -> None:
+        if self.persist_path is None:
+            return
         raw = json.loads(self.persist_path.read_text(encoding="utf-8"))
         for key, value in raw.items():
             self._store[key] = Embedding(
