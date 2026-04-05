@@ -44,6 +44,7 @@ jobs:
       url: https://pypi.org/p/siof
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
+      attestations: write
     steps:
       - name: Download distributions
         uses: actions/download-artifact@v4
