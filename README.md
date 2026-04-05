@@ -33,7 +33,9 @@ Install with optional storage backend support:
 pip install "siof[storage]"
 ```
 
-## PyPI Release (v2)
+## Release (v2)
+
+SIOF v2 release target is **2.0.0**.
 
 Build and validate release artifacts:
 
@@ -41,13 +43,22 @@ Build and validate release artifacts:
 ./scripts/release_pypi_v2.sh
 ```
 
-Upload to TestPyPI:
+Publish a new version via trusted publishing (OIDC, no API token required):
 
 ```bash
-SIOF_PYPI_TOKEN=your_testpypi_token PUBLISH=1 TEST_PYPI=1 ./scripts/release_pypi_v2.sh
+# First publish of 2.0.0
+git tag -a v2.0.0 -m "Release v2.0.0"
+git push origin v2.0.0
+
+# Re-release 2.0.0 after deleting prior release
+git tag -fa v2.0.0 -m "Re-release v2.0.0"
+git push --force origin v2.0.0
 ```
 
-Upload to PyPI:
+This triggers [publish.yml](.github/workflows/publish.yml), which builds and uploads
+to PyPI using the configured trusted publisher.
+
+Optional manual upload path (if ever needed):
 
 ```bash
 SIOF_PYPI_TOKEN=your_pypi_token PUBLISH=1 ./scripts/release_pypi_v2.sh
@@ -237,45 +248,76 @@ All 242 tests pass in ~11 seconds.
 
 ```mermaid
 graph TD
-    CLI[CLI Interface<br/>siof index/slop/mcp/memex/green]
-    API[Python API<br/>SIOFOrchestrator]
-    
+    subgraph Clients
+        CLI[CLI]
+        PYAPI[Python API]
+        MCPCLIENT[MCP Clients and Agents]
+    end
+
+    subgraph Core[SIOF Core Pipelines]
+        ORCH[SIOFOrchestrator]
+        IDX[Indexer and FreeThreadedIndexer]
+        SLOP[De-Slopper]
+        MEMEX[Memex]
+        GREEN[Green Guard]
+        SEM[Semantic Search]
+    end
+
+    subgraph Enterprise[Enterprise Control Plane]
+        EMCP[EnterpriseMCPServer]
+        AUTH[Auth and Token Services]
+        SESS[Session Manager]
+        RL[Rate Limiter]
+        RBAC[Role and Permission Engine]
+        AUDIT[Audit Logger]
+    end
+
+    subgraph Storage[Storage Layer]
+        SQLITE[(SQLite)]
+        DIST[Distributed Repository]
+        NEO[(Neo4j Backend)]
+        FAL[(FalkorDB Backend)]
+        VEC[(Vector Store and Milvus-Compatible)]
+    end
+
+    subgraph Ops[Observability and Deployment]
+        OBS[Metrics, Logs, Traces, Alerts]
+        EDGE[Edge Deployment Stack]
+        HELM[Helm and Kubernetes]
+    end
+
     CLI --> ORCH
-    API --> ORCH
-    
-    ORCH[Orchestrator<br/>Pipeline Manager]
-    
-    ORCH --> IDX[DTG Indexer<br/>Graph Construction]
-    ORCH --> SLOP[De-Slopper<br/>Anti-Pattern Detection]
-    ORCH --> MCP[MCP Server<br/>Agent Interface]
-    ORCH --> MEM[Memex<br/>Intent Extraction]
-    ORCH --> GREEN[Green Guard<br/>Sustainability]
-    
-    IDX --> REPO[Repository Layer<br/>File I/O + AST]
-    SLOP --> REPO
-    MCP --> REPO
-    MEM --> REPO
-    GREEN --> REPO
-    
-    REPO --> DB[(SQLite<br/>DTG + Metadata)]
-    
-    MCP --> POL[Policy Engine<br/>RBAC + Rate Limit]
-    MEM --> INTENT[Intent Extractor<br/>Git + Prompts]
-    GREEN --> ENERGY[Energy Calculator<br/>CO2 Tracking]
-    
-    style CLI fill:#e1f5ff
-    style API fill:#e1f5ff
-    style ORCH fill:#fff4e1
-    style IDX fill:#e8f5e9
-    style SLOP fill:#e8f5e9
-    style MCP fill:#e8f5e9
-    style MEM fill:#e8f5e9
-    style GREEN fill:#e8f5e9
-    style REPO fill:#ffe4e1
-    style DB fill:#f3e5f5
-    style POL fill:#fff9e6
-    style INTENT fill:#fff9e6
-    style ENERGY fill:#fff9e6
+    PYAPI --> ORCH
+    MCPCLIENT --> EMCP
+
+    ORCH --> IDX
+    ORCH --> SLOP
+    ORCH --> MEMEX
+    ORCH --> GREEN
+    ORCH --> SEM
+
+    IDX --> SQLITE
+    SLOP --> SQLITE
+    MEMEX --> SQLITE
+    GREEN --> SQLITE
+
+    SEM --> VEC
+    SEM --> SQLITE
+
+    EMCP --> AUTH
+    EMCP --> SESS
+    EMCP --> RL
+    EMCP --> RBAC
+    EMCP --> AUDIT
+    EMCP --> DIST
+
+    DIST --> NEO
+    DIST --> FAL
+
+    ORCH --> OBS
+    EMCP --> OBS
+    EDGE --> EMCP
+    HELM --> EMCP
 ```
 
 ## Why SIOF?
@@ -297,14 +339,7 @@ Traditional linters (Pylint, Flake8, Ruff) catch syntax errors but miss semantic
 
 ## Roadmap
 
-### v1.0 (Current) ✅
-- DTG Indexer with incremental updates
-- De-Slopper with audit/fix/strict modes
-- MCP server with RBAC and rate limiting
-- Memex intent extraction
-- Green Guard sustainability tracking
-
-### v2.0 (Planned)
+### v2.0 (Current) ✅
 - Free-threaded parsing (10x speedup on Python 3.14+)
 - Distributed graph storage (Neo4j/FalkorDB)
 - Enterprise MCP server (JWT, Redis, stateless)
@@ -312,6 +347,13 @@ Traditional linters (Pylint, Flake8, Ruff) catch syntax errors but miss semantic
 - Edge deployment (K3s, regional caching)
 - Kubernetes orchestration (Helm charts)
 - Full observability stack (OpenTelemetry, Prometheus, Grafana)
+
+### v1.0 (Foundation) ✅
+- DTG Indexer with incremental updates
+- De-Slopper with audit/fix/strict modes
+- MCP server with RBAC and rate limiting
+- Memex intent extraction
+- Green Guard sustainability tracking
 
 ## Contributing
 
