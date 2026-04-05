@@ -35,7 +35,7 @@ pip install "siof[storage]"
 
 ## Release (v2)
 
-SIOF v2 release target is **2.0.0**.
+SIOF v2 is published through GitHub trusted publishing (OIDC, no API token required).
 
 Build and validate release artifacts:
 
@@ -43,20 +43,18 @@ Build and validate release artifacts:
 ./scripts/release_pypi_v2.sh
 ```
 
-Publish a new version via trusted publishing (OIDC, no API token required):
+Publish a new version via trusted publishing:
 
 ```bash
-# First publish of 2.0.0
-git tag -a v2.0.0 -m "Release v2.0.0"
-git push origin v2.0.0
-
-# Re-release 2.0.0 after deleting prior release
-git tag -fa v2.0.0 -m "Re-release v2.0.0"
-git push --force origin v2.0.0
+git tag -a vX.Y.Z -m "Release vX.Y.Z"
+git push origin vX.Y.Z
 ```
 
 This triggers [publish.yml](.github/workflows/publish.yml), which builds and uploads
 to PyPI using the configured trusted publisher.
+
+Note: PyPI does not allow re-uploading a deleted file with the same filename.
+If a version was removed, publish a new patch version (for example, `2.0.1`).
 
 Optional manual upload path (if ever needed):
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.0.1 - 2026-04-05
+
+### Changed
+- Updated README architecture diagram to reflect the v2 system layout (core pipelines, enterprise control plane, distributed storage, and observability/deployment layers).
+- Updated release documentation to show trusted publishing tag flow and PyPI filename immutability constraints for re-releases.
+- Added GitHub Actions publish permission `attestations: write` for the PyPI publish job.
+
+### Notes
+- This patch release is used to republish v2 after a prior `2.0.0` release was removed.
+
 ## 2.0.0 - 2026-04-04
 
 ### Added
