@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ConnectionPoolConfig:
     """Configuration for connection pool.
-    
+
     Attributes:
         min_size: Minimum idle connections to maintain
         max_size: Maximum total connections
@@ -24,7 +24,7 @@ class ConnectionPoolConfig:
 
     def validate(self) -> None:
         """Validate configuration parameters.
-        
+
         Raises:
             ValueError: If configuration is invalid
         """
@@ -33,9 +33,7 @@ class ConnectionPoolConfig:
         if self.max_size < 1:
             raise ValueError(f"max_size must be at least 1, got {self.max_size}")
         if self.min_size > self.max_size:
-            raise ValueError(
-                f"min_size ({self.min_size}) cannot exceed max_size ({self.max_size})"
-            )
+            raise ValueError(f"min_size ({self.min_size}) cannot exceed max_size ({self.max_size})")
         if self.validation_interval_seconds < 0:
             raise ValueError(
                 f"validation_interval_seconds must be non-negative, "
@@ -46,7 +44,7 @@ class ConnectionPoolConfig:
 @dataclass
 class RetryPolicyConfig:
     """Configuration for retry policy.
-    
+
     Attributes:
         base_delay_ms: Base delay in milliseconds for first retry
         max_retries: Maximum number of retry attempts
@@ -59,14 +57,12 @@ class RetryPolicyConfig:
 
     def validate(self) -> None:
         """Validate configuration parameters.
-        
+
         Raises:
             ValueError: If configuration is invalid
         """
         if self.base_delay_ms < 0:
-            raise ValueError(
-                f"base_delay_ms must be non-negative, got {self.base_delay_ms}"
-            )
+            raise ValueError(f"base_delay_ms must be non-negative, got {self.base_delay_ms}")
         if self.max_retries < 0:
             raise ValueError(f"max_retries must be non-negative, got {self.max_retries}")
 
@@ -74,7 +70,7 @@ class RetryPolicyConfig:
 @dataclass
 class CacheConfig:
     """Configuration for caching layer.
-    
+
     Attributes:
         enabled: Whether caching is enabled
         max_size: Maximum number of cached items
@@ -87,22 +83,20 @@ class CacheConfig:
 
     def validate(self) -> None:
         """Validate configuration parameters.
-        
+
         Raises:
             ValueError: If configuration is invalid
         """
         if self.max_size < 1:
             raise ValueError(f"max_size must be at least 1, got {self.max_size}")
         if self.ttl_seconds < 0:
-            raise ValueError(
-                f"ttl_seconds must be non-negative, got {self.ttl_seconds}"
-            )
+            raise ValueError(f"ttl_seconds must be non-negative, got {self.ttl_seconds}")
 
 
 @dataclass
 class QueryOptimizerConfig:
     """Configuration for query optimizer.
-    
+
     Attributes:
         enabled: Whether query optimization is enabled
         plan_cache_size: Maximum number of cached query plans
@@ -113,20 +107,18 @@ class QueryOptimizerConfig:
 
     def validate(self) -> None:
         """Validate configuration parameters.
-        
+
         Raises:
             ValueError: If configuration is invalid
         """
         if self.plan_cache_size < 1:
-            raise ValueError(
-                f"plan_cache_size must be at least 1, got {self.plan_cache_size}"
-            )
+            raise ValueError(f"plan_cache_size must be at least 1, got {self.plan_cache_size}")
 
 
 @dataclass
 class BackendConfig:
     """Configuration for a single backend instance.
-    
+
     Attributes:
         name: Unique name for this backend
         type: Backend type (neo4j, falkordb, sqlite)
@@ -143,7 +135,7 @@ class BackendConfig:
 
     def validate(self) -> None:
         """Validate configuration parameters.
-        
+
         Raises:
             ValueError: If configuration is invalid
         """
@@ -153,8 +145,7 @@ class BackendConfig:
             raise ValueError("Backend type cannot be empty")
         if self.type not in ("neo4j", "falkordb", "sqlite"):
             raise ValueError(
-                f"Invalid backend type: {self.type}. "
-                f"Must be one of: neo4j, falkordb, sqlite"
+                f"Invalid backend type: {self.type}. " f"Must be one of: neo4j, falkordb, sqlite"
             )
         if not self.connection_string:
             raise ValueError("Connection string cannot be empty")
@@ -163,7 +154,7 @@ class BackendConfig:
 @dataclass
 class StorageConfig:
     """Complete storage configuration.
-    
+
     Attributes:
         backends: List of backend configurations
         connection_pool: Connection pool configuration
@@ -182,7 +173,7 @@ class StorageConfig:
 
     def validate(self) -> None:
         """Validate all configuration parameters.
-        
+
         Raises:
             ValueError: If any configuration is invalid
         """
@@ -215,13 +206,13 @@ class StorageConfig:
     @classmethod
     def load_from_yaml(cls, yaml_file: str) -> "StorageConfig":
         """Load configuration from YAML file.
-        
+
         Args:
             yaml_file: Path to YAML configuration file
-            
+
         Returns:
             StorageConfig instance
-            
+
         Raises:
             FileNotFoundError: If file doesn't exist
             ValueError: If configuration is invalid
@@ -230,8 +221,7 @@ class StorageConfig:
             import yaml
         except ImportError:
             raise ImportError(
-                "PyYAML is required to load YAML configuration. "
-                "Install with: pip install pyyaml"
+                "PyYAML is required to load YAML configuration. " "Install with: pip install pyyaml"
             )
 
         if not os.path.exists(yaml_file):
@@ -250,7 +240,7 @@ class StorageConfig:
     @classmethod
     def load_from_env(cls) -> "StorageConfig":
         """Load configuration from environment variables.
-        
+
         Environment variables:
         - SIOF_STORAGE_BACKEND: Backend type (neo4j, falkordb, sqlite)
         - SIOF_STORAGE_CONNECTION_STRING: Connection string
@@ -258,10 +248,10 @@ class StorageConfig:
         - SIOF_STORAGE_POOL_MAX_SIZE: Connection pool max size
         - SIOF_STORAGE_RETRY_MAX_RETRIES: Max retry attempts
         - SIOF_STORAGE_LOG_LEVEL: Logging level
-        
+
         Returns:
             StorageConfig instance
-            
+
         Raises:
             ValueError: If required environment variables are missing
         """
@@ -271,9 +261,7 @@ class StorageConfig:
         connection_string = os.getenv("SIOF_STORAGE_CONNECTION_STRING")
 
         if not connection_string:
-            raise ValueError(
-                "SIOF_STORAGE_CONNECTION_STRING environment variable is required"
-            )
+            raise ValueError("SIOF_STORAGE_CONNECTION_STRING environment variable is required")
 
         pool_min_size = int(os.getenv("SIOF_STORAGE_POOL_MIN_SIZE", "10"))
         pool_max_size = int(os.getenv("SIOF_STORAGE_POOL_MAX_SIZE", "50"))
@@ -303,13 +291,13 @@ class StorageConfig:
     @classmethod
     def _from_dict(cls, data: dict[str, Any]) -> "StorageConfig":
         """Create StorageConfig from dictionary.
-        
+
         Args:
             data: Configuration dictionary
-            
+
         Returns:
             StorageConfig instance
-            
+
         Raises:
             ValueError: If configuration is invalid
         """
@@ -375,7 +363,7 @@ class StorageConfig:
 
     def to_dict(self) -> dict[str, Any]:
         """Convert configuration to dictionary.
-        
+
         Returns:
             Dictionary representation of configuration
         """

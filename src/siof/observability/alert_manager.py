@@ -53,10 +53,18 @@ class AlertManager:
 
     def register_default_rules(self) -> None:
         self.register_rule(AlertRule("high_error_rate", "error_rate", 0.05, ">", 300, "critical"))
-        self.register_rule(AlertRule("high_latency_p95", "latency_p95_seconds", 1.0, ">", 300, "critical"))
-        self.register_rule(AlertRule("low_cache_hit_rate", "cache_hit_rate", 0.70, "<", 600, "warning"))
-        self.register_rule(AlertRule("high_memory_usage", "memory_usage_ratio", 0.80, ">", 300, "warning"))
-        self.register_rule(AlertRule("high_cpu_usage", "cpu_usage_ratio", 0.80, ">", 300, "warning"))
+        self.register_rule(
+            AlertRule("high_latency_p95", "latency_p95_seconds", 1.0, ">", 300, "critical")
+        )
+        self.register_rule(
+            AlertRule("low_cache_hit_rate", "cache_hit_rate", 0.70, "<", 600, "warning")
+        )
+        self.register_rule(
+            AlertRule("high_memory_usage", "memory_usage_ratio", 0.80, ">", 300, "warning")
+        )
+        self.register_rule(
+            AlertRule("high_cpu_usage", "cpu_usage_ratio", 0.80, ">", 300, "warning")
+        )
 
     @staticmethod
     def _matches(value: float, comparator: str, threshold: float) -> bool:

@@ -106,9 +106,7 @@ def test_e2e_orchestrator_incremental_update(tmp_path: Path):
     nodes1 = result1.phase_results["phase1_index"]["nodes"]
 
     # Modify code
-    (repo / "code.py").write_text(
-        "def f(x):\n    return x + 1\n\ndef g(y):\n    return y * 2\n"
-    )
+    (repo / "code.py").write_text("def f(x):\n    return x + 1\n\ndef g(y):\n    return y * 2\n")
 
     # Incremental update (currently does full rebuild in v1)
     result2 = orch.run_full_pipeline(index_mode="update", slop_mode="audit")
@@ -166,7 +164,11 @@ def test_e2e_orchestrator_fix_mode(tmp_path: Path):
 
     # Create file with fixable slop
     bad_code = (
-        "def process():\n" "    try:\n" "        return compute()\n" "    except:\n" "        pass\n"
+        "def process():\n"
+        "    try:\n"
+        "        return compute()\n"
+        "    except:\n"
+        "        pass\n"
     )
     (repo / "code.py").write_text(bad_code)
 

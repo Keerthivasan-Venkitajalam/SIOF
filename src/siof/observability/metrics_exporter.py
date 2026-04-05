@@ -77,7 +77,9 @@ class MetricsExporter:
         metric.cardinality.add(labels)
         return True
 
-    def increment_counter(self, name: str, value: float = 1.0, labels: dict[str, str] | None = None) -> None:
+    def increment_counter(
+        self, name: str, value: float = 1.0, labels: dict[str, str] | None = None
+    ) -> None:
         with self._lock:
             metric = self._metrics[name]
             series = self._normalize_labels(labels)
@@ -93,7 +95,9 @@ class MetricsExporter:
                 return
             metric.values[series] = float(value)
 
-    def record_histogram(self, name: str, value: float, labels: dict[str, str] | None = None) -> None:
+    def record_histogram(
+        self, name: str, value: float, labels: dict[str, str] | None = None
+    ) -> None:
         with self._lock:
             metric = self._metrics[name]
             series = self._normalize_labels(labels)

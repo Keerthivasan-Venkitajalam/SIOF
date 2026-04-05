@@ -30,11 +30,15 @@ class IntentQuery:
             file_path="<intent>",
             content=intent,
         )
-        results = self.semantic_search.search_by_symbol(query_symbol, top_k=top_k, threshold=threshold)
+        results = self.semantic_search.search_by_symbol(
+            query_symbol, top_k=top_k, threshold=threshold
+        )
         self._history.append(IntentHistory(intent=intent, results=results))
         return results
 
-    def refine_query(self, refinement: str, *, top_k: int = 10, threshold: float = 0.7) -> SearchResults:
+    def refine_query(
+        self, refinement: str, *, top_k: int = 10, threshold: float = 0.7
+    ) -> SearchResults:
         if not self._history:
             return self.query(refinement, top_k=top_k, threshold=threshold)
         base_intent = self._history[-1].intent

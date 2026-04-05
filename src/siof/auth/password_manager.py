@@ -58,7 +58,9 @@ class PasswordManager:
         if self.require_numbers and not re.search(r"\d", password):
             return False, "Password must contain at least one number"
 
-        if self.require_special and not re.search(r"[!@#$%^&*()_+\-=\[\]{};:'\",.<>?/\\|`~]", password):
+        if self.require_special and not re.search(
+            r"[!@#$%^&*()_+\-=\[\]{};:'\",.<>?/\\|`~]", password
+        ):
             return False, "Password must contain at least one special character"
 
         return True, None

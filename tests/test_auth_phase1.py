@@ -225,7 +225,9 @@ class TestAuthProvider:
         public_keys = auth_provider.get_public_keys()
 
         assert len(public_keys) > 0
-        assert all(key.public_key_pem.startswith("-----BEGIN PUBLIC KEY-----") for key in public_keys)
+        assert all(
+            key.public_key_pem.startswith("-----BEGIN PUBLIC KEY-----") for key in public_keys
+        )
 
 
 class TestTokenManager:

@@ -28,6 +28,7 @@ from siof.free_threaded_indexer import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_repo(tmp_path: Path, files: dict[str, str]) -> Path:
     """Write *files* dict (relative-path -> content) into *tmp_path*."""
     for rel, content in files.items():
@@ -39,32 +40,30 @@ def _make_repo(tmp_path: Path, files: dict[str, str]) -> Path:
 
 def _simple_repo(tmp_path: Path) -> Path:
     """Create a small but realistic Python repository."""
-    return _make_repo(tmp_path, {
-        "main.py": (
-            "from utils import helper\n"
-            "\n"
-            "def main():\n"
-            "    return helper(42)\n"
-        ),
-        "utils.py": (
-            "def helper(x: int) -> int:\n"
-            "    return x * 2\n"
-        ),
-        "models.py": (
-            "class User:\n"
-            "    def __init__(self, name: str) -> None:\n"
-            "        self.name = name\n"
-            "\n"
-            "    def greet(self) -> str:\n"
-            "        return f'Hello, {self.name}'\n"
-        ),
-    })
+    return _make_repo(
+        tmp_path,
+        {
+            "main.py": (
+                "from utils import helper\n" "\n" "def main():\n" "    return helper(42)\n"
+            ),
+            "utils.py": ("def helper(x: int) -> int:\n" "    return x * 2\n"),
+            "models.py": (
+                "class User:\n"
+                "    def __init__(self, name: str) -> None:\n"
+                "        self.name = name\n"
+                "\n"
+                "    def greet(self) -> str:\n"
+                "        return f'Hello, {self.name}'\n"
+            ),
+        },
+    )
 
 
 # ---------------------------------------------------------------------------
 # Task 14.1 – Full build workflow integration test
 # Requirements: 12.2
 # ---------------------------------------------------------------------------
+
 
 class TestFullBuildWorkflow:
     """Integration tests for the complete index build workflow."""
@@ -205,6 +204,7 @@ class TestFullBuildWorkflow:
 # Requirements: 12.2
 # ---------------------------------------------------------------------------
 
+
 class TestIncrementalUpdateWorkflow:
     """Integration tests for the incremental update workflow."""
 
@@ -220,8 +220,7 @@ class TestIncrementalUpdateWorkflow:
 
             # Modify one file
             (repo / "utils.py").write_text(
-                "def helper(x: int) -> int:\n"
-                "    return x * 3  # changed\n"
+                "def helper(x: int) -> int:\n" "    return x * 3  # changed\n"
             )
 
             result = indexer.update(changed_files=[repo / "utils.py"])
@@ -278,10 +277,7 @@ class TestIncrementalUpdateWorkflow:
             nodes_before = indexer.repository.get_statistics()["nodes"]
 
             # Update only utils.py
-            (repo / "utils.py").write_text(
-                "def helper(x: int) -> int:\n"
-                "    return x + 1\n"
-            )
+            (repo / "utils.py").write_text("def helper(x: int) -> int:\n" "    return x + 1\n")
             indexer.update(changed_files=[repo / "utils.py"])
             nodes_after = indexer.repository.get_statistics()["nodes"]
         finally:
@@ -340,15 +336,19 @@ class TestIncrementalUpdateWorkflow:
 # Requirements: 8.3, 8.4, 8.5
 # ---------------------------------------------------------------------------
 
+
 class TestErrorRecovery:
     """Integration tests for error recovery during build/update."""
 
     def test_build_with_syntax_error_file(self, tmp_path: Path) -> None:
         """Build must complete even when one file has a syntax error."""
-        repo = _make_repo(tmp_path, {
-            "good.py": "def good(): return 42\n",
-            "bad.py": "def bad(\n    invalid syntax here",
-        })
+        repo = _make_repo(
+            tmp_path,
+            {
+                "good.py": "def good(): return 42\n",
+                "bad.py": "def bad(\n    invalid syntax here",
+            },
+        )
         db_path = tmp_path / "index.db"
 
         indexer = FreeThreadedIndexer(repo, db_path, workers=2)
@@ -370,11 +370,14 @@ class TestErrorRecovery:
 
         Validates: Requirements 8.5
         """
-        repo = _make_repo(tmp_path, {
-            "good1.py": "def f1(): pass\n",
-            "good2.py": "def f2(): pass\n",
-            "bad.py": "def bad(\n    invalid",
-        })
+        repo = _make_repo(
+            tmp_path,
+            {
+                "good1.py": "def f1(): pass\n",
+                "good2.py": "def f2(): pass\n",
+                "bad.py": "def bad(\n    invalid",
+            },
+        )
         db_path = tmp_path / "index.db"
 
         indexer = FreeThreadedIndexer(repo, db_path, workers=2)
@@ -397,11 +400,14 @@ class TestErrorRecovery:
 
         Validates: Requirements 8.3
         """
-        repo = _make_repo(tmp_path, {
-            "ok.py": "x = 1\n",
-            "err1.py": "def f(\n    bad",
-            "err2.py": "class (\n    bad",
-        })
+        repo = _make_repo(
+            tmp_path,
+            {
+                "ok.py": "x = 1\n",
+                "err1.py": "def f(\n    bad",
+                "err2.py": "class (\n    bad",
+            },
+        )
         db_path = tmp_path / "index.db"
 
         indexer = FreeThreadedIndexer(repo, db_path, workers=2)
@@ -418,14 +424,18 @@ class TestErrorRecovery:
 
         Validates: Requirements 8.4
         """
-        repo = _make_repo(tmp_path, {
-            "a.py": "def a(): pass\n",
-            "b.py": "def b(): pass\n",
-        })
+        repo = _make_repo(
+            tmp_path,
+            {
+                "a.py": "def a(): pass\n",
+                "b.py": "def b(): pass\n",
+            },
+        )
         db_path = tmp_path / "index.db"
 
         # Patch ParseWorker.parse to raise on one file
         from siof import free_threaded_indexer as fti_module
+
         original_parse = fti_module.ParseWorker.parse
         call_count = [0]
 
@@ -478,6 +488,7 @@ class TestErrorRecovery:
 # Task 14.4 – Resource management integration test
 # Requirements: 9.3, 9.4, 9.5
 # ---------------------------------------------------------------------------
+
 
 class TestResourceManagement:
     """Integration tests for resource management (shutdown, timeout, cleanup)."""
@@ -599,6 +610,7 @@ class TestResourceManagement:
         db_path = tmp_path / "index.db"
 
         from siof import free_threaded_indexer as fti_module
+
         original_aggregate = fti_module.DTGAggregator.add_result
 
         call_count = [0]
@@ -630,6 +642,7 @@ class TestResourceManagement:
 # Task 14.5 – Progress reporting integration test
 # Requirements: 10.1, 10.2, 10.3, 10.4, 10.5
 # ---------------------------------------------------------------------------
+
 
 class TestProgressReporting:
     """Integration tests for progress reporting."""
@@ -725,9 +738,7 @@ class TestProgressReporting:
         final_msgs = [r.message for r in caplog.records if "Parsing complete:" in r.message]
         assert final_msgs, "build() did not emit final statistics"
 
-    def test_progress_not_logged_before_interval(
-        self, caplog: pytest.LogCaptureFixture
-    ) -> None:
+    def test_progress_not_logged_before_interval(self, caplog: pytest.LogCaptureFixture) -> None:
         """ProgressReporter must NOT log before the interval has elapsed.
 
         Validates: Requirements 10.1
@@ -764,9 +775,7 @@ class TestProgressReporting:
         # At least one progress message per file (3 files)
         assert len(progress_msgs) >= 1
 
-    def test_progress_reporter_eta_present(
-        self, caplog: pytest.LogCaptureFixture
-    ) -> None:
+    def test_progress_reporter_eta_present(self, caplog: pytest.LogCaptureFixture) -> None:
         """Progress log must include ETA information.
 
         Validates: Requirements 10.2

@@ -34,7 +34,7 @@ class TestParsingMode:
             parallel=True,
             python_version=(3, 14, 0),
             gil_enabled=False,
-            reason="Free-threading enabled"
+            reason="Free-threading enabled",
         )
 
         assert mode.parallel is True
@@ -48,7 +48,7 @@ class TestParsingMode:
             parallel=False,
             python_version=(3, 11, 0),
             gil_enabled=True,
-            reason="Python 3.11 detected"
+            reason="Python 3.11 detected",
         )
 
         assert mode.parallel is False
@@ -63,9 +63,7 @@ class TestParseTask:
     def test_parse_task_creation(self):
         """Test creating a parse task."""
         task = ParseTask(
-            file_path=Path("test.py"),
-            file_metadata={"size": 100, "hash": "abc123"},
-            task_id=1
+            file_path=Path("test.py"), file_metadata={"size": 100, "hash": "abc123"}, task_id=1
         )
 
         assert task.file_path == Path("test.py")
@@ -78,21 +76,9 @@ class TestParseResult:
 
     def test_successful_parse_result(self):
         """Test creating a successful parse result."""
-        artifact = Artifact(
-            path="test.py",
-            hash="abc123",
-            parse_ok=True,
-            error=None
-        )
+        artifact = Artifact(path="test.py", hash="abc123", parse_ok=True, error=None)
 
-        nodes = [
-            DataNode(
-                symbol="test.func",
-                module="test",
-                kind="function",
-                location="test.py:1"
-            )
-        ]
+        nodes = [DataNode(symbol="test.func", module="test", kind="function", location="test.py:1")]
 
         edges = [
             TransformEdge(
@@ -101,7 +87,7 @@ class TestParseResult:
                 transform_symbol="test.func",
                 transform_kind="call",
                 location="test.py:2",
-                confidence=1.0
+                confidence=1.0,
             )
         ]
 
@@ -113,7 +99,7 @@ class TestParseResult:
             edges=edges,
             errors=[],
             duration_ms=10.5,
-            success=True
+            success=True,
         )
 
         assert result.success is True
@@ -126,10 +112,7 @@ class TestParseResult:
     def test_failed_parse_result(self):
         """Test creating a failed parse result."""
         artifact = Artifact(
-            path="test.py",
-            hash="abc123",
-            parse_ok=False,
-            error="SyntaxError: invalid syntax"
+            path="test.py", hash="abc123", parse_ok=False, error="SyntaxError: invalid syntax"
         )
 
         result = ParseResult(
@@ -140,7 +123,7 @@ class TestParseResult:
             edges=[],
             errors=["SyntaxError: invalid syntax"],
             duration_ms=5.0,
-            success=False
+            success=False,
         )
 
         assert result.success is False
@@ -157,7 +140,7 @@ class TestBuildResult:
             parallel=True,
             python_version=(3, 14, 0),
             gil_enabled=False,
-            reason="Free-threading enabled"
+            reason="Free-threading enabled",
         )
 
         result = BuildResult(
@@ -168,7 +151,7 @@ class TestBuildResult:
             duration_seconds=10.0,
             throughput_files_per_second=10.0,
             speedup_factor=8.0,
-            mode=mode
+            mode=mode,
         )
 
         assert result.artifacts == 100
@@ -186,8 +169,8 @@ class TestVersionDetector:
 
     def test_detect_python_314_with_free_threading(self):
         """Test detection of Python 3.14+ with free-threading enabled."""
-        with patch.object(sys, 'version_info', (3, 14, 0, 'final', 0)):
-            with patch.object(sys, '_is_gil_enabled', return_value=False):
+        with patch.object(sys, "version_info", (3, 14, 0, "final", 0)):
+            with patch.object(sys, "_is_gil_enabled", return_value=False, create=True):
                 mode = VersionDetector.detect()
 
                 assert mode.parallel is True
@@ -197,8 +180,8 @@ class TestVersionDetector:
 
     def test_detect_python_314_without_free_threading(self):
         """Test detection of Python 3.14+ with GIL still enabled."""
-        with patch.object(sys, 'version_info', (3, 14, 0, 'final', 0)):
-            with patch.object(sys, '_is_gil_enabled', return_value=True):
+        with patch.object(sys, "version_info", (3, 14, 0, "final", 0)):
+            with patch.object(sys, "_is_gil_enabled", return_value=True, create=True):
                 mode = VersionDetector.detect()
 
                 assert mode.parallel is False
@@ -208,7 +191,7 @@ class TestVersionDetector:
 
     def test_detect_python_313(self):
         """Test detection of Python 3.13 (no free-threading)."""
-        with patch.object(sys, 'version_info', (3, 13, 0, 'final', 0)):
+        with patch.object(sys, "version_info", (3, 13, 0, "final", 0)):
             mode = VersionDetector.detect()
 
             assert mode.parallel is False
@@ -218,7 +201,7 @@ class TestVersionDetector:
 
     def test_detect_python_311(self):
         """Test detection of Python 3.11 (no free-threading)."""
-        with patch.object(sys, 'version_info', (3, 11, 0, 'final', 0)):
+        with patch.object(sys, "version_info", (3, 11, 0, "final", 0)):
             mode = VersionDetector.detect()
 
             assert mode.parallel is False
@@ -228,8 +211,8 @@ class TestVersionDetector:
 
     def test_detect_python_315(self):
         """Test detection of Python 3.15+ with free-threading."""
-        with patch.object(sys, 'version_info', (3, 15, 0, 'final', 0)):
-            with patch.object(sys, '_is_gil_enabled', return_value=False):
+        with patch.object(sys, "version_info", (3, 15, 0, "final", 0)):
+            with patch.object(sys, "_is_gil_enabled", return_value=False, create=True):
                 mode = VersionDetector.detect()
 
                 assert mode.parallel is True
@@ -238,11 +221,11 @@ class TestVersionDetector:
 
     def test_detect_missing_gil_check(self):
         """Test detection when _is_gil_enabled is not available."""
-        with patch.object(sys, 'version_info', (3, 14, 0, 'final', 0)):
+        with patch.object(sys, "version_info", (3, 14, 0, "final", 0)):
             # Remove _is_gil_enabled attribute
-            original_attr = getattr(sys, '_is_gil_enabled', None)
-            if hasattr(sys, '_is_gil_enabled'):
-                delattr(sys, '_is_gil_enabled')
+            original_attr = getattr(sys, "_is_gil_enabled", None)
+            if hasattr(sys, "_is_gil_enabled"):
+                delattr(sys, "_is_gil_enabled")
 
             try:
                 mode = VersionDetector.detect()
@@ -257,8 +240,10 @@ class TestVersionDetector:
 
     def test_detect_gil_check_exception(self):
         """Test detection when _is_gil_enabled raises an exception."""
-        with patch.object(sys, 'version_info', (3, 14, 0, 'final', 0)):
-            with patch.object(sys, '_is_gil_enabled', side_effect=RuntimeError("Test error")):
+        with patch.object(sys, "version_info", (3, 14, 0, "final", 0)):
+            with patch.object(
+                sys, "_is_gil_enabled", side_effect=RuntimeError("Test error"), create=True
+            ):
                 mode = VersionDetector.detect()
 
                 # Should fall back to single-threaded mode
@@ -271,12 +256,7 @@ class TestFileMetadata:
 
     def test_file_metadata_creation(self):
         """Test creating file metadata."""
-        metadata = FileMetadata(
-            path=Path("test.py"),
-            size=100,
-            hash="abc123",
-            language="python"
-        )
+        metadata = FileMetadata(path=Path("test.py"), size=100, hash="abc123", language="python")
 
         assert metadata.path == Path("test.py")
         assert metadata.size == 100
@@ -285,11 +265,7 @@ class TestFileMetadata:
 
     def test_file_metadata_default_language(self):
         """Test file metadata with default language."""
-        metadata = FileMetadata(
-            path=Path("test.py"),
-            size=100,
-            hash="abc123"
-        )
+        metadata = FileMetadata(path=Path("test.py"), size=100, hash="abc123")
 
         assert metadata.language == "python"
 
@@ -445,9 +421,22 @@ class TestParallelFileDiscovery:
 
             # Create all SKIP_DIRS directories
             skip_dirs = [
-                ".venv", "venv", "env", "__pycache__", ".egg-info", ".eggs",
-                "node_modules", ".git", ".hg", ".svn", ".pytest_cache",
-                ".mypy_cache", ".tox", "dist", "build", ".coverage"
+                ".venv",
+                "venv",
+                "env",
+                "__pycache__",
+                ".egg-info",
+                ".eggs",
+                "node_modules",
+                ".git",
+                ".hg",
+                ".svn",
+                ".pytest_cache",
+                ".mypy_cache",
+                ".tox",
+                "dist",
+                "build",
+                ".coverage",
             ]
 
             for skip_dir in skip_dirs:
@@ -465,8 +454,7 @@ class TestParallelFileDiscovery:
 
             # Should only find the valid file, none from SKIP_DIRS
             assert len(files) == 1, (
-                f"Expected 1 file, found {len(files)}. "
-                f"Files: {[f.path for f in files]}"
+                f"Expected 1 file, found {len(files)}. " f"Files: {[f.path for f in files]}"
             )
             assert files[0].path == valid_file
 
@@ -570,7 +558,7 @@ class TestParallelFileDiscovery:
                     raise PermissionError("Access denied")
                 return original_iterdir(self)
 
-            with patch.object(Path, 'iterdir', mock_iterdir):
+            with patch.object(Path, "iterdir", mock_iterdir):
                 files = discovery.discover()
 
             # Should still find the valid file
@@ -642,6 +630,7 @@ class TestParallelFileDiscovery:
 
 # Property-Based Tests
 
+
 class TestVersionDetectorProperties:
     """Property-based tests for VersionDetector."""
 
@@ -650,13 +639,13 @@ class TestVersionDetectorProperties:
         major=st.integers(min_value=3, max_value=4),
         minor=st.integers(min_value=11, max_value=20),
         patch_version=st.integers(min_value=0, max_value=10),
-        gil_enabled=st.booleans()
+        gil_enabled=st.booleans(),
     )
     def test_version_detection_correctness(self, major, minor, patch_version, gil_enabled):
         """Property 1: Version Detection Correctness.
-        
+
         **Validates: Requirements 1.1, 1.2, 1.4**
-        
+
         For any Python version and GIL state, the version detector SHALL select
         parallel mode if and only if the version is 3.14+ AND the GIL is disabled,
         otherwise it SHALL select single-threaded mode.
@@ -664,8 +653,8 @@ class TestVersionDetectorProperties:
         version = (major, minor, patch_version)
 
         # Mock sys.version_info and sys._is_gil_enabled
-        with patch.object(sys, 'version_info', (*version, 'final', 0)):
-            with patch.object(sys, '_is_gil_enabled', return_value=gil_enabled):
+        with patch.object(sys, "version_info", (*version, "final", 0)):
+            with patch.object(sys, "_is_gil_enabled", return_value=gil_enabled, create=True):
                 mode = VersionDetector.detect()
 
                 # Expected behavior: parallel mode only when version >= 3.14 AND GIL disabled
@@ -678,40 +667,40 @@ class TestVersionDetectorProperties:
                 )
 
                 # Verify version is correctly recorded
-                assert mode.python_version == version, (
-                    f"Expected version {version}, got {mode.python_version}"
-                )
+                assert (
+                    mode.python_version == version
+                ), f"Expected version {version}, got {mode.python_version}"
 
                 # Verify GIL state is correctly recorded
                 # Note: For Python < 3.14, GIL is always enabled regardless of input
                 if (major, minor) >= (3, 14):
-                    assert mode.gil_enabled == gil_enabled, (
-                        f"Expected gil_enabled={gil_enabled}, got {mode.gil_enabled}"
-                    )
+                    assert (
+                        mode.gil_enabled == gil_enabled
+                    ), f"Expected gil_enabled={gil_enabled}, got {mode.gil_enabled}"
                 else:
                     # Python < 3.14 always has GIL enabled
-                    assert mode.gil_enabled is True, (
-                        f"Python < 3.14 should always have gil_enabled=True, got {mode.gil_enabled}"
-                    )
+                    assert (
+                        mode.gil_enabled is True
+                    ), f"Python < 3.14 should always have gil_enabled=True, got {mode.gil_enabled}"
 
                 # Verify reason is provided
                 assert len(mode.reason) > 0, "Reason should not be empty"
 
                 # Verify reason contains relevant information
                 if expected_parallel:
-                    assert "parallel" in mode.reason.lower() or "free-threading" in mode.reason.lower(), (
-                        f"Parallel mode reason should mention parallel or free-threading: {mode.reason}"
-                    )
+                    assert (
+                        "parallel" in mode.reason.lower() or "free-threading" in mode.reason.lower()
+                    ), f"Parallel mode reason should mention parallel or free-threading: {mode.reason}"
                 else:
                     # Should explain why parallel mode is not enabled
                     if (major, minor) < (3, 14):
-                        assert "3.14" in mode.reason or "requires" in mode.reason.lower(), (
-                            f"Should mention version requirement: {mode.reason}"
-                        )
+                        assert (
+                            "3.14" in mode.reason or "requires" in mode.reason.lower()
+                        ), f"Should mention version requirement: {mode.reason}"
                     elif gil_enabled:
-                        assert "gil" in mode.reason.lower(), (
-                            f"Should mention GIL when it's the reason: {mode.reason}"
-                        )
+                        assert (
+                            "gil" in mode.reason.lower()
+                        ), f"Should mention GIL when it's the reason: {mode.reason}"
 
 
 class TestParseWorker:
@@ -739,9 +728,7 @@ class Greeter:
 
             # Create parse task
             task = ParseTask(
-                file_path=test_file,
-                file_metadata={"size": test_file.stat().st_size},
-                task_id=1
+                file_path=test_file, file_metadata={"size": test_file.stat().st_size}, task_id=1
             )
 
             # Parse the file
@@ -785,9 +772,7 @@ def broken(
 
             # Create parse task
             task = ParseTask(
-                file_path=test_file,
-                file_metadata={"size": test_file.stat().st_size},
-                task_id=2
+                file_path=test_file, file_metadata={"size": test_file.stat().st_size}, task_id=2
             )
 
             # Parse the file
@@ -818,11 +803,7 @@ def broken(
             test_file = repo / "nonexistent.py"
 
             # Create parse task
-            task = ParseTask(
-                file_path=test_file,
-                file_metadata={},
-                task_id=3
-            )
+            task = ParseTask(file_path=test_file, file_metadata={}, task_id=3)
 
             # Parse the file
             result = ParseWorker.parse(task, repo)
@@ -857,11 +838,7 @@ def broken(
 
             try:
                 # Create parse task
-                task = ParseTask(
-                    file_path=test_file,
-                    file_metadata={},
-                    task_id=4
-                )
+                task = ParseTask(file_path=test_file, file_metadata={}, task_id=4)
 
                 # Parse the file
                 result = ParseWorker.parse(task, repo)
@@ -888,11 +865,7 @@ def broken(
             test_file.write_text("")
 
             # Create parse task
-            task = ParseTask(
-                file_path=test_file,
-                file_metadata={"size": 0},
-                task_id=5
-            )
+            task = ParseTask(file_path=test_file, file_metadata={"size": 0}, task_id=5)
 
             # Parse the file
             result = ParseWorker.parse(task, repo)
@@ -918,11 +891,7 @@ def broken(
             test_file.write_bytes(b"print('\xff\xfe invalid utf-8')")
 
             # Create parse task
-            task = ParseTask(
-                file_path=test_file,
-                file_metadata={},
-                task_id=6
-            )
+            task = ParseTask(file_path=test_file, file_metadata={}, task_id=6)
 
             # Parse the file - should handle encoding errors gracefully
             result = ParseWorker.parse(task, repo)
@@ -945,11 +914,7 @@ def broken(
             outside_file.write_text("print('outside')")
 
             # Create parse task
-            task = ParseTask(
-                file_path=outside_file,
-                file_metadata={},
-                task_id=7
-            )
+            task = ParseTask(file_path=outside_file, file_metadata={}, task_id=7)
 
             # Parse the file
             result = ParseWorker.parse(task, repo)
@@ -1016,9 +981,7 @@ result = function_with_params(5)
 
             # Create parse task
             task = ParseTask(
-                file_path=test_file,
-                file_metadata={"size": test_file.stat().st_size},
-                task_id=8
+                file_path=test_file, file_metadata={"size": test_file.stat().st_size}, task_id=8
             )
 
             # Parse the file
@@ -1094,11 +1057,13 @@ class TestFileDiscoveryProperties:
         num_skip_dirs=st.integers(min_value=0, max_value=3),
         num_nested_levels=st.integers(min_value=1, max_value=3),
     )
-    def test_file_discovery_equivalence(self, num_dirs, num_files_per_dir, num_skip_dirs, num_nested_levels):
+    def test_file_discovery_equivalence(
+        self, num_dirs, num_files_per_dir, num_skip_dirs, num_nested_levels
+    ):
         """Property 2: File Discovery Equivalence.
-        
+
         **Validates: Requirements 2.5**
-        
+
         For any repository structure, parallel file discovery SHALL produce the same
         set of files with identical metadata as sequential file discovery.
         """
@@ -1199,15 +1164,15 @@ class TestFileDiscoveryProperties:
             # Verify no files from SKIP_DIRS are included
             for file_meta in sequential_files:
                 for skip_dir in skip_dir_names[:num_skip_dirs]:
-                    assert skip_dir not in str(file_meta.path), (
-                        f"File from SKIP_DIR found: {file_meta.path} contains {skip_dir}"
-                    )
+                    assert skip_dir not in str(
+                        file_meta.path
+                    ), f"File from SKIP_DIR found: {file_meta.path} contains {skip_dir}"
 
             for file_meta in parallel_files:
                 for skip_dir in skip_dir_names[:num_skip_dirs]:
-                    assert skip_dir not in str(file_meta.path), (
-                        f"File from SKIP_DIR found: {file_meta.path} contains {skip_dir}"
-                    )
+                    assert skip_dir not in str(
+                        file_meta.path
+                    ), f"File from SKIP_DIR found: {file_meta.path} contains {skip_dir}"
 
 
 class TestSkipDirsFilteringProperties:
@@ -1218,28 +1183,39 @@ class TestSkipDirsFilteringProperties:
         num_valid_dirs=st.integers(min_value=1, max_value=5),
         num_files_per_dir=st.integers(min_value=1, max_value=3),
         skip_dirs_to_create=st.lists(
-            st.sampled_from([
-                ".venv", "venv", "env", "__pycache__", ".egg-info", ".eggs",
-                "node_modules", ".git", ".hg", ".svn", ".pytest_cache",
-                ".mypy_cache", ".tox", "dist", "build", ".coverage"
-            ]),
+            st.sampled_from(
+                [
+                    ".venv",
+                    "venv",
+                    "env",
+                    "__pycache__",
+                    ".egg-info",
+                    ".eggs",
+                    "node_modules",
+                    ".git",
+                    ".hg",
+                    ".svn",
+                    ".pytest_cache",
+                    ".mypy_cache",
+                    ".tox",
+                    "dist",
+                    "build",
+                    ".coverage",
+                ]
+            ),
             min_size=1,
             max_size=5,
-            unique=True
+            unique=True,
         ),
         num_files_in_skip_dirs=st.integers(min_value=1, max_value=3),
     )
     def test_skip_dirs_filtering(
-        self,
-        num_valid_dirs,
-        num_files_per_dir,
-        skip_dirs_to_create,
-        num_files_in_skip_dirs
+        self, num_valid_dirs, num_files_per_dir, skip_dirs_to_create, num_files_in_skip_dirs
     ):
         """Property 3: SKIP_DIRS Filtering.
-        
+
         **Validates: Requirements 2.4**
-        
+
         For any repository structure containing directories in SKIP_DIRS,
         no files from those directories SHALL appear in the discovered file list.
         """
@@ -1304,38 +1280,33 @@ class TestSkipDirsFilteringProperties:
 
                 # Check that no SKIP_DIR name appears in the path
                 for skip_dir_name in skip_dirs_to_create:
-                    assert skip_dir_name not in file_path_str, (
-                        f"File from SKIP_DIR '{skip_dir_name}' found in results: {discovered_file.path}"
-                    )
+                    assert (
+                        skip_dir_name not in file_path_str
+                    ), f"File from SKIP_DIR '{skip_dir_name}' found in results: {discovered_file.path}"
 
                 # Verify the file is not in any of the skip directory paths
                 for skip_dir_path in skip_dir_paths:
-                    assert not discovered_file.path.is_relative_to(skip_dir_path), (
-                        f"File from SKIP_DIR found: {discovered_file.path} is inside {skip_dir_path}"
-                    )
+                    assert not discovered_file.path.is_relative_to(
+                        skip_dir_path
+                    ), f"File from SKIP_DIR found: {discovered_file.path} is inside {skip_dir_path}"
 
             # Verify count matches expectations
             expected_count = len(expected_valid_files)
             actual_count = len(discovered_files)
-            assert actual_count == expected_count, (
-                f"File count mismatch: expected {expected_count}, got {actual_count}"
-            )
-
+            assert (
+                actual_count == expected_count
+            ), f"File count mismatch: expected {expected_count}, got {actual_count}"
 
 
 class TestLockFreeSymbolTable:
     """Tests for LockFreeSymbolTable class."""
 
     @staticmethod
-    def _create_symbol(name: str, kind: str, module: str = "test", location: str = "test.py:10", **kwargs):
+    def _create_symbol(
+        name: str, kind: str, module: str = "test", location: str = "test.py:10", **kwargs
+    ):
         """Helper to create SymbolInfo with minimal required fields."""
-        return SymbolInfo(
-            name=name,
-            kind=kind,
-            module=module,
-            location=location,
-            **kwargs
-        )
+        return SymbolInfo(name=name, kind=kind, module=module, location=location, **kwargs)
 
     def test_init_creates_empty_table(self):
         """Test initialization creates an empty symbol table."""
@@ -1355,7 +1326,7 @@ class TestLockFreeSymbolTable:
             module="test",
             location="test.py:10",
             signature="def test_func():",
-            docstring="Test function"
+            docstring="Test function",
         )
 
         table.add_symbol("test.test_func", symbol)
@@ -1379,7 +1350,7 @@ class TestLockFreeSymbolTable:
             decorators=[],
             parameters=[],
             type_hints={},
-            bases=[]
+            bases=[],
         )
 
         symbol2 = SymbolInfo(
@@ -1392,7 +1363,7 @@ class TestLockFreeSymbolTable:
             decorators=[],
             parameters=[],
             type_hints={},
-            bases=[]
+            bases=[],
         )
 
         symbol3 = SymbolInfo(
@@ -1405,7 +1376,7 @@ class TestLockFreeSymbolTable:
             decorators=[],
             parameters=[],
             type_hints={},
-            bases=[]
+            bases=[],
         )
 
         table.add_symbol("test.func1", symbol1)
@@ -1432,7 +1403,7 @@ class TestLockFreeSymbolTable:
             decorators=[],
             parameters=[],
             type_hints={},
-            bases=[]
+            bases=[],
         )
 
         symbol2 = SymbolInfo(
@@ -1445,7 +1416,7 @@ class TestLockFreeSymbolTable:
             decorators=[],
             parameters=[],
             type_hints={},
-            bases=[]
+            bases=[],
         )
 
         table.add_symbol("test.func", symbol1)
@@ -1469,7 +1440,7 @@ class TestLockFreeSymbolTable:
             decorators=[],
             parameters=[],
             type_hints={},
-            bases=[]
+            bases=[],
         )
 
         table.add_symbol("test.func", symbol)
@@ -1506,7 +1477,7 @@ class TestLockFreeSymbolTable:
                     decorators=[],
                     parameters=[],
                     type_hints={},
-                    bases=[]
+                    bases=[],
                 )
                 table.add_symbol(f"test{thread_id}.func_{thread_id}_{i}", symbol)
 
@@ -1524,17 +1495,15 @@ class TestLockFreeSymbolTable:
         # Verify all symbols were added
         symbols = table.get_all_symbols()
         expected_count = num_threads * symbols_per_thread
-        assert len(symbols) == expected_count, (
-            f"Expected {expected_count} symbols, got {len(symbols)}"
-        )
+        assert (
+            len(symbols) == expected_count
+        ), f"Expected {expected_count} symbols, got {len(symbols)}"
 
         # Verify all expected symbols are present
         for thread_id in range(num_threads):
             for i in range(symbols_per_thread):
                 qualified_name = f"test{thread_id}.func_{thread_id}_{i}"
-                assert qualified_name in symbols, (
-                    f"Missing symbol: {qualified_name}"
-                )
+                assert qualified_name in symbols, f"Missing symbol: {qualified_name}"
 
     def test_add_symbol_concurrent_duplicates(self):
         """Test concurrent addition of duplicate symbols keeps first occurrence."""
@@ -1555,7 +1524,7 @@ class TestLockFreeSymbolTable:
                 decorators=[],
                 parameters=[],
                 type_hints={},
-                bases=[]
+                bases=[],
             )
             table.add_symbol("test.shared_func", symbol)
 
@@ -1594,7 +1563,7 @@ class TestLockFreeSymbolTable:
             decorators=[],
             parameters=[],
             type_hints={},
-            bases=[]
+            bases=[],
         )
 
         class_symbol = SymbolInfo(
@@ -1607,7 +1576,7 @@ class TestLockFreeSymbolTable:
             decorators=[],
             parameters=[],
             type_hints={},
-            bases=[]
+            bases=[],
         )
 
         method_symbol = SymbolInfo(
@@ -1620,7 +1589,7 @@ class TestLockFreeSymbolTable:
             decorators=[],
             parameters=["self"],
             type_hints={},
-            bases=[]
+            bases=[],
         )
 
         variable_symbol = SymbolInfo(
@@ -1633,7 +1602,7 @@ class TestLockFreeSymbolTable:
             decorators=[],
             parameters=[],
             type_hints={"inferred": "int"},
-            bases=[]
+            bases=[],
         )
 
         table.add_symbol("test.my_function", function_symbol)
@@ -1671,7 +1640,7 @@ class TestLockFreeSymbolTable:
             decorators=[],
             parameters=[],
             type_hints={},
-            bases=[]
+            bases=[],
         )
 
         # Nested class method
@@ -1685,7 +1654,7 @@ class TestLockFreeSymbolTable:
             decorators=[],
             parameters=["self"],
             type_hints={},
-            bases=[]
+            bases=[],
         )
 
         table.add_symbol("mypackage.module.func", symbol1)
@@ -1695,7 +1664,6 @@ class TestLockFreeSymbolTable:
         assert len(symbols) == 2
         assert "mypackage.module.func" in symbols
         assert "mypackage.module.OuterClass.InnerClass.method" in symbols
-
 
 
 class TestSymbolTableThreadSafetyProperties:
@@ -1709,9 +1677,9 @@ class TestSymbolTableThreadSafetyProperties:
     )
     def test_symbol_table_thread_safety(self, num_files, num_symbols_per_file, num_threads):
         """Property 4: Symbol Table Thread Safety.
-        
+
         **Validates: Requirements 3.2**
-        
+
         For any set of files parsed concurrently, the final symbol table SHALL
         contain all symbols without corruption (no missing symbols, no corrupted data).
         """
@@ -1753,7 +1721,7 @@ class TestSymbolTableThreadSafetyProperties:
                             "kind": "function",
                             "module": f"module_{file_idx}",
                             "file_idx": file_idx,
-                            "sym_idx": sym_idx
+                            "sym_idx": sym_idx,
                         }
 
                     elif symbol_type == 1:
@@ -1770,7 +1738,7 @@ class TestSymbolTableThreadSafetyProperties:
                             "kind": "class",
                             "module": f"module_{file_idx}",
                             "file_idx": file_idx,
-                            "sym_idx": sym_idx
+                            "sym_idx": sym_idx,
                         }
 
                     elif symbol_type == 2:
@@ -1785,7 +1753,7 @@ class TestSymbolTableThreadSafetyProperties:
                             "kind": "variable",
                             "module": f"module_{file_idx}",
                             "file_idx": file_idx,
-                            "sym_idx": sym_idx
+                            "sym_idx": sym_idx,
                         }
 
                     else:
@@ -1805,7 +1773,7 @@ class TestSymbolTableThreadSafetyProperties:
                             "kind": "class",
                             "module": f"module_{file_idx}",
                             "file_idx": file_idx,
-                            "sym_idx": sym_idx
+                            "sym_idx": sym_idx,
                         }
 
                         method_qualified_name = f"module_{file_idx}.{class_name}.{method_name}"
@@ -1814,7 +1782,7 @@ class TestSymbolTableThreadSafetyProperties:
                             "kind": "method",
                             "module": f"module_{file_idx}",
                             "file_idx": file_idx,
-                            "sym_idx": sym_idx
+                            "sym_idx": sym_idx,
                         }
 
                 # Write the file
@@ -1855,7 +1823,7 @@ class TestSymbolTableThreadSafetyProperties:
                                 docstring=ast.get_docstring(node),
                                 decorators=[],
                                 parameters=[],
-                                type_hints={}
+                                type_hints={},
                             )
 
                             table.add_symbol(qualified_name, symbol)
@@ -1873,7 +1841,7 @@ class TestSymbolTableThreadSafetyProperties:
                                 docstring=ast.get_docstring(node),
                                 decorators=[],
                                 bases=[],
-                                type_hints={}
+                                type_hints={},
                             )
 
                             table.add_symbol(qualified_name, symbol)
@@ -1892,7 +1860,7 @@ class TestSymbolTableThreadSafetyProperties:
                                         signature=f"{target.id} = ...",
                                         docstring=None,
                                         decorators=[],
-                                        type_hints={}
+                                        type_hints={},
                                     )
 
                                     table.add_symbol(qualified_name, symbol)
@@ -1900,6 +1868,7 @@ class TestSymbolTableThreadSafetyProperties:
                 except Exception as exc:
                     # Log but don't fail - error handling is tested separately
                     import logging
+
                     logging.warning(f"Error parsing {file_path}: {exc}")
 
             # Get all Python files
@@ -1919,6 +1888,7 @@ class TestSymbolTableThreadSafetyProperties:
                     except Exception as exc:
                         # Log but don't fail
                         import logging
+
                         logging.warning(f"Thread execution error: {exc}")
 
             # Get all symbols from the table
@@ -1927,36 +1897,33 @@ class TestSymbolTableThreadSafetyProperties:
             # Verify no symbol corruption
             for qualified_name, symbol_info in actual_symbols.items():
                 # Verify symbol has required attributes
-                assert hasattr(symbol_info, 'name'), (
-                    f"Symbol {qualified_name} missing 'name' attribute"
-                )
-                assert hasattr(symbol_info, 'kind'), (
-                    f"Symbol {qualified_name} missing 'kind' attribute"
-                )
-                assert hasattr(symbol_info, 'location'), (
-                    f"Symbol {qualified_name} missing 'location' attribute"
-                )
+                assert hasattr(
+                    symbol_info, "name"
+                ), f"Symbol {qualified_name} missing 'name' attribute"
+                assert hasattr(
+                    symbol_info, "kind"
+                ), f"Symbol {qualified_name} missing 'kind' attribute"
+                assert hasattr(
+                    symbol_info, "location"
+                ), f"Symbol {qualified_name} missing 'location' attribute"
 
                 # Verify symbol name is not corrupted (not empty, not None)
-                assert symbol_info.name is not None, (
-                    f"Symbol {qualified_name} has None name"
-                )
-                assert len(symbol_info.name) > 0, (
-                    f"Symbol {qualified_name} has empty name"
-                )
+                assert symbol_info.name is not None, f"Symbol {qualified_name} has None name"
+                assert len(symbol_info.name) > 0, f"Symbol {qualified_name} has empty name"
 
                 # Verify kind is valid
-                assert symbol_info.kind in ["function", "class", "method", "variable"], (
-                    f"Symbol {qualified_name} has invalid kind: {symbol_info.kind}"
-                )
+                assert symbol_info.kind in [
+                    "function",
+                    "class",
+                    "method",
+                    "variable",
+                ], f"Symbol {qualified_name} has invalid kind: {symbol_info.kind}"
 
                 # Verify location is not corrupted
-                assert symbol_info.location is not None, (
-                    f"Symbol {qualified_name} has None location"
-                )
-                assert len(symbol_info.location) > 0, (
-                    f"Symbol {qualified_name} has empty location"
-                )
+                assert (
+                    symbol_info.location is not None
+                ), f"Symbol {qualified_name} has None location"
+                assert len(symbol_info.location) > 0, f"Symbol {qualified_name} has empty location"
 
             # Verify all expected symbols are present (no missing symbols)
             actual_symbol_names = set(actual_symbols.keys())
@@ -1973,7 +1940,11 @@ class TestSymbolTableThreadSafetyProperties:
 
             # Verify at least 80% of expected symbols are present
             # (This accounts for edge cases in AST parsing logic)
-            coverage_ratio = len(actual_symbol_names & expected_symbol_names) / len(expected_symbol_names) if expected_symbol_names else 1.0
+            coverage_ratio = (
+                len(actual_symbol_names & expected_symbol_names) / len(expected_symbol_names)
+                if expected_symbol_names
+                else 1.0
+            )
 
             assert coverage_ratio >= 0.8, (
                 f"Too many missing symbols: {len(missing_symbols)} missing out of {len(expected_symbol_names)}\n"
@@ -1986,9 +1957,9 @@ class TestSymbolTableThreadSafetyProperties:
             # Verify no duplicate symbols (each symbol should appear exactly once)
             # This is implicitly verified by the dict structure, but we can check
             # that the count matches
-            assert len(actual_symbols) == len(actual_symbol_names), (
-                f"Symbol count mismatch: {len(actual_symbols)} symbols but {len(actual_symbol_names)} unique names"
-            )
+            assert len(actual_symbols) == len(
+                actual_symbol_names
+            ), f"Symbol count mismatch: {len(actual_symbols)} symbols but {len(actual_symbol_names)} unique names"
 
             # Verify thread safety: run the same test multiple times to catch race conditions
             # This is done by hypothesis running 100+ iterations
@@ -2011,12 +1982,12 @@ class TestSymbolExtractionEquivalenceProperties:
         num_functions_per_file,
         num_classes_per_file,
         num_methods_per_class,
-        num_threads
+        num_threads,
     ):
         """Property 5: Symbol Extraction Equivalence.
-        
+
         **Validates: Requirements 3.5**
-        
+
         For any set of Python files, parallel symbol extraction SHALL produce
         the same symbols as sequential extraction.
         """
@@ -2049,7 +2020,9 @@ class TestSymbolExtractionEquivalenceProperties:
                 # Generate functions
                 for func_idx in range(num_functions_per_file):
                     func_name = f"function_{file_idx}_{func_idx}"
-                    file_content.append(f"def {func_name}(arg1: int, arg2: str = 'default') -> bool:")
+                    file_content.append(
+                        f"def {func_name}(arg1: int, arg2: str = 'default') -> bool:"
+                    )
                     file_content.append(f"    '''Function {file_idx}-{func_idx} docstring.'''")
                     file_content.append(f"    result = arg1 + {func_idx}")
                     file_content.append("    return result > 0")
@@ -2115,6 +2088,7 @@ class TestSymbolExtractionEquivalenceProperties:
 
                 except Exception as exc:
                     import logging
+
                     logging.warning(f"Sequential extraction error for {file_path}: {exc}")
 
             # Parallel extraction using LockFreeSymbolTable
@@ -2136,6 +2110,7 @@ class TestSymbolExtractionEquivalenceProperties:
 
                 except Exception as exc:
                     import logging
+
                     logging.warning(f"Parallel extraction error for {file_path}: {exc}")
 
             # Extract symbols in parallel
@@ -2151,6 +2126,7 @@ class TestSymbolExtractionEquivalenceProperties:
                         future.result()
                     except Exception as exc:
                         import logging
+
                         logging.warning(f"Thread execution error: {exc}")
 
             # Get parallel symbols
@@ -2199,42 +2175,42 @@ class TestSymbolExtractionEquivalenceProperties:
                 )
 
                 # Verify signature matches (if present)
-                if hasattr(seq_symbol, 'signature') and hasattr(par_symbol, 'signature'):
+                if hasattr(seq_symbol, "signature") and hasattr(par_symbol, "signature"):
                     assert seq_symbol.signature == par_symbol.signature, (
                         f"Signature mismatch for {qualified_name}: "
                         f"sequential={seq_symbol.signature}, parallel={par_symbol.signature}"
                     )
 
                 # Verify docstring matches (if present)
-                if hasattr(seq_symbol, 'docstring') and hasattr(par_symbol, 'docstring'):
+                if hasattr(seq_symbol, "docstring") and hasattr(par_symbol, "docstring"):
                     assert seq_symbol.docstring == par_symbol.docstring, (
                         f"Docstring mismatch for {qualified_name}: "
                         f"sequential={seq_symbol.docstring}, parallel={par_symbol.docstring}"
                     )
 
                 # Verify decorators match (if present)
-                if hasattr(seq_symbol, 'decorators') and hasattr(par_symbol, 'decorators'):
+                if hasattr(seq_symbol, "decorators") and hasattr(par_symbol, "decorators"):
                     assert seq_symbol.decorators == par_symbol.decorators, (
                         f"Decorators mismatch for {qualified_name}: "
                         f"sequential={seq_symbol.decorators}, parallel={par_symbol.decorators}"
                     )
 
                 # Verify type hints match (if present)
-                if hasattr(seq_symbol, 'type_hints') and hasattr(par_symbol, 'type_hints'):
+                if hasattr(seq_symbol, "type_hints") and hasattr(par_symbol, "type_hints"):
                     assert seq_symbol.type_hints == par_symbol.type_hints, (
                         f"Type hints mismatch for {qualified_name}: "
                         f"sequential={seq_symbol.type_hints}, parallel={par_symbol.type_hints}"
                     )
 
                 # Verify parameters match (if present)
-                if hasattr(seq_symbol, 'parameters') and hasattr(par_symbol, 'parameters'):
+                if hasattr(seq_symbol, "parameters") and hasattr(par_symbol, "parameters"):
                     assert seq_symbol.parameters == par_symbol.parameters, (
                         f"Parameters mismatch for {qualified_name}: "
                         f"sequential={seq_symbol.parameters}, parallel={par_symbol.parameters}"
                     )
 
                 # Verify bases match (if present, for classes)
-                if hasattr(seq_symbol, 'bases') and hasattr(par_symbol, 'bases'):
+                if hasattr(seq_symbol, "bases") and hasattr(par_symbol, "bases"):
                     assert seq_symbol.bases == par_symbol.bases, (
                         f"Bases mismatch for {qualified_name}: "
                         f"sequential={seq_symbol.bases}, parallel={par_symbol.bases}"
@@ -2245,7 +2221,6 @@ class TestSymbolExtractionEquivalenceProperties:
                 f"Symbol count mismatch: "
                 f"sequential={len(sequential_symbols)}, parallel={len(parallel_symbols)}"
             )
-
 
 
 class TestWorkPool:
@@ -2628,14 +2603,16 @@ class TestErrorIsolationProperties:
         num_invalid_files=st.integers(min_value=3, max_value=15),
         num_functions_per_valid_file=st.integers(min_value=1, max_value=5),
         num_classes_per_valid_file=st.integers(min_value=0, max_value=3),
-        invalid_syntax_type=st.sampled_from([
-            "missing_paren",
-            "missing_colon",
-            "invalid_indent",
-            "unclosed_string",
-            "invalid_operator",
-            "missing_bracket",
-        ]),
+        invalid_syntax_type=st.sampled_from(
+            [
+                "missing_paren",
+                "missing_colon",
+                "invalid_indent",
+                "unclosed_string",
+                "invalid_operator",
+                "missing_bracket",
+            ]
+        ),
         num_threads=st.integers(min_value=2, max_value=8),
     )
     def test_error_isolation(
@@ -2645,12 +2622,12 @@ class TestErrorIsolationProperties:
         num_functions_per_valid_file,
         num_classes_per_valid_file,
         invalid_syntax_type,
-        num_threads
+        num_threads,
     ):
         """Property 10: Error Isolation.
-        
+
         **Validates: Requirements 5.4, 8.1**
-        
+
         For any set of files containing a mix of valid and invalid Python files,
         all valid files SHALL be parsed successfully regardless of errors in
         invalid files.
@@ -2756,7 +2733,7 @@ class TestErrorIsolationProperties:
                 ParseTask(
                     file_path=file_path,
                     file_metadata={"size": file_path.stat().st_size},
-                    task_id=idx
+                    task_id=idx,
                 )
                 for idx, file_path in enumerate(all_files)
             ]
@@ -2799,9 +2776,9 @@ class TestErrorIsolationProperties:
 
             # All invalid files should fail (but this is not the main property)
             # The main property is that valid files succeed
-            assert invalid_file_paths.issubset(failed_paths | successful_paths), (
-                "Some invalid files were not processed"
-            )
+            assert invalid_file_paths.issubset(
+                failed_paths | successful_paths
+            ), "Some invalid files were not processed"
 
             # Verify that successful results have extracted nodes
             for result in successful_results:
@@ -2814,27 +2791,27 @@ class TestErrorIsolationProperties:
                     )
 
                     # Verify artifact is marked as successful
-                    assert result.artifact.parse_ok is True, (
-                        f"Valid file {result.file_path.name} has parse_ok=False"
-                    )
+                    assert (
+                        result.artifact.parse_ok is True
+                    ), f"Valid file {result.file_path.name} has parse_ok=False"
 
                     # Verify no errors recorded
-                    assert len(result.errors) == 0, (
-                        f"Valid file {result.file_path.name} has errors: {result.errors}"
-                    )
+                    assert (
+                        len(result.errors) == 0
+                    ), f"Valid file {result.file_path.name} has errors: {result.errors}"
 
             # Verify that failed results have error messages
             for result in failed_results:
                 if result.file_path in invalid_files:
                     # Invalid files should have error messages
-                    assert len(result.errors) > 0, (
-                        f"Invalid file {result.file_path.name} failed but has no error messages"
-                    )
+                    assert (
+                        len(result.errors) > 0
+                    ), f"Invalid file {result.file_path.name} failed but has no error messages"
 
                     # Verify artifact is marked as failed
-                    assert result.artifact.parse_ok is False, (
-                        f"Invalid file {result.file_path.name} has parse_ok=True"
-                    )
+                    assert (
+                        result.artifact.parse_ok is False
+                    ), f"Invalid file {result.file_path.name} has parse_ok=True"
 
                     # Verify error message mentions syntax error
                     error_text = " ".join(result.errors).lower()
@@ -2844,9 +2821,9 @@ class TestErrorIsolationProperties:
                     )
 
             # Verify total count matches
-            assert len(results) == len(all_files), (
-                f"Result count mismatch: expected {len(all_files)}, got {len(results)}"
-            )
+            assert len(results) == len(
+                all_files
+            ), f"Result count mismatch: expected {len(all_files)}, got {len(results)}"
 
             # Verify that each task was processed exactly once
             task_ids = {r.task_id for r in results}
@@ -2871,7 +2848,6 @@ class TestErrorIsolationProperties:
             )
 
 
-
 class TestErrorAggregationProperties:
     """Property-based tests for error aggregation."""
 
@@ -2880,32 +2856,30 @@ class TestErrorAggregationProperties:
         num_files_with_errors=st.integers(min_value=5, max_value=25),
         num_valid_files=st.integers(min_value=2, max_value=10),
         error_types=st.lists(
-            st.sampled_from([
-                "missing_paren",
-                "missing_colon",
-                "invalid_indent",
-                "unclosed_string",
-                "invalid_operator",
-                "missing_bracket",
-                "unexpected_eof",
-                "invalid_syntax",
-            ]),
+            st.sampled_from(
+                [
+                    "missing_paren",
+                    "missing_colon",
+                    "invalid_indent",
+                    "unclosed_string",
+                    "invalid_operator",
+                    "missing_bracket",
+                    "unexpected_eof",
+                    "invalid_syntax",
+                ]
+            ),
             min_size=1,
-            max_size=8
+            max_size=8,
         ),
         num_threads=st.integers(min_value=2, max_value=8),
     )
     def test_error_aggregation(
-        self,
-        num_files_with_errors,
-        num_valid_files,
-        error_types,
-        num_threads
+        self, num_files_with_errors, num_valid_files, error_types, num_threads
     ):
         """Property 11: Error Aggregation.
-        
+
         **Validates: Requirements 5.5, 8.3**
-        
+
         For any set of files with parse errors, all errors SHALL be collected
         and included in the final build result.
         """
@@ -2999,7 +2973,7 @@ class TestErrorAggregationProperties:
                 ParseTask(
                     file_path=file_path,
                     file_metadata={"size": file_path.stat().st_size},
-                    task_id=idx
+                    task_id=idx,
                 )
                 for idx, file_path in enumerate(all_files)
             ]
@@ -3049,20 +3023,21 @@ class TestErrorAggregationProperties:
                 total_errors_collected += len(result.errors)
 
                 # Verify artifact is marked as failed
-                assert result.artifact.parse_ok is False, (
-                    f"Failed result for {result.file_path.name} has parse_ok=True"
-                )
+                assert (
+                    result.artifact.parse_ok is False
+                ), f"Failed result for {result.file_path.name} has parse_ok=True"
 
                 # Verify artifact has error message
-                assert result.artifact.error is not None, (
-                    f"Failed result for {result.file_path.name} has no artifact error message"
-                )
+                assert (
+                    result.artifact.error is not None
+                ), f"Failed result for {result.file_path.name} has no artifact error message"
 
                 # Verify error messages are meaningful (contain error keywords)
                 error_text = " ".join(result.errors).lower()
-                assert any(keyword in error_text for keyword in [
-                    "syntax", "error", "invalid", "unexpected", "missing"
-                ]), (
+                assert any(
+                    keyword in error_text
+                    for keyword in ["syntax", "error", "invalid", "unexpected", "missing"]
+                ), (
                     f"Error message for {result.file_path.name} doesn't contain error keywords: "
                     f"{result.errors}"
                 )
@@ -3085,17 +3060,15 @@ class TestErrorAggregationProperties:
             )
 
             # Verify all results were processed
-            assert len(results) == len(all_files), (
-                f"Result count mismatch: expected {len(all_files)}, got {len(results)}"
-            )
+            assert len(results) == len(
+                all_files
+            ), f"Result count mismatch: expected {len(all_files)}, got {len(results)}"
 
             # Verify each task was processed exactly once
             task_ids = {r.task_id for r in results}
             expected_task_ids = set(range(len(all_files)))
             assert task_ids == expected_task_ids, (
-                f"Task ID mismatch:\n"
-                f"Expected: {expected_task_ids}\n"
-                f"Got: {task_ids}"
+                f"Task ID mismatch:\n" f"Expected: {expected_task_ids}\n" f"Got: {task_ids}"
             )
 
             # Additional verification: Check that error details are preserved
@@ -3111,9 +3084,9 @@ class TestErrorAggregationProperties:
 
                     # Different error types should produce different error messages
                     # We don't check for specific text, just that errors are recorded
-                    assert len(error_text) > 0, (
-                        f"Error message for {result.file_path.name} is empty"
-                    )
+                    assert (
+                        len(error_text) > 0
+                    ), f"Error message for {result.file_path.name} is empty"
 
             # FINAL VERIFICATION: Simulate build result aggregation
             # In a real build, all these errors would be aggregated into BuildResult
@@ -3162,18 +3135,8 @@ class TestDTGAggregator:
 
         # Create a parse result with nodes and edges
         nodes = [
-            DataNode(
-                symbol="test.func",
-                module="test",
-                kind="function",
-                location="test.py:1"
-            ),
-            DataNode(
-                symbol="test.Class",
-                module="test",
-                kind="class",
-                location="test.py:5"
-            )
+            DataNode(symbol="test.func", module="test", kind="function", location="test.py:1"),
+            DataNode(symbol="test.Class", module="test", kind="class", location="test.py:5"),
         ]
 
         edges = [
@@ -3183,7 +3146,7 @@ class TestDTGAggregator:
                 transform_symbol="test.func",
                 transform_kind="call",
                 location="test.py:2",
-                confidence=1.0
+                confidence=1.0,
             )
         ]
 
@@ -3195,7 +3158,7 @@ class TestDTGAggregator:
             edges=edges,
             errors=[],
             duration_ms=10.0,
-            success=True
+            success=True,
         )
 
         # Add result
@@ -3226,7 +3189,9 @@ class TestDTGAggregator:
             file_path=Path("file1.py"),
             artifact=Artifact(path="file1.py", hash="abc123", parse_ok=True),
             nodes=[
-                DataNode(symbol="file1.func1", module="file1", kind="function", location="file1.py:1")
+                DataNode(
+                    symbol="file1.func1", module="file1", kind="function", location="file1.py:1"
+                )
             ],
             edges=[
                 TransformEdge(
@@ -3235,12 +3200,12 @@ class TestDTGAggregator:
                     transform_symbol="file1.func1",
                     transform_kind="call",
                     location="file1.py:2",
-                    confidence=1.0
+                    confidence=1.0,
                 )
             ],
             errors=[],
             duration_ms=10.0,
-            success=True
+            success=True,
         )
 
         # Create second result
@@ -3249,7 +3214,9 @@ class TestDTGAggregator:
             file_path=Path("file2.py"),
             artifact=Artifact(path="file2.py", hash="def456", parse_ok=True),
             nodes=[
-                DataNode(symbol="file2.func1", module="file2", kind="function", location="file2.py:1")
+                DataNode(
+                    symbol="file2.func1", module="file2", kind="function", location="file2.py:1"
+                )
             ],
             edges=[
                 TransformEdge(
@@ -3258,12 +3225,12 @@ class TestDTGAggregator:
                     transform_symbol="file2.func1",
                     transform_kind="call",
                     location="file2.py:2",
-                    confidence=1.0
+                    confidence=1.0,
                 )
             ],
             errors=[],
             duration_ms=10.0,
-            success=True
+            success=True,
         )
 
         # Add both results
@@ -3296,16 +3263,13 @@ class TestDTGAggregator:
             artifact=Artifact(path="file1.py", hash="abc123", parse_ok=True),
             nodes=[
                 DataNode(
-                    symbol="shared.func",
-                    module="shared",
-                    kind="function",
-                    location="file1.py:1"
+                    symbol="shared.func", module="shared", kind="function", location="file1.py:1"
                 )
             ],
             edges=[],
             errors=[],
             duration_ms=10.0,
-            success=True
+            success=True,
         )
 
         # Create second result with duplicate node (different location)
@@ -3315,16 +3279,13 @@ class TestDTGAggregator:
             artifact=Artifact(path="file2.py", hash="def456", parse_ok=True),
             nodes=[
                 DataNode(
-                    symbol="shared.func",
-                    module="shared",
-                    kind="function",
-                    location="file2.py:10"
+                    symbol="shared.func", module="shared", kind="function", location="file2.py:10"
                 )
             ],
             edges=[],
             errors=[],
             duration_ms=10.0,
-            success=True
+            success=True,
         )
 
         # Add both results
@@ -3363,12 +3324,12 @@ class TestDTGAggregator:
                     transform_symbol="func1",
                     transform_kind="call",
                     location="file1.py:5",
-                    confidence=1.0
+                    confidence=1.0,
                 )
             ],
             errors=[],
             duration_ms=10.0,
-            success=True
+            success=True,
         )
 
         # Create second result with duplicate edge (different location)
@@ -3384,12 +3345,12 @@ class TestDTGAggregator:
                     transform_symbol="func1",
                     transform_kind="call",
                     location="file2.py:10",
-                    confidence=1.0
+                    confidence=1.0,
                 )
             ],
             errors=[],
             duration_ms=10.0,
-            success=True
+            success=True,
         )
 
         # Add both results
@@ -3418,12 +3379,14 @@ class TestDTGAggregator:
             file_path=Path("file1.py"),
             artifact=Artifact(path="file1.py", hash="abc123", parse_ok=True),
             nodes=[
-                DataNode(symbol="file1.func", module="file1", kind="function", location="file1.py:1")
+                DataNode(
+                    symbol="file1.func", module="file1", kind="function", location="file1.py:1"
+                )
             ],
             edges=[],
             errors=[],
             duration_ms=10.0,
-            success=True
+            success=True,
         )
 
         aggregator.add_result(result)
@@ -3448,12 +3411,14 @@ class TestDTGAggregator:
             file_path=Path("file1.py"),
             artifact=Artifact(path="file1.py", hash="abc123", parse_ok=True),
             nodes=[
-                DataNode(symbol="shared.func", module="shared", kind="function", location="file1.py:1")
+                DataNode(
+                    symbol="shared.func", module="shared", kind="function", location="file1.py:1"
+                )
             ],
             edges=[],
             errors=[],
             duration_ms=10.0,
-            success=True
+            success=True,
         )
 
         result2 = ParseResult(
@@ -3461,12 +3426,14 @@ class TestDTGAggregator:
             file_path=Path("file2.py"),
             artifact=Artifact(path="file2.py", hash="def456", parse_ok=True),
             nodes=[
-                DataNode(symbol="shared.func", module="shared", kind="function", location="file2.py:10")
+                DataNode(
+                    symbol="shared.func", module="shared", kind="function", location="file2.py:10"
+                )
             ],
             edges=[],
             errors=[],
             duration_ms=10.0,
-            success=True
+            success=True,
         )
 
         result3 = ParseResult(
@@ -3474,12 +3441,14 @@ class TestDTGAggregator:
             file_path=Path("file3.py"),
             artifact=Artifact(path="file3.py", hash="ghi789", parse_ok=True),
             nodes=[
-                DataNode(symbol="shared.func", module="shared", kind="function", location="file3.py:20")
+                DataNode(
+                    symbol="shared.func", module="shared", kind="function", location="file3.py:20"
+                )
             ],
             edges=[],
             errors=[],
             duration_ms=10.0,
-            success=True
+            success=True,
         )
 
         # Add all results
@@ -3492,7 +3461,7 @@ class TestDTGAggregator:
         assert len(conflicts) == 2  # Two duplicates detected
 
         # Resolve conflicts (should log warnings)
-        with patch('siof.free_threaded_indexer.logger') as mock_logger:
+        with patch("siof.free_threaded_indexer.logger") as mock_logger:
             aggregator.resolve_conflicts()
 
             # Verify warning was logged about conflict count
@@ -3522,7 +3491,7 @@ class TestDTGAggregator:
             edges=[],
             errors=[],
             duration_ms=10.0,
-            success=True
+            success=True,
         )
 
         result2 = ParseResult(
@@ -3535,7 +3504,7 @@ class TestDTGAggregator:
             edges=[],
             errors=[],
             duration_ms=10.0,
-            success=True
+            success=True,
         )
 
         # Add both results
@@ -3570,12 +3539,12 @@ class TestDTGAggregator:
                     transform_symbol="func1",
                     transform_kind="call",
                     location="file1.py:5",
-                    confidence=1.0
+                    confidence=1.0,
                 )
             ],
             errors=[],
             duration_ms=10.0,
-            success=True
+            success=True,
         )
 
         result2 = ParseResult(
@@ -3590,12 +3559,12 @@ class TestDTGAggregator:
                     transform_symbol="func1",
                     transform_kind="call",
                     location="file2.py:10",
-                    confidence=1.0
+                    confidence=1.0,
                 )
             ],
             errors=[],
             duration_ms=10.0,
-            success=True
+            success=True,
         )
 
         # Add both results
@@ -3626,7 +3595,7 @@ class TestDTGAggregator:
             edges=[],
             errors=[],
             duration_ms=10.0,
-            success=True
+            success=True,
         )
 
         # Add result
@@ -3655,13 +3624,13 @@ class TestDTGAggregator:
                         symbol="shared.func",
                         module="shared",
                         kind="function",
-                        location=f"file{i}.py:{i}"
+                        location=f"file{i}.py:{i}",
                     )
                 ],
                 edges=[],
                 errors=[],
                 duration_ms=10.0,
-                success=True
+                success=True,
             )
             aggregator.add_result(result)
 
@@ -3688,17 +3657,11 @@ class TestDTGAggregator:
             artifact=Artifact(path="module.py", hash="hash1", parse_ok=True),
             nodes=[
                 DataNode(
-                    symbol="module.func1",
-                    module="module",
-                    kind="function",
-                    location="module.py:1"
+                    symbol="module.func1", module="module", kind="function", location="module.py:1"
                 ),
                 DataNode(
-                    symbol="module.func2",
-                    module="module",
-                    kind="function",
-                    location="module.py:10"
-                )
+                    symbol="module.func2", module="module", kind="function", location="module.py:10"
+                ),
             ],
             edges=[
                 TransformEdge(
@@ -3707,12 +3670,12 @@ class TestDTGAggregator:
                     transform_symbol="module.func1",
                     transform_kind="call",
                     location="module.py:5",
-                    confidence=0.9
+                    confidence=0.9,
                 )
             ],
             errors=[],
             duration_ms=10.0,
-            success=True
+            success=True,
         )
         aggregator.add_result(result)
 
@@ -3733,10 +3696,7 @@ class TestDTGAggregator:
             artifact=Artifact(path="module.py", hash="hash1", parse_ok=True),
             nodes=[
                 DataNode(
-                    symbol="module.func",
-                    module="module",
-                    kind="function",
-                    location="module.py:1"
+                    symbol="module.func", module="module", kind="function", location="module.py:1"
                 )
             ],
             edges=[
@@ -3746,12 +3706,12 @@ class TestDTGAggregator:
                     transform_symbol="module.func",
                     transform_kind="call",  # Not a parameter edge
                     location="module.py:5",
-                    confidence=0.9
+                    confidence=0.9,
                 )
             ],
             errors=[],
             duration_ms=10.0,
-            success=True
+            success=True,
         )
         aggregator.add_result(result)
 
@@ -3774,10 +3734,7 @@ class TestDTGAggregator:
             artifact=Artifact(path="module.py", hash="hash1", parse_ok=True),
             nodes=[
                 DataNode(
-                    symbol="module.func",
-                    module="module",
-                    kind="function",
-                    location="module.py:1"
+                    symbol="module.func", module="module", kind="function", location="module.py:1"
                 )
             ],
             edges=[
@@ -3787,12 +3744,12 @@ class TestDTGAggregator:
                     transform_symbol="module.func",
                     transform_kind="parameter",  # Parameter edge - allowed
                     location="module.py:1",
-                    confidence=1.0
+                    confidence=1.0,
                 )
             ],
             errors=[],
             duration_ms=10.0,
-            success=True
+            success=True,
         )
         aggregator.add_result(result)
 
@@ -3813,17 +3770,11 @@ class TestDTGAggregator:
             artifact=Artifact(path="module.py", hash="hash1", parse_ok=True),
             nodes=[
                 DataNode(
-                    symbol="module.func1",
-                    module="module",
-                    kind="function",
-                    location="module.py:1"
+                    symbol="module.func1", module="module", kind="function", location="module.py:1"
                 ),
                 DataNode(
-                    symbol="module.func2",
-                    module="module",
-                    kind="function",
-                    location="module.py:10"
-                )
+                    symbol="module.func2", module="module", kind="function", location="module.py:10"
+                ),
             ],
             edges=[
                 TransformEdge(
@@ -3832,7 +3783,7 @@ class TestDTGAggregator:
                     transform_symbol="module.func1",
                     transform_kind="call",
                     location="module.py:5",
-                    confidence=1.5  # Invalid: > 1.0
+                    confidence=1.5,  # Invalid: > 1.0
                 ),
                 TransformEdge(
                     source="module.func2",
@@ -3840,12 +3791,12 @@ class TestDTGAggregator:
                     transform_symbol="module.func2",
                     transform_kind="call",
                     location="module.py:15",
-                    confidence=-0.1  # Invalid: < 0.0
-                )
+                    confidence=-0.1,  # Invalid: < 0.0
+                ),
             ],
             errors=[],
             duration_ms=10.0,
-            success=True
+            success=True,
         )
         aggregator.add_result(result)
 
@@ -3871,7 +3822,7 @@ class TestDTGAggregator:
                     symbol="module.existing",
                     module="module",
                     kind="function",
-                    location="module.py:1"
+                    location="module.py:1",
                 )
             ],
             edges=[
@@ -3881,12 +3832,12 @@ class TestDTGAggregator:
                     transform_symbol="module.missing1",
                     transform_kind="call",
                     location="module.py:5",
-                    confidence=0.9
+                    confidence=0.9,
                 )
             ],
             errors=[],
             duration_ms=10.0,
-            success=True
+            success=True,
         )
         aggregator.add_result(result)
 
@@ -3909,10 +3860,7 @@ class TestDTGAggregator:
             artifact=Artifact(path="module.py", hash="hash1", parse_ok=True),
             nodes=[
                 DataNode(
-                    symbol="module.func",
-                    module="module",
-                    kind="function",
-                    location="module.py:1"
+                    symbol="module.func", module="module", kind="function", location="module.py:1"
                 )
             ],
             edges=[
@@ -3922,12 +3870,12 @@ class TestDTGAggregator:
                     transform_symbol="module.func",
                     transform_kind="call",
                     location="module.py:5",
-                    confidence=0.8
+                    confidence=0.8,
                 )
             ],
             errors=[],
             duration_ms=10.0,
-            success=True
+            success=True,
         )
         aggregator.add_result(result)
 
@@ -3948,10 +3896,7 @@ class TestDTGAggregator:
             artifact=Artifact(path="module.py", hash="hash1", parse_ok=True),
             nodes=[
                 DataNode(
-                    symbol="module.func",
-                    module="module",
-                    kind="function",
-                    location="module.py:1"
+                    symbol="module.func", module="module", kind="function", location="module.py:1"
                 )
             ],
             edges=[
@@ -3962,7 +3907,7 @@ class TestDTGAggregator:
                     transform_symbol="module.func",
                     transform_kind="call",
                     location="module.py:5",
-                    confidence=0.9
+                    confidence=0.9,
                 ),
                 # Invalid confidence violation
                 TransformEdge(
@@ -3971,7 +3916,7 @@ class TestDTGAggregator:
                     transform_symbol="module.func",
                     transform_kind="call",
                     location="module.py:10",
-                    confidence=2.0
+                    confidence=2.0,
                 ),
                 # Dangling edge violation
                 TransformEdge(
@@ -3980,12 +3925,12 @@ class TestDTGAggregator:
                     transform_symbol="missing.func1",
                     transform_kind="call",
                     location="module.py:15",
-                    confidence=0.5
-                )
+                    confidence=0.5,
+                ),
             ],
             errors=[],
             duration_ms=10.0,
-            success=True
+            success=True,
         )
         aggregator.add_result(result)
 
@@ -4020,14 +3965,14 @@ class TestDTGAggregatorIntegration:
                         symbol="module1.ClassA",
                         module="module1",
                         kind="class",
-                        location="module1.py:1"
+                        location="module1.py:1",
                     ),
                     DataNode(
                         symbol="module1.ClassA.method1",
                         module="module1",
                         kind="method",
-                        location="module1.py:5"
-                    )
+                        location="module1.py:5",
+                    ),
                 ],
                 edges=[
                     TransformEdge(
@@ -4036,12 +3981,12 @@ class TestDTGAggregatorIntegration:
                         transform_symbol="module1.ClassA",
                         transform_kind="contains",
                         location="module1.py:5",
-                        confidence=1.0
+                        confidence=1.0,
                     )
                 ],
                 errors=[],
                 duration_ms=10.0,
-                success=True
+                success=True,
             ),
             ParseResult(
                 task_id=2,
@@ -4052,7 +3997,7 @@ class TestDTGAggregatorIntegration:
                         symbol="module2.func",
                         module="module2",
                         kind="function",
-                        location="module2.py:1"
+                        location="module2.py:1",
                     )
                 ],
                 edges=[
@@ -4062,13 +4007,13 @@ class TestDTGAggregatorIntegration:
                         transform_symbol="module2.func",
                         transform_kind="call",
                         location="module2.py:5",
-                        confidence=0.9
+                        confidence=0.9,
                     )
                 ],
                 errors=[],
                 duration_ms=15.0,
-                success=True
-            )
+                success=True,
+            ),
         ]
 
         # Add all results to aggregator
@@ -4123,7 +4068,7 @@ class TestDTGAggregatorIntegration:
                     symbol="bad_module.func",
                     module="bad_module",
                     kind="function",
-                    location="bad_module.py:1"
+                    location="bad_module.py:1",
                 )
             ],
             edges=[
@@ -4134,7 +4079,7 @@ class TestDTGAggregatorIntegration:
                     transform_symbol="bad_module.func",
                     transform_kind="call",
                     location="bad_module.py:5",
-                    confidence=0.9
+                    confidence=0.9,
                 ),
                 # Invalid confidence
                 TransformEdge(
@@ -4143,12 +4088,12 @@ class TestDTGAggregatorIntegration:
                     transform_symbol="bad_module.func",
                     transform_kind="call",
                     location="bad_module.py:10",
-                    confidence=1.5
-                )
+                    confidence=1.5,
+                ),
             ],
             errors=[],
             duration_ms=10.0,
-            success=True
+            success=True,
         )
 
         aggregator.add_result(result)
@@ -4169,6 +4114,7 @@ class TestDTGAggregatorIntegration:
 # Property-Based Tests: DTG Node Deduplication (Property 6)
 # ============================================================
 
+
 class TestDTGNodeDeduplicationProperties:
     """Property-based tests for DTG node deduplication.
 
@@ -4180,7 +4126,9 @@ class TestDTGNodeDeduplicationProperties:
     @given(
         symbols=st.lists(
             st.text(
-                alphabet=st.characters(whitelist_categories=("Ll", "Lu", "Nd"), whitelist_characters="_"),
+                alphabet=st.characters(
+                    whitelist_categories=("Ll", "Lu", "Nd"), whitelist_characters="_"
+                ),
                 min_size=1,
                 max_size=20,
             ),
@@ -4240,26 +4188,25 @@ class TestDTGNodeDeduplicationProperties:
 
         # Property: exactly one node per unique symbol
         node_symbols = [n.symbol for n in dtg_nodes]
-        assert len(node_symbols) == len(set(node_symbols)), (
-            f"Duplicate nodes found in aggregated DTG: {node_symbols}"
-        )
+        assert len(node_symbols) == len(
+            set(node_symbols)
+        ), f"Duplicate nodes found in aggregated DTG: {node_symbols}"
 
         # All original symbols must be present
         node_symbol_set = set(node_symbols)
         for sym in valid_symbols:
-            assert sym in node_symbol_set, (
-                f"Symbol '{sym}' missing from aggregated DTG"
-            )
+            assert sym in node_symbol_set, f"Symbol '{sym}' missing from aggregated DTG"
 
         # Exactly the right number of unique symbols
-        assert len(dtg_nodes) == len(valid_symbols), (
-            f"Expected {len(valid_symbols)} nodes, got {len(dtg_nodes)}"
-        )
+        assert len(dtg_nodes) == len(
+            valid_symbols
+        ), f"Expected {len(valid_symbols)} nodes, got {len(dtg_nodes)}"
 
 
 # ============================================================
 # Property-Based Tests: DTG Edge Consistency (Property 7)
 # ============================================================
+
 
 class TestDTGEdgeConsistencyProperties:
     """Property-based tests for DTG edge consistency.
@@ -4317,42 +4264,41 @@ class TestDTGEdgeConsistencyProperties:
         _, dtg_edges = aggregator.get_dtg()
 
         # Property: total edges equals sum of all edges added
-        assert len(dtg_edges) == len(all_edges_added), (
-            f"Expected {len(all_edges_added)} edges, got {len(dtg_edges)}"
-        )
+        assert len(dtg_edges) == len(
+            all_edges_added
+        ), f"Expected {len(all_edges_added)} edges, got {len(dtg_edges)}"
 
         # Property: every edge has non-empty source and target
         for edge in dtg_edges:
-            assert edge.source is not None and len(edge.source) > 0, (
-                f"Edge has empty/None source: {edge}"
-            )
-            assert edge.target is not None and len(edge.target) > 0, (
-                f"Edge has empty/None target: {edge}"
-            )
-            assert edge.transform_kind is not None and len(edge.transform_kind) > 0, (
-                f"Edge has empty/None transform_kind: {edge}"
-            )
-            assert edge.location is not None, (
-                f"Edge has None location: {edge}"
-            )
+            assert (
+                edge.source is not None and len(edge.source) > 0
+            ), f"Edge has empty/None source: {edge}"
+            assert (
+                edge.target is not None and len(edge.target) > 0
+            ), f"Edge has empty/None target: {edge}"
+            assert (
+                edge.transform_kind is not None and len(edge.transform_kind) > 0
+            ), f"Edge has empty/None transform_kind: {edge}"
+            assert edge.location is not None, f"Edge has None location: {edge}"
             # Confidence must be a valid float
-            assert isinstance(edge.confidence, float), (
-                f"Edge confidence is not a float: {edge.confidence}"
-            )
+            assert isinstance(
+                edge.confidence, float
+            ), f"Edge confidence is not a float: {edge.confidence}"
 
         # Property: edge data is not corrupted (source != target for non-parameter edges)
         for edge in dtg_edges:
             if edge.transform_kind != "parameter":
                 # Non-parameter edges should not be self-loops in our generated data
                 # (we generate source=func{j}, target=func{j+1} so they differ)
-                assert edge.source != edge.target or edge.transform_kind == "parameter", (
-                    f"Unexpected self-loop for kind={edge.transform_kind}: {edge.source}"
-                )
+                assert (
+                    edge.source != edge.target or edge.transform_kind == "parameter"
+                ), f"Unexpected self-loop for kind={edge.transform_kind}: {edge.source}"
 
 
 # ============================================================
 # Property-Based Tests: DTG Aggregation Validity (Property 8)
 # ============================================================
+
 
 class TestDTGAggregationValidityProperties:
     """Property-based tests for DTG aggregation validity.
@@ -4422,14 +4368,13 @@ class TestDTGAggregationValidityProperties:
 
         # Property: verify_integrity() returns empty list for valid graphs
         violations = aggregator.verify_integrity()
-        assert violations == [], (
-            f"Expected no integrity violations, got: {violations}"
-        )
+        assert violations == [], f"Expected no integrity violations, got: {violations}"
 
 
 # ============================================================
 # Task 11.1: API Compatibility Tests
 # ============================================================
+
 
 class TestFreeThreadedIndexerAPICompatibility:
     """Tests verifying FreeThreadedIndexer matches PythonIndexer's API.
@@ -4452,28 +4397,32 @@ class TestFreeThreadedIndexerAPICompatibility:
 
         # FreeThreadedIndexer must accept all PythonIndexer params
         missing = py_params - ft_params
-        assert not missing, (
-            f"FreeThreadedIndexer is missing constructor params from PythonIndexer: {missing}"
-        )
+        assert (
+            not missing
+        ), f"FreeThreadedIndexer is missing constructor params from PythonIndexer: {missing}"
 
     def test_has_build_method(self):
         """FreeThreadedIndexer has a build() method."""
         from siof.free_threaded_indexer import FreeThreadedIndexer
+
         assert callable(getattr(FreeThreadedIndexer, "build", None))
 
     def test_has_update_method(self):
         """FreeThreadedIndexer has an update() method."""
         from siof.free_threaded_indexer import FreeThreadedIndexer
+
         assert callable(getattr(FreeThreadedIndexer, "update", None))
 
     def test_has_init_method(self):
         """FreeThreadedIndexer has an init() method."""
         from siof.free_threaded_indexer import FreeThreadedIndexer
+
         assert callable(getattr(FreeThreadedIndexer, "init", None))
 
     def test_has_close_method(self):
         """FreeThreadedIndexer has a close() method."""
         from siof.free_threaded_indexer import FreeThreadedIndexer
+
         assert callable(getattr(FreeThreadedIndexer, "close", None))
 
     def test_build_returns_dict_with_required_keys(self):
@@ -4496,9 +4445,9 @@ class TestFreeThreadedIndexerAPICompatibility:
 
             # Must contain the same keys as PythonIndexer.build()
             required_keys = {"artifacts", "nodes", "edges", "parse_errors", "files"}
-            assert required_keys.issubset(result.keys()), (
-                f"build() result missing keys: {required_keys - result.keys()}"
-            )
+            assert required_keys.issubset(
+                result.keys()
+            ), f"build() result missing keys: {required_keys - result.keys()}"
 
     def test_update_returns_dict_with_required_keys(self):
         """update() returns a dict with the same keys as PythonIndexer.update()."""
@@ -4519,9 +4468,9 @@ class TestFreeThreadedIndexerAPICompatibility:
             indexer.close()
 
             required_keys = {"artifacts", "nodes", "edges", "parse_errors", "files"}
-            assert required_keys.issubset(result.keys()), (
-                f"update() result missing keys: {required_keys - result.keys()}"
-            )
+            assert required_keys.issubset(
+                result.keys()
+            ), f"update() result missing keys: {required_keys - result.keys()}"
 
     def test_build_result_values_are_non_negative(self):
         """build() result values are non-negative integers."""
@@ -4563,6 +4512,7 @@ class TestFreeThreadedIndexerAPICompatibility:
 # Task 11.2: Single-Threaded Fallback Mode Tests
 # ============================================================
 
+
 class TestSingleThreadedFallbackMode:
     """Tests for single-threaded fallback mode behavior.
 
@@ -4603,9 +4553,9 @@ class TestSingleThreadedFallbackMode:
                 indexer.close()
 
             assert created_workers, "WorkPool was never created"
-            assert created_workers[0] == 1, (
-                f"Expected workers=1 in fallback mode, got workers={created_workers[0]}"
-            )
+            assert (
+                created_workers[0] == 1
+            ), f"Expected workers=1 in fallback mode, got workers={created_workers[0]}"
 
     def test_fallback_mode_logs_reason(self, caplog):
         """When mode.parallel is False, build() logs the fallback reason."""
@@ -4633,9 +4583,9 @@ class TestSingleThreadedFallbackMode:
                 "fallback" in record.message.lower() or "single-threaded" in record.message.lower()
                 for record in caplog.records
             )
-            assert fallback_logged, (
-                f"Expected fallback log message, got: {[r.message for r in caplog.records]}"
-            )
+            assert (
+                fallback_logged
+            ), f"Expected fallback log message, got: {[r.message for r in caplog.records]}"
 
     def test_parallel_mode_uses_configured_workers(self):
         """When mode.parallel is True, build() uses the configured worker count."""
@@ -4650,7 +4600,7 @@ class TestSingleThreadedFallbackMode:
 
             # Force parallel mode
             with patch.object(sys, "version_info", (3, 14, 0, "final", 0)):
-                with patch.object(sys, "_is_gil_enabled", return_value=False):
+                with patch.object(sys, "_is_gil_enabled", return_value=False, create=True):
                     indexer = FreeThreadedIndexer(repo, db_path, workers=4)
                     assert indexer.mode.parallel is True
 
@@ -4670,9 +4620,9 @@ class TestSingleThreadedFallbackMode:
                     indexer.close()
 
             assert created_workers, "WorkPool was never created"
-            assert created_workers[0] == 4, (
-                f"Expected workers=4 in parallel mode, got workers={created_workers[0]}"
-            )
+            assert (
+                created_workers[0] == 4
+            ), f"Expected workers=4 in parallel mode, got workers={created_workers[0]}"
 
     def test_fallback_produces_same_results_as_parallel(self):
         """Fallback mode produces the same build results as parallel mode."""
@@ -4703,17 +4653,18 @@ class TestSingleThreadedFallbackMode:
             indexer_seq.close()
 
             # Both should find the same number of files and artifacts
-            assert result_fallback["files"] == result_seq["files"], (
-                f"File count mismatch: fallback={result_fallback['files']}, seq={result_seq['files']}"
-            )
-            assert result_fallback["artifacts"] == result_seq["artifacts"], (
-                f"Artifact count mismatch: fallback={result_fallback['artifacts']}, seq={result_seq['artifacts']}"
-            )
+            assert (
+                result_fallback["files"] == result_seq["files"]
+            ), f"File count mismatch: fallback={result_fallback['files']}, seq={result_seq['files']}"
+            assert (
+                result_fallback["artifacts"] == result_seq["artifacts"]
+            ), f"Artifact count mismatch: fallback={result_fallback['artifacts']}, seq={result_seq['artifacts']}"
 
 
 # ============================================================
 # Task 11.3: Property 13 - Single-Threaded Mode Equivalence
 # ============================================================
+
 
 class TestSingleThreadedModeEquivalenceProperties:
     """Property-based tests for single-threaded mode equivalence.
@@ -4765,9 +4716,7 @@ class TestSingleThreadedModeEquivalenceProperties:
                         lines.append(f"def func_{i}(x, y):\n    return x + y\n\n")
                     if include_classes:
                         lines.append(
-                            f"class Class_{i}:\n"
-                            f"    def method(self):\n"
-                            f"        pass\n\n"
+                            f"class Class_{i}:\n" f"    def method(self):\n" f"        pass\n\n"
                         )
                     if not include_functions and not include_classes:
                         lines.append(f"VALUE_{i} = {i}\n")
@@ -4938,12 +4887,10 @@ class TestDTGSemanticEquivalenceProperties:
             conn_par = repo_par.storage.conn
 
             seq_symbols = {
-                row[0]
-                for row in conn_seq.execute("SELECT symbol FROM nodes").fetchall()
+                row[0] for row in conn_seq.execute("SELECT symbol FROM nodes").fetchall()
             }
             par_symbols = {
-                row[0]
-                for row in conn_par.execute("SELECT symbol FROM nodes").fetchall()
+                row[0] for row in conn_par.execute("SELECT symbol FROM nodes").fetchall()
             }
 
             assert seq_symbols == par_symbols, (
@@ -5046,57 +4993,53 @@ class TestPartialResultsPreservationProperties:
             indexer.close()
 
             # Property: total files discovered matches what we created
-            assert result["files"] == total_files, (
-                f"Expected {total_files} files, found {result['files']}"
-            )
+            assert (
+                result["files"] == total_files
+            ), f"Expected {total_files} files, found {result['files']}"
 
             # Property: parse errors count matches invalid files
-            assert result["parse_errors"] == num_invalid, (
-                f"Expected {num_invalid} parse errors, got {result['parse_errors']}"
-            )
+            assert (
+                result["parse_errors"] == num_invalid
+            ), f"Expected {num_invalid} parse errors, got {result['parse_errors']}"
 
             # Property: artifacts stored equals total files (both valid and invalid)
-            assert result["artifacts"] == total_files, (
-                f"Expected {total_files} artifacts, got {result['artifacts']}"
-            )
+            assert (
+                result["artifacts"] == total_files
+            ), f"Expected {total_files} artifacts, got {result['artifacts']}"
 
             # Property: verify all valid files are stored in repository
             repository = Repository(db_path)
             conn = repository.storage.conn
 
-            stored_artifacts = conn.execute(
-                "SELECT path, parse_ok FROM artifacts"
-            ).fetchall()
+            stored_artifacts = conn.execute("SELECT path, parse_ok FROM artifacts").fetchall()
             stored_paths = {row[0] for row in stored_artifacts}
             stored_ok = {row[0] for row in stored_artifacts if row[1]}
 
             # All valid files should be stored with parse_ok=True
             for valid_path in valid_paths:
                 rel_path = str(valid_path.relative_to(repo))
-                assert rel_path in stored_paths, (
-                    f"Valid file {rel_path} not found in stored artifacts"
-                )
-                assert rel_path in stored_ok, (
-                    f"Valid file {rel_path} not stored with parse_ok=True"
-                )
+                assert (
+                    rel_path in stored_paths
+                ), f"Valid file {rel_path} not found in stored artifacts"
+                assert rel_path in stored_ok, f"Valid file {rel_path} not stored with parse_ok=True"
 
             # All invalid files should be stored with parse_ok=False
             stored_failed = {row[0] for row in stored_artifacts if not row[1]}
             for invalid_path in invalid_paths:
                 rel_path = str(invalid_path.relative_to(repo))
-                assert rel_path in stored_paths, (
-                    f"Invalid file {rel_path} not found in stored artifacts"
-                )
-                assert rel_path in stored_failed, (
-                    f"Invalid file {rel_path} not stored with parse_ok=False"
-                )
+                assert (
+                    rel_path in stored_paths
+                ), f"Invalid file {rel_path} not found in stored artifacts"
+                assert (
+                    rel_path in stored_failed
+                ), f"Invalid file {rel_path} not stored with parse_ok=False"
 
             # Property: nodes from valid files are present in repository
             if num_valid > 0:
                 node_count = conn.execute("SELECT COUNT(*) FROM nodes").fetchone()[0]
-                assert node_count > 0, (
-                    f"Expected nodes from {num_valid} valid files, but found none"
-                )
+                assert (
+                    node_count > 0
+                ), f"Expected nodes from {num_valid} valid files, but found none"
 
             repository.close()
 
@@ -5157,10 +5100,7 @@ class TestDTGIntegrityVerificationProperties:
                 file_path = repo / f"module_{i}.py"
                 lines = [f"# module {i}\n"]
                 if include_functions:
-                    lines.append(
-                        f"def func_{i}(a, b):\n"
-                        f"    return a + b\n\n"
-                    )
+                    lines.append(f"def func_{i}(a, b):\n" f"    return a + b\n\n")
                 if include_classes:
                     if include_inheritance and i > 0:
                         lines.append(
@@ -5194,10 +5134,9 @@ class TestDTGIntegrityVerificationProperties:
 
             # Property: DTG integrity verification passes (no violations)
             violations = aggregator.verify_integrity()
-            assert violations == [], (
-                "DTG integrity violations found in parallel DTG:\n"
-                + "\n".join(violations)
-            )
+            assert (
+                violations == []
+            ), "DTG integrity violations found in parallel DTG:\n" + "\n".join(violations)
 
             # Property: no self-loops (except parameter edges)
             node_symbols = {n.symbol for n in nodes}
@@ -5217,10 +5156,7 @@ class TestDTGIntegrityVerificationProperties:
 
             # Property: no fully orphaned edges (both source AND target missing)
             for edge in edges:
-                both_missing = (
-                    edge.source not in node_symbols
-                    and edge.target not in node_symbols
-                )
+                both_missing = edge.source not in node_symbols and edge.target not in node_symbols
                 assert not both_missing, (
                     f"Orphaned edge: {edge.source} -> {edge.target} "
                     f"(neither node exists in DTG)"
@@ -5253,28 +5189,23 @@ class TestDTGIntegrityVerificationProperties:
                 source, target, _, transform_kind, _, _ = row
                 if transform_kind not in ("parameter",):
                     assert source != target, (
-                        f"Self-loop in stored DTG: {source} -> {target} "
-                        f"(kind={transform_kind})"
+                        f"Self-loop in stored DTG: {source} -> {target} " f"(kind={transform_kind})"
                     )
 
             # Check confidence scores in stored edges
             for row in stored_edges:
                 source, target, _, _, _, confidence = row
                 assert 0.0 <= confidence <= 1.0, (
-                    f"Invalid confidence {confidence} in stored edge "
-                    f"{source} -> {target}"
+                    f"Invalid confidence {confidence} in stored edge " f"{source} -> {target}"
                 )
 
             # Check no fully orphaned edges in stored DTG
             for row in stored_edges:
                 source, target = row[0], row[1]
                 both_missing = (
-                    source not in stored_node_symbols
-                    and target not in stored_node_symbols
+                    source not in stored_node_symbols and target not in stored_node_symbols
                 )
-                assert not both_missing, (
-                    f"Orphaned edge in stored DTG: {source} -> {target}"
-                )
+                assert not both_missing, f"Orphaned edge in stored DTG: {source} -> {target}"
 
             repository.close()
 
@@ -5296,7 +5227,7 @@ class TestVersionDetectorModeSelection:
             mode_313 = VersionDetector.detect()
 
         with patch.object(sys, "version_info", (3, 14, 0, "final", 0)):
-            with patch.object(sys, "_is_gil_enabled", return_value=False):
+            with patch.object(sys, "_is_gil_enabled", return_value=False, create=True):
                 mode_314 = VersionDetector.detect()
 
         assert mode_313.parallel is False
@@ -5306,13 +5237,13 @@ class TestVersionDetectorModeSelection:
         """Parallel mode requires Python 3.14+ AND GIL disabled."""
         # 3.14 with GIL enabled → single-threaded
         with patch.object(sys, "version_info", (3, 14, 0, "final", 0)):
-            with patch.object(sys, "_is_gil_enabled", return_value=True):
+            with patch.object(sys, "_is_gil_enabled", return_value=True, create=True):
                 mode = VersionDetector.detect()
         assert mode.parallel is False
 
         # 3.14 with GIL disabled → parallel
         with patch.object(sys, "version_info", (3, 14, 0, "final", 0)):
-            with patch.object(sys, "_is_gil_enabled", return_value=False):
+            with patch.object(sys, "_is_gil_enabled", return_value=False, create=True):
                 mode = VersionDetector.detect()
         assert mode.parallel is True
 
@@ -5325,13 +5256,13 @@ class TestVersionDetectorModeSelection:
 
         # New Python, GIL on
         with patch.object(sys, "version_info", (3, 14, 0, "final", 0)):
-            with patch.object(sys, "_is_gil_enabled", return_value=True):
+            with patch.object(sys, "_is_gil_enabled", return_value=True, create=True):
                 mode = VersionDetector.detect()
         assert "GIL" in mode.reason
 
         # New Python, GIL off
         with patch.object(sys, "version_info", (3, 14, 0, "final", 0)):
-            with patch.object(sys, "_is_gil_enabled", return_value=False):
+            with patch.object(sys, "_is_gil_enabled", return_value=False, create=True):
                 mode = VersionDetector.detect()
         assert "parallel" in mode.reason.lower() or "free-threading" in mode.reason.lower()
 
@@ -5339,11 +5270,9 @@ class TestVersionDetectorModeSelection:
         """Detected python_version tuple must match the mocked sys.version_info."""
         for version in [(3, 11, 5), (3, 13, 2), (3, 14, 1)]:
             with patch.object(sys, "version_info", (*version, "final", 0)):
-                with patch.object(sys, "_is_gil_enabled", return_value=True):
+                with patch.object(sys, "_is_gil_enabled", return_value=True, create=True):
                     mode = VersionDetector.detect()
-            assert mode.python_version == version, (
-                f"Expected {version}, got {mode.python_version}"
-            )
+            assert mode.python_version == version, f"Expected {version}, got {mode.python_version}"
 
 
 # ============================================================
@@ -5477,6 +5406,7 @@ class TestProgressReporter:
 
     def _make_reporter(self, total: int = 100, interval: float = 5.0):
         from siof.free_threaded_indexer import ProgressReporter
+
         return ProgressReporter(total_files=total, interval=interval)
 
     # ------------------------------------------------------------------
@@ -5575,8 +5505,8 @@ class TestProgressReporter:
             mock_logger.info.assert_called_once()
             log_msg = mock_logger.info.call_args[0][0]
 
-        assert "100" in log_msg          # total files
-        assert "10.00s" in log_msg       # duration
+        assert "100" in log_msg  # total files
+        assert "10.00s" in log_msg  # duration
         assert "10.0 files/sec" in log_msg  # throughput (100/10)
         assert "errors: 5" in log_msg
         assert "successful: 95" in log_msg

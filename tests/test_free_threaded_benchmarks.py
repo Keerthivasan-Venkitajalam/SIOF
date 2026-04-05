@@ -23,15 +23,14 @@ from siof.indexer import PythonIndexer
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_python_files(root: Path, count: int, subdir: str = "") -> None:
     """Create *count* minimal Python files under *root* (optionally in *subdir*)."""
     base = root / subdir if subdir else root
     base.mkdir(parents=True, exist_ok=True)
     for i in range(count):
         (base / f"file_{i}.py").write_text(
-            f"# auto-generated file {i}\n"
-            f"def func_{i}(x: int) -> int:\n"
-            f"    return x + {i}\n"
+            f"# auto-generated file {i}\n" f"def func_{i}(x: int) -> int:\n" f"    return x + {i}\n"
         )
 
 
@@ -62,6 +61,7 @@ def _run_parallel(repo: Path, db_path: Path, workers: int | None = None) -> tupl
 # Requirements: 6.1, 6.3, 6.4
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.slow
 class TestVaryingFileCounts:
     """Measure parsing time for 100, 1000, 10000 files.
@@ -86,12 +86,12 @@ class TestVaryingFileCounts:
         par_result, par_elapsed = _run_parallel(repo, tmp_path / "par.db")
 
         # Both must discover all files
-        assert st_result["files"] == file_count, (
-            f"Single-threaded found {st_result['files']} files, expected {file_count}"
-        )
-        assert par_result["files"] == file_count, (
-            f"Parallel found {par_result['files']} files, expected {file_count}"
-        )
+        assert (
+            st_result["files"] == file_count
+        ), f"Single-threaded found {st_result['files']} files, expected {file_count}"
+        assert (
+            par_result["files"] == file_count
+        ), f"Parallel found {par_result['files']} files, expected {file_count}"
 
         # Throughput (files/sec)
         st_throughput = file_count / st_elapsed if st_elapsed > 0 else float("inf")
@@ -108,9 +108,9 @@ class TestVaryingFileCounts:
         )
 
         # Parallel must complete within a reasonable wall-clock budget
-        assert par_elapsed < 120.0, (
-            f"Parallel indexing {file_count} files took {par_elapsed:.2f}s (> 120s)"
-        )
+        assert (
+            par_elapsed < 120.0
+        ), f"Parallel indexing {file_count} files took {par_elapsed:.2f}s (> 120s)"
 
     def test_10k_files_parallel_completes(self, tmp_path: Path):
         """Verify parallel indexer handles 10 000 files without error.
@@ -124,18 +124,13 @@ class TestVaryingFileCounts:
 
         par_result, par_elapsed = _run_parallel(repo, tmp_path / "par.db")
 
-        assert par_result["files"] == 10_000, (
-            f"Expected 10000 files, got {par_result['files']}"
-        )
-        assert par_elapsed < 300.0, (
-            f"Parallel indexing 10000 files took {par_elapsed:.2f}s (> 300s)"
-        )
+        assert par_result["files"] == 10_000, f"Expected 10000 files, got {par_result['files']}"
+        assert (
+            par_elapsed < 300.0
+        ), f"Parallel indexing 10000 files took {par_elapsed:.2f}s (> 300s)"
 
         throughput = 10_000 / par_elapsed
-        print(
-            f"\n[10k files] parallel={par_elapsed:.2f}s | "
-            f"throughput={throughput:.1f} f/s"
-        )
+        print(f"\n[10k files] parallel={par_elapsed:.2f}s | " f"throughput={throughput:.1f} f/s")
 
     def test_throughput_increases_with_file_count(self, tmp_path: Path):
         """Verify throughput (files/sec) is non-trivially positive for all sizes.
@@ -158,6 +153,7 @@ class TestVaryingFileCounts:
 # Task 15.2 – Benchmark suite for varying core counts
 # Requirements: 6.2, 6.4
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.slow
 class TestVaryingCoreCounts:
@@ -197,9 +193,7 @@ class TestVaryingCoreCounts:
 
         # All runs must complete successfully
         for workers, elapsed in timings.items():
-            assert elapsed < 120.0, (
-                f"workers={workers} took {elapsed:.2f}s (> 120s)"
-            )
+            assert elapsed < 120.0, f"workers={workers} took {elapsed:.2f}s (> 120s)"
 
     def test_more_workers_not_slower(self, tmp_path: Path):
         """Verify that doubling workers does not make things dramatically slower.
@@ -222,9 +216,9 @@ class TestVaryingCoreCounts:
 
         # 2 workers should not be more than 3x slower than 1 worker
         # (accounts for overhead on single-core CI machines)
-        assert t2 < t1 * 3.0, (
-            f"2 workers ({t2:.3f}s) is more than 3x slower than 1 worker ({t1:.3f}s)"
-        )
+        assert (
+            t2 < t1 * 3.0
+        ), f"2 workers ({t2:.3f}s) is more than 3x slower than 1 worker ({t1:.3f}s)"
         print(f"\n[scaling] 1 worker={t1:.3f}s | 2 workers={t2:.3f}s")
 
     def test_cpu_utilization_proxy(self, tmp_path: Path):
@@ -264,6 +258,7 @@ class TestVaryingCoreCounts:
 # Requirements: 6.5
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.slow
 class TestSpeedupTarget:
     """Verify 8x speedup on 8-core systems with 1000+ files.
@@ -288,9 +283,7 @@ class TestSpeedupTarget:
 
         cpu_count = os.cpu_count() or 0
         if cpu_count < 8:
-            pytest.skip(
-                f"8x speedup test requires 8+ CPU cores; this system has {cpu_count}"
-            )
+            pytest.skip(f"8x speedup test requires 8+ CPU cores; this system has {cpu_count}")
 
         # Check that free-threading is actually active
         if sys.version_info < (3, 14):
@@ -306,9 +299,7 @@ class TestSpeedupTarget:
             except Exception:
                 pass
         if gil_enabled:
-            pytest.skip(
-                "8x speedup requires GIL to be disabled (free-threaded Python build)"
-            )
+            pytest.skip("8x speedup requires GIL to be disabled (free-threaded Python build)")
 
         file_count = 1000
         repo = tmp_path / "repo"
@@ -372,6 +363,7 @@ class TestSpeedupTarget:
 # Requirements: 12.3
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.slow
 class TestRaceConditionStress:
     """Parse the same files concurrently many times to detect race conditions.
@@ -412,9 +404,9 @@ class TestRaceConditionStress:
 
         # All builds must agree on file count
         file_counts = {r["files"] for r in results}
-        assert file_counts == {50}, (
-            f"Inconsistent file counts across concurrent builds: {file_counts}"
-        )
+        assert file_counts == {
+            50
+        }, f"Inconsistent file counts across concurrent builds: {file_counts}"
 
     def test_repeated_sequential_builds_consistent(self, tmp_path: Path):
         """Run 30 sequential builds on the same repo; verify identical results.
@@ -433,12 +425,12 @@ class TestRaceConditionStress:
             node_counts.append(result["nodes"])
 
         # All runs must agree
-        assert len(set(file_counts)) == 1, (
-            f"Inconsistent file counts across 30 runs: {set(file_counts)}"
-        )
-        assert len(set(node_counts)) == 1, (
-            f"Inconsistent node counts across 30 runs: {set(node_counts)}"
-        )
+        assert (
+            len(set(file_counts)) == 1
+        ), f"Inconsistent file counts across 30 runs: {set(file_counts)}"
+        assert (
+            len(set(node_counts)) == 1
+        ), f"Inconsistent node counts across 30 runs: {set(node_counts)}"
 
     def test_high_concurrency_no_data_corruption(self, tmp_path: Path):
         """Stress test with many threads sharing a single FreeThreadedIndexer.
@@ -485,9 +477,9 @@ class TestRaceConditionStress:
 
         # All results must match baseline file count
         for r in results:
-            assert r["files"] == baseline["files"], (
-                f"File count mismatch: {r['files']} != {baseline['files']}"
-            )
+            assert (
+                r["files"] == baseline["files"]
+            ), f"File count mismatch: {r['files']} != {baseline['files']}"
 
     def test_1000_plus_concurrent_parse_invocations(self, tmp_path: Path):
         """Parse same files 1000+ times via WorkPool to detect race conditions.

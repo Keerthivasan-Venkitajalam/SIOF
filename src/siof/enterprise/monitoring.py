@@ -31,7 +31,9 @@ class MetricsCollector:
         self._gauges: dict[tuple[str, tuple[tuple[str, str], ...]], float] = {}
         self._histograms: dict[tuple[str, tuple[tuple[str, str], ...]], HistogramSeries] = {}
 
-    def increment_counter(self, name: str, value: float = 1.0, labels: dict[str, str] | None = None) -> None:
+    def increment_counter(
+        self, name: str, value: float = 1.0, labels: dict[str, str] | None = None
+    ) -> None:
         key = (name, _label_key(labels))
         self._counters[key] = self._counters.get(key, 0.0) + value
 
@@ -39,12 +41,16 @@ class MetricsCollector:
         key = (name, _label_key(labels))
         self._gauges[key] = value
 
-    def observe_histogram(self, name: str, value: float, labels: dict[str, str] | None = None) -> None:
+    def observe_histogram(
+        self, name: str, value: float, labels: dict[str, str] | None = None
+    ) -> None:
         key = (name, _label_key(labels))
         series = self._histograms.setdefault(key, HistogramSeries(values=[]))
         series.values.append(value)
 
-    def record_request(self, *, latency_ms: float, status_code: int, auth_failure: bool = False) -> None:
+    def record_request(
+        self, *, latency_ms: float, status_code: int, auth_failure: bool = False
+    ) -> None:
         self.increment_counter("requests_total")
         self.observe_histogram("request_latency_ms", latency_ms)
 

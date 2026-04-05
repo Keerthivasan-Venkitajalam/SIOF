@@ -69,7 +69,9 @@ class RateLimiter:
     def _bucket_key(self, scope: str, identifier: str) -> str:
         return f"{scope}:{identifier}"
 
-    def _effective_config(self, scope: str, identifier: str, role: str | None = None) -> tuple[int, float]:
+    def _effective_config(
+        self, scope: str, identifier: str, role: str | None = None
+    ) -> tuple[int, float]:
         if scope == "org":
             base_limit, base_burst = self._org_limits.get(
                 identifier,
@@ -87,7 +89,9 @@ class RateLimiter:
 
         raise ValueError("scope must be 'org' or 'user'")
 
-    def _build_state(self, limit_per_minute: int, burst_allowance: float, now: float) -> BucketState:
+    def _build_state(
+        self, limit_per_minute: int, burst_allowance: float, now: float
+    ) -> BucketState:
         capacity = float(limit_per_minute) * (1.0 + burst_allowance)
         refill_rate = float(limit_per_minute) / float(self.window_seconds)
         return BucketState(
@@ -143,7 +147,9 @@ class RateLimiter:
                 violators.append(key)
         return violators
 
-    def set_org_limit(self, org_id: str, *, requests_per_minute: int, burst_allowance: float | None = None) -> None:
+    def set_org_limit(
+        self, org_id: str, *, requests_per_minute: int, burst_allowance: float | None = None
+    ) -> None:
         self._org_limits[org_id] = (
             max(1, requests_per_minute),
             self.burst_allowance if burst_allowance is None else max(0.0, burst_allowance),
@@ -200,7 +206,9 @@ class RateLimiter:
                 )
         return result
 
-    def check_user_limit(self, user_id: str, *, role: str = "analyst", org_id: str | None = None) -> RateLimitDecision:
+    def check_user_limit(
+        self, user_id: str, *, role: str = "analyst", org_id: str | None = None
+    ) -> RateLimitDecision:
         limit, burst = self._effective_config("user", user_id, role=role)
         key = self._bucket_key("user", user_id)
         result = self._consume(key, limit, burst)

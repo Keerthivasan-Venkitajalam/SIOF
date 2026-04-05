@@ -30,13 +30,14 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ParsingMode:
     """Configuration for parsing mode.
-    
+
     Attributes:
         parallel: True if parallel parsing is enabled
         python_version: Python version tuple (major, minor, patch)
         gil_enabled: True if GIL is enabled
         reason: Human-readable reason for mode selection
     """
+
     parallel: bool
     python_version: tuple[int, int, int]
     gil_enabled: bool
@@ -46,12 +47,13 @@ class ParsingMode:
 @dataclass
 class ParseTask:
     """Task for parallel parsing.
-    
+
     Attributes:
         file_path: Path to file to parse
         file_metadata: File metadata (size, hash, etc.)
         task_id: Unique task identifier
     """
+
     file_path: Path
     file_metadata: dict
     task_id: int
@@ -60,7 +62,7 @@ class ParseTask:
 @dataclass
 class ParseResult:
     """Result of parsing a file.
-    
+
     Attributes:
         task_id: Task identifier
         file_path: Path to parsed file
@@ -71,6 +73,7 @@ class ParseResult:
         duration_ms: Parse duration in milliseconds
         success: True if parse succeeded
     """
+
     task_id: int
     file_path: Path
     artifact: Artifact
@@ -84,7 +87,7 @@ class ParseResult:
 @dataclass
 class BuildResult:
     """Result of index build.
-    
+
     Attributes:
         artifacts: Number of artifacts processed
         nodes: Number of nodes created
@@ -95,6 +98,7 @@ class BuildResult:
         speedup_factor: Speedup vs single-threaded (1.0 = baseline)
         mode: Parsing mode used
     """
+
     artifacts: int
     nodes: int
     edges: int
@@ -111,7 +115,7 @@ class VersionDetector:
     @staticmethod
     def detect() -> ParsingMode:
         """Detect parsing mode based on Python version.
-        
+
         Returns:
             ParsingMode with detection results
         """
@@ -124,13 +128,13 @@ class VersionDetector:
                 python_version=python_version,
                 gil_enabled=True,
                 reason=f"Python {python_version[0]}.{python_version[1]} detected, "
-                       f"free-threading requires Python 3.14+"
+                f"free-threading requires Python 3.14+",
             )
 
         # Check if GIL is disabled
         # sys._is_gil_enabled() returns False when GIL is disabled
         gil_enabled = True
-        if hasattr(sys, '_is_gil_enabled'):
+        if hasattr(sys, "_is_gil_enabled"):
             try:
                 gil_enabled = sys._is_gil_enabled()
             except Exception:
@@ -143,7 +147,7 @@ class VersionDetector:
                 python_version=python_version,
                 gil_enabled=True,
                 reason=f"Python {python_version[0]}.{python_version[1]} detected, "
-                       f"but GIL is enabled (free-threading not active)"
+                f"but GIL is enabled (free-threading not active)",
             )
 
         # Python 3.14+ with GIL disabled - enable parallel mode
@@ -152,20 +156,21 @@ class VersionDetector:
             python_version=python_version,
             gil_enabled=False,
             reason=f"Python {python_version[0]}.{python_version[1]} with free-threading detected, "
-                   f"parallel parsing enabled"
+            f"parallel parsing enabled",
         )
 
 
 @dataclass
 class FileMetadata:
     """Metadata for discovered Python file.
-    
+
     Attributes:
         path: Path to the file
         size: File size in bytes
         hash: SHA-256 hash of file content
         language: Programming language (always "python")
     """
+
     path: Path
     size: int
     hash: str
@@ -174,7 +179,7 @@ class FileMetadata:
 
 class ParallelFileDiscovery:
     """Parallel file discovery with thread-safe inode tracking.
-    
+
     Discovers Python files in a repository using multiple threads for
     parallel directory traversal. Tracks visited inodes to prevent
     circular symlink loops.
@@ -202,7 +207,7 @@ class ParallelFileDiscovery:
 
     def __init__(self, repo: Path, workers: int = 4):
         """Initialize parallel file discovery.
-        
+
         Args:
             repo: Repository root path
             workers: Number of worker threads for parallel traversal
@@ -216,7 +221,7 @@ class ParallelFileDiscovery:
 
     def discover(self) -> list[FileMetadata]:
         """Discover Python files in parallel.
-        
+
         Returns:
             List of FileMetadata for discovered Python files
         """
@@ -250,10 +255,10 @@ class ParallelFileDiscovery:
 
     def _process_directory(self, directory: Path) -> list[Path]:
         """Process a single directory and return subdirectories to traverse.
-        
+
         Args:
             directory: Directory to process
-            
+
         Returns:
             List of subdirectories to process next
         """
@@ -321,10 +326,10 @@ class ParallelFileDiscovery:
 
     def _extract_file_metadata(self, file_path: Path) -> FileMetadata:
         """Extract metadata for a Python file.
-        
+
         Args:
             file_path: Path to Python file
-            
+
         Returns:
             FileMetadata with size and hash
         """
@@ -340,15 +345,14 @@ class ParallelFileDiscovery:
             raise
 
 
-
 class LockFreeSymbolTable:
     """Lock-free symbol table for concurrent symbol extraction.
-    
+
     This class provides thread-safe storage for symbols extracted during
     parallel parsing. In Python 3.14+ free-threaded mode, the built-in dict
     is thread-safe for concurrent reads and writes. We use minimal locking
     only for complex update operations to ensure atomicity.
-    
+
     Attributes:
         _symbols: Dictionary mapping qualified names to SymbolInfo objects
         _lock: Lock for atomic check-then-update operations
@@ -361,12 +365,12 @@ class LockFreeSymbolTable:
 
     def add_symbol(self, qualified_name: str, symbol: SymbolInfo) -> None:
         """Add symbol atomically with minimal locking.
-        
+
         This method adds a symbol to the table in a thread-safe manner.
         In Python 3.14+ free-threaded mode, simple dict assignments are
         thread-safe. We use a lock only for check-then-update operations
         to prevent race conditions.
-        
+
         Args:
             qualified_name: Fully qualified symbol name (e.g., "module.Class.method")
             symbol: SymbolInfo object containing symbol metadata
@@ -379,11 +383,11 @@ class LockFreeSymbolTable:
 
     def get_all_symbols(self) -> dict[str, SymbolInfo]:
         """Get snapshot of all symbols for retrieval.
-        
+
         Returns a shallow copy of the symbol dictionary to provide a
         consistent snapshot. This prevents issues if the table is modified
         during iteration.
-        
+
         Returns:
             Dictionary mapping qualified names to SymbolInfo objects
         """
@@ -394,7 +398,7 @@ class LockFreeSymbolTable:
 
 class ParseWorker:
     """Worker that parses a single Python file.
-    
+
     This class provides a static method for parsing individual Python files
     in parallel. It includes comprehensive error handling to ensure that
     errors in one file don't affect the parsing of other files.
@@ -403,16 +407,16 @@ class ParseWorker:
     @staticmethod
     def parse(task: ParseTask, repo: Path) -> ParseResult:
         """Parse a single file and extract DTG nodes/edges.
-        
+
         This method parses a Python file and extracts symbols, nodes, and edges
         for the Data Transformation Graph (DTG). It includes robust error handling
         for syntax errors and unexpected exceptions to ensure parsing failures
         are isolated to individual files.
-        
+
         Args:
             task: ParseTask containing file path, metadata, and task ID
             repo: Repository root path for computing relative paths
-            
+
         Returns:
             ParseResult with success/error status, extracted nodes/edges, and timing
         """
@@ -444,7 +448,7 @@ class ParseWorker:
                 edges=[],
                 errors=errors,
                 duration_ms=duration_ms,
-                success=False
+                success=False,
             )
 
         # Read file content with error handling
@@ -464,7 +468,7 @@ class ParseWorker:
                 edges=[],
                 errors=errors,
                 duration_ms=duration_ms,
-                success=False
+                success=False,
             )
         except Exception as exc:
             # Unexpected error reading file
@@ -480,7 +484,7 @@ class ParseWorker:
                 edges=[],
                 errors=errors,
                 duration_ms=duration_ms,
-                success=False
+                success=False,
             )
 
         # Compute file hash
@@ -519,7 +523,7 @@ class ParseWorker:
                 edges=[],
                 errors=errors,
                 duration_ms=duration_ms,
-                success=False
+                success=False,
             )
         except Exception as exc:
             # Unexpected parsing error
@@ -535,7 +539,7 @@ class ParseWorker:
                 edges=[],
                 errors=errors,
                 duration_ms=duration_ms,
-                success=False
+                success=False,
             )
 
         # Extract symbols and build DTG with error handling
@@ -598,7 +602,7 @@ class ParseWorker:
                 edges=edges,
                 errors=errors,
                 duration_ms=duration_ms,
-                success=True
+                success=True,
             )
 
         except Exception as exc:
@@ -615,17 +619,17 @@ class ParseWorker:
                 edges=[],
                 errors=errors,
                 duration_ms=duration_ms,
-                success=False
+                success=False,
             )
 
 
 class WorkPool:
     """Manages parallel parsing workers using ThreadPoolExecutor.
-    
+
     This class manages a pool of worker threads that parse Python files in parallel.
     It distributes parsing tasks across workers and yields results as they complete,
     enabling streaming processing of parse results.
-    
+
     Attributes:
         workers: Number of worker threads
         repo: Repository root path
@@ -634,7 +638,7 @@ class WorkPool:
 
     def __init__(self, workers: int, repo: Path):
         """Initialize work pool with ThreadPoolExecutor.
-        
+
         Args:
             workers: Number of worker threads to create
             repo: Repository root path for parsing context
@@ -646,21 +650,20 @@ class WorkPool:
 
     def submit_tasks(self, tasks: list[ParseTask]) -> Iterator[ParseResult]:
         """Submit tasks and yield results as they complete.
-        
+
         This method submits all parsing tasks to the thread pool and yields
         results as they complete, enabling streaming processing. Results are
         yielded in completion order, not submission order.
-        
+
         Args:
             tasks: List of ParseTask objects to process
-            
+
         Yields:
             ParseResult objects as tasks complete
         """
         # Submit all tasks to the executor
         future_to_task = {
-            self._executor.submit(ParseWorker.parse, task, self.repo): task
-            for task in tasks
+            self._executor.submit(ParseWorker.parse, task, self.repo): task for task in tasks
         }
 
         logger.info(f"Submitted {len(tasks)} tasks to WorkPool")
@@ -673,7 +676,9 @@ class WorkPool:
                 yield result
             except Exception as exc:
                 # Worker thread raised an unexpected exception
-                error_msg = f"Worker thread failed for task {task.task_id} ({task.file_path}): {exc}"
+                error_msg = (
+                    f"Worker thread failed for task {task.task_id} ({task.file_path}): {exc}"
+                )
                 logger.error(error_msg, exc_info=True)
 
                 # Yield error result
@@ -681,25 +686,22 @@ class WorkPool:
                     task_id=task.task_id,
                     file_path=task.file_path,
                     artifact=Artifact(
-                        path=str(task.file_path),
-                        hash="",
-                        parse_ok=False,
-                        error=str(exc)
+                        path=str(task.file_path), hash="", parse_ok=False, error=str(exc)
                     ),
                     nodes=[],
                     edges=[],
                     errors=[error_msg],
                     duration_ms=0.0,
-                    success=False
+                    success=False,
                 )
 
     def shutdown(self, timeout: float = 30.0) -> None:
         """Shutdown work pool gracefully with timeout.
-        
+
         This method attempts to gracefully shutdown the thread pool by waiting
         for in-progress tasks to complete. If tasks don't complete within the
         timeout period, it forces termination and logs a warning.
-        
+
         Args:
             timeout: Maximum wait time in seconds (default: 30.0)
         """
@@ -723,12 +725,12 @@ class WorkPool:
 
 class DTGAggregator:
     """Aggregates DTG results from parallel workers.
-    
+
     This class collects nodes and edges from multiple parse workers and
     aggregates them into a single consistent Data Transformation Graph (DTG).
     It handles node deduplication by keeping the first occurrence of each
     unique symbol and tracks conflicts for debugging purposes.
-    
+
     Attributes:
         _nodes: Dictionary mapping symbol names to DataNode objects
         _edges: List of all TransformEdge objects
@@ -744,15 +746,15 @@ class DTGAggregator:
 
     def add_result(self, result: ParseResult) -> None:
         """Add parse result to aggregation.
-        
+
         This method processes a ParseResult from a worker thread and adds
         its nodes and edges to the aggregated DTG. For nodes, it implements
         deduplication by keeping only the first occurrence of each unique
         symbol. Duplicate node definitions are logged as conflicts.
-        
+
         For edges, all edges are kept since duplicate edges may represent
         multiple call sites or relationships in the code.
-        
+
         Args:
             result: ParseResult from a worker thread containing nodes and edges
         """
@@ -781,13 +783,13 @@ class DTGAggregator:
 
     def resolve_conflicts(self) -> None:
         """Resolve conflicting node definitions.
-        
+
         This method processes the conflicts detected during aggregation and logs
         warnings for duplicate nodes. The conflict resolution strategy is:
-        
+
         1. Duplicate nodes: Keep first occurrence (already handled in add_result)
         2. Duplicate edges: Keep all (may represent multiple call sites)
-        
+
         This method should be called after all results have been added via add_result()
         but before retrieving the final DTG with get_dtg().
         """
@@ -805,7 +807,7 @@ class DTGAggregator:
 
     def get_dtg(self) -> tuple[list[DataNode], list[TransformEdge]]:
         """Get aggregated DTG as lists of nodes and edges.
-        
+
         Returns:
             Tuple of (nodes, edges) where nodes is a list of DataNode objects
             and edges is a list of TransformEdge objects
@@ -819,7 +821,7 @@ class DTGAggregator:
 
     def get_conflicts(self) -> list[str]:
         """Get list of conflicts detected during aggregation.
-        
+
         Returns:
             List of conflict description strings
         """
@@ -827,18 +829,18 @@ class DTGAggregator:
 
     def verify_integrity(self) -> list[str]:
         """Verify DTG integrity constraints on aggregated graph.
-        
+
         This method performs in-memory verification of the aggregated DTG
         to ensure it meets integrity constraints before storage. It checks:
-        
+
         1. No self-loops (except allowed cases like "parameter" edges)
         2. Valid confidence bounds [0.0, 1.0] for all edges
         3. No dangling edges (edges referencing non-existent nodes)
-        
+
         This verification is compatible with GraphVerifier checks and ensures
         that parallel parsing produces DTGs that pass the same integrity
         verification as sequential parsing.
-        
+
         Returns:
             List of integrity violation messages (empty if valid)
         """
@@ -874,9 +876,7 @@ class DTGAggregator:
                 )
 
         if violations:
-            logger.warning(
-                f"DTG integrity verification found {len(violations)} violations"
-            )
+            logger.warning(f"DTG integrity verification found {len(violations)} violations")
         else:
             logger.debug("DTG integrity verification passed with no violations")
 
@@ -1266,15 +1266,17 @@ class FreeThreadedIndexer:
         from .models import TransformEdge as _TransformEdge
 
         all_artifacts_full = [
-            _Artifact(path=r["path"], hash=r["hash"], parse_ok=bool(r["parse_ok"]), error=r["error"])
+            _Artifact(
+                path=r["path"], hash=r["hash"], parse_ok=bool(r["parse_ok"]), error=r["error"]
+            )
             for r in all_artifacts_rows
         ]
 
-        all_nodes_rows = conn.execute(
-            "SELECT symbol, module, kind, location FROM nodes"
-        ).fetchall()
+        all_nodes_rows = conn.execute("SELECT symbol, module, kind, location FROM nodes").fetchall()
         all_nodes = [
-            _DataNode(symbol=r["symbol"], module=r["module"], kind=r["kind"], location=r["location"])
+            _DataNode(
+                symbol=r["symbol"], module=r["module"], kind=r["kind"], location=r["location"]
+            )
             for r in all_nodes_rows
         ]
 

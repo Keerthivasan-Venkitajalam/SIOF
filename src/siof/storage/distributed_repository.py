@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 class IsolationLevel(Enum):
     """Transaction isolation levels."""
+
     READ_UNCOMMITTED = "read_uncommitted"
     READ_COMMITTED = "read_committed"
     REPEATABLE_READ = "repeatable_read"
@@ -64,7 +65,9 @@ class DistributedRepository:
         if cache_ttl_seconds < 0:
             raise ValueError(f"cache_ttl_seconds must be non-negative, got {cache_ttl_seconds}")
         if transaction_timeout_seconds < 0:
-            raise ValueError(f"transaction_timeout_seconds must be non-negative, got {transaction_timeout_seconds}")
+            raise ValueError(
+                f"transaction_timeout_seconds must be non-negative, got {transaction_timeout_seconds}"
+            )
 
         self.backend = backend
         self.cache_size = cache_size
@@ -548,7 +551,9 @@ class DistributedRepository:
         if self._transaction_start_time:
             elapsed = time.time() - self._transaction_start_time
             if elapsed > self.transaction_timeout_seconds:
-                logger.warning(f"Transaction timeout: {elapsed}s > {self.transaction_timeout_seconds}s")
+                logger.warning(
+                    f"Transaction timeout: {elapsed}s > {self.transaction_timeout_seconds}s"
+                )
                 self.rollback_transaction()
                 raise TransactionFailed(
                     f"Transaction timeout: {elapsed}s > {self.transaction_timeout_seconds}s"
@@ -676,7 +681,7 @@ class DistributedRepository:
 
             # Remove savepoints after this one
             idx = self._transaction_savepoints.index(savepoint_name)
-            self._transaction_savepoints = self._transaction_savepoints[:idx + 1]
+            self._transaction_savepoints = self._transaction_savepoints[: idx + 1]
 
             logger.debug(f"Rolled back to savepoint: {savepoint_name}")
         except Exception as e:
@@ -783,9 +788,7 @@ class DistributedRepository:
             - max_size: Maximum cache size
         """
         total_accesses = self._cache_hits + self._cache_misses
-        hit_rate = (
-            (self._cache_hits / total_accesses * 100) if total_accesses > 0 else 0.0
-        )
+        hit_rate = (self._cache_hits / total_accesses * 100) if total_accesses > 0 else 0.0
 
         return {
             "hits": self._cache_hits,

@@ -23,11 +23,11 @@ logger = logging.getLogger(__name__)
 
 class Neo4jBackend(StorageBackend):
     """Neo4j graph database backend implementation.
-    
+
     This backend uses the official neo4j Python driver to connect to Neo4j
     and execute Cypher queries. It supports ACID transactions and provides
     comprehensive error handling with conversion to StorageException types.
-    
+
     Attributes:
         connection_string: Neo4j connection string (bolt://host:port)
         username: Authentication username
@@ -44,7 +44,7 @@ class Neo4jBackend(StorageBackend):
         password: str = "",
     ) -> None:
         """Initialize Neo4j backend.
-        
+
         Args:
             connection_string: Connection string (e.g., bolt://localhost:7687)
             username: Authentication username (default: neo4j)
@@ -62,7 +62,7 @@ class Neo4jBackend(StorageBackend):
 
     def connect(self) -> None:
         """Establish connection to Neo4j.
-        
+
         Raises:
             ConnectionRefused: If Neo4j refuses the connection
             ConnectionTimeout: If connection attempt times out
@@ -75,9 +75,7 @@ class Neo4jBackend(StorageBackend):
             try:
                 from neo4j import GraphDatabase
             except ImportError:
-                raise ImportError(
-                    "neo4j driver is required. Install with: pip install neo4j"
-                )
+                raise ImportError("neo4j driver is required. Install with: pip install neo4j")
 
             # Create driver
             self.driver = GraphDatabase.driver(
@@ -120,7 +118,7 @@ class Neo4jBackend(StorageBackend):
 
     def disconnect(self) -> None:
         """Close connection to Neo4j.
-        
+
         Raises:
             StorageException: If disconnection fails
         """
@@ -146,7 +144,7 @@ class Neo4jBackend(StorageBackend):
 
     def get_connection_status(self) -> bool:
         """Check if connected to Neo4j and backend is healthy.
-        
+
         Returns:
             True if connected and healthy, False otherwise
         """
@@ -165,7 +163,7 @@ class Neo4jBackend(StorageBackend):
 
     def get_backend_name(self) -> str:
         """Get backend name.
-        
+
         Returns:
             "Neo4j"
         """
@@ -173,7 +171,7 @@ class Neo4jBackend(StorageBackend):
 
     def get_backend_version(self) -> str:
         """Get Neo4j server version.
-        
+
         Returns:
             Version string (e.g., "5.0.0")
         """
@@ -193,10 +191,10 @@ class Neo4jBackend(StorageBackend):
 
     def create_node(self, node: Node) -> None:
         """Create a new node in Neo4j.
-        
+
         Args:
             node: Node object with id, type, name, metadata
-            
+
         Raises:
             DuplicateNode: If node with same id already exists
             StorageException: For other creation errors
@@ -245,13 +243,13 @@ class Neo4jBackend(StorageBackend):
 
     def read_node(self, node_id: str) -> Node | None:
         """Read a node from Neo4j.
-        
+
         Args:
             node_id: The node ID to read
-            
+
         Returns:
             Node object if found, None otherwise
-            
+
         Raises:
             StorageException: For read errors
         """
@@ -291,10 +289,10 @@ class Neo4jBackend(StorageBackend):
 
     def update_node(self, node: Node) -> None:
         """Update an existing node in Neo4j.
-        
+
         Args:
             node: Node object with updated properties
-            
+
         Raises:
             StorageException: If node not found or update fails
         """
@@ -343,13 +341,13 @@ class Neo4jBackend(StorageBackend):
 
     def delete_node(self, node_id: str) -> None:
         """Delete a node from Neo4j.
-        
+
         This operation fails if the node has incoming or outgoing edges
         (referential integrity constraint).
-        
+
         Args:
             node_id: The node ID to delete
-            
+
         Raises:
             ReferentialIntegrityError: If node has edges
             StorageException: For deletion errors
@@ -392,18 +390,17 @@ class Neo4jBackend(StorageBackend):
 
     def create_edge(self, edge: Edge) -> None:
         """Create a new edge between two nodes in Neo4j.
-        
+
         Args:
             edge: Edge object with source_id, target_id, edge_type, metadata
-            
+
         Raises:
             ReferentialIntegrityError: If source or target node doesn't exist
             StorageException: For creation errors
         """
         try:
             logger.debug(
-                f"Creating edge: {edge.source_id} -> {edge.target_id} "
-                f"({edge.edge_type})"
+                f"Creating edge: {edge.source_id} -> {edge.target_id} " f"({edge.edge_type})"
             )
 
             query = """
@@ -443,9 +440,7 @@ class Neo4jBackend(StorageBackend):
         except Exception as e:
             error_msg = str(e)
             self._error_count += 1
-            logger.error(
-                f"Failed to create edge {edge.source_id} -> {edge.target_id}: {error_msg}"
-            )
+            logger.error(f"Failed to create edge {edge.source_id} -> {edge.target_id}: {error_msg}")
 
             raise StorageException(
                 f"Failed to create edge: {error_msg}",
@@ -457,14 +452,14 @@ class Neo4jBackend(StorageBackend):
 
     def read_edge(self, source_id: str, target_id: str) -> Edge | None:
         """Read an edge between two nodes from Neo4j.
-        
+
         Args:
             source_id: ID of the source node
             target_id: ID of the target node
-            
+
         Returns:
             Edge object if found, None otherwise
-            
+
         Raises:
             StorageException: For read errors
         """
@@ -511,11 +506,11 @@ class Neo4jBackend(StorageBackend):
 
     def delete_edge(self, source_id: str, target_id: str) -> None:
         """Delete an edge between two nodes from Neo4j.
-        
+
         Args:
             source_id: ID of the source node
             target_id: ID of the target node
-            
+
         Raises:
             StorageException: For deletion errors
         """
@@ -547,14 +542,14 @@ class Neo4jBackend(StorageBackend):
 
     def query(self, query_str: str, params: dict[str, Any]) -> list[dict[str, Any]]:
         """Execute a Cypher query against Neo4j.
-        
+
         Args:
             query_str: Cypher query string
             params: Query parameters
-            
+
         Returns:
             List of result dictionaries
-            
+
         Raises:
             InvalidQuery: If query syntax is invalid
             QueryTimeout: If query execution times out
@@ -595,7 +590,7 @@ class Neo4jBackend(StorageBackend):
 
     def begin_transaction(self) -> None:
         """Begin a new transaction.
-        
+
         Raises:
             TransactionFailed: If transaction cannot be started
         """
@@ -621,7 +616,7 @@ class Neo4jBackend(StorageBackend):
 
     def commit_transaction(self) -> None:
         """Commit the current transaction.
-        
+
         Raises:
             TransactionFailed: If commit fails
             TransactionTimeout: If commit times out
@@ -656,7 +651,7 @@ class Neo4jBackend(StorageBackend):
 
     def rollback_transaction(self) -> None:
         """Rollback the current transaction.
-        
+
         Raises:
             TransactionFailed: If rollback fails
         """
@@ -684,7 +679,7 @@ class Neo4jBackend(StorageBackend):
 
     def get_metrics(self) -> dict[str, Any]:
         """Get performance metrics from the backend.
-        
+
         Returns:
             Dictionary containing:
             - operation_count: Total operations performed
@@ -694,9 +689,7 @@ class Neo4jBackend(StorageBackend):
             - backend_version: Backend version
         """
         error_rate = (
-            (self._error_count / self._operation_count * 100)
-            if self._operation_count > 0
-            else 0.0
+            (self._error_count / self._operation_count * 100) if self._operation_count > 0 else 0.0
         )
 
         return {

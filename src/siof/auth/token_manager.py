@@ -15,9 +15,7 @@ class TokenManager:
         # Maps token_jti -> {"user_id": str, "org_id": str, "used": bool, "used_at": Optional[int], "created_at": int, "expires_at": int}
         self._refresh_tokens: dict[str, dict] = {}
 
-    def store_refresh_token(
-        self, jti: str, user_id: str, org_id: str, expires_at: int
-    ) -> None:
+    def store_refresh_token(self, jti: str, user_id: str, org_id: str, expires_at: int) -> None:
         """Store a refresh token.
 
         Args:

@@ -63,7 +63,9 @@ class OrganizationManager:
         self.audit_logger = audit_logger
         self._organizations: dict[str, OrganizationRecord] = {}
 
-    def create_organization(self, *, name: str, description: str = "", config: dict[str, Any] | None = None) -> OrganizationRecord:
+    def create_organization(
+        self, *, name: str, description: str = "", config: dict[str, Any] | None = None
+    ) -> OrganizationRecord:
         org_id = str(uuid.uuid4())
         org = OrganizationRecord(
             org_id=org_id,
@@ -157,7 +159,9 @@ class OrganizationManager:
         return {
             "organization": asdict(org),
             "stats": {
-                "user_count": len([user for user in users if user.org_id == org_id and user.deleted_at is None]),
+                "user_count": len(
+                    [user for user in users if user.org_id == org_id and user.deleted_at is None]
+                ),
                 "service_account_count": len(
                     [
                         svc
@@ -260,7 +264,14 @@ class UserManager:
             return None
         return self._users.get(user_id)
 
-    def update_user(self, user_id: str, *, name: str | None = None, email: str | None = None, roles: list[str] | None = None) -> UserRecord:
+    def update_user(
+        self,
+        user_id: str,
+        *,
+        name: str | None = None,
+        email: str | None = None,
+        roles: list[str] | None = None,
+    ) -> UserRecord:
         user = self._users.get(user_id)
         if user is None:
             raise ValueError("User not found")
@@ -449,7 +460,9 @@ class ServiceAccountManager:
 
         return record
 
-    def set_service_account_enabled(self, service_account_id: str, *, enabled: bool) -> ServiceAccountRecord:
+    def set_service_account_enabled(
+        self, service_account_id: str, *, enabled: bool
+    ) -> ServiceAccountRecord:
         record = self._service_accounts.get(service_account_id)
         if record is None:
             raise ValueError("Service account not found")

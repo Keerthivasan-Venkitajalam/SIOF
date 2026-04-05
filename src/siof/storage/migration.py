@@ -13,11 +13,11 @@ logger = logging.getLogger(__name__)
 
 class MigrationTool:
     """Tool for migrating data between storage backends.
-    
+
     This tool enables exporting data from one backend (e.g., SQLite) and
     importing it into another (e.g., Neo4j, FalkorDB). It includes validation
     to ensure data consistency and provides rollback capability for failed imports.
-    
+
     Attributes:
         source_backend: Source StorageBackend instance
         target_backend: Target StorageBackend instance
@@ -29,11 +29,11 @@ class MigrationTool:
         target_backend: StorageBackend,
     ) -> None:
         """Initialize MigrationTool.
-        
+
         Args:
             source_backend: Source backend to export from
             target_backend: Target backend to import to
-            
+
         Raises:
             ValueError: If backends are None
         """
@@ -51,17 +51,17 @@ class MigrationTool:
 
     def export(self, output_file: str) -> dict[str, Any]:
         """Export all nodes and edges from source backend.
-        
+
         Args:
             output_file: Path to write exported data as JSON
-            
+
         Returns:
             Dictionary containing:
             - nodes_exported: Number of nodes exported
             - edges_exported: Number of edges exported
             - output_file: Path to output file
             - metadata: Export metadata (timestamp, source backend, etc.)
-            
+
         Raises:
             StorageException: If export fails
         """
@@ -117,17 +117,17 @@ class MigrationTool:
 
     def import_data(self, input_file: str) -> dict[str, Any]:
         """Import nodes and edges from JSON file to target backend.
-        
+
         Args:
             input_file: Path to JSON file with exported data
-            
+
         Returns:
             Dictionary containing:
             - nodes_imported: Number of nodes imported
             - edges_imported: Number of edges imported
             - validation_status: Status of validation
             - errors: List of any errors encountered
-            
+
         Raises:
             StorageException: If import fails
         """
@@ -173,7 +173,7 @@ class MigrationTool:
 
     def validate_import(self) -> dict[str, Any]:
         """Validate that imported data matches exported data.
-        
+
         Returns:
             Dictionary containing validation results:
             - valid: Whether validation passed
@@ -181,7 +181,7 @@ class MigrationTool:
             - edges_match: Number of matching edges
             - missing_nodes: List of missing node IDs
             - missing_edges: List of missing edges
-            
+
         Raises:
             StorageException: If validation fails
         """
@@ -225,7 +225,7 @@ class MigrationTool:
 
     def rollback(self) -> None:
         """Rollback a failed import by deleting imported nodes and edges.
-        
+
         Raises:
             StorageException: If rollback fails
         """
@@ -258,7 +258,7 @@ class MigrationTool:
 
     def _export_nodes(self) -> list[dict[str, Any]]:
         """Export all nodes from source backend.
-        
+
         Returns:
             List of node dictionaries
         """
@@ -284,7 +284,7 @@ class MigrationTool:
 
     def _export_edges(self) -> list[dict[str, Any]]:
         """Export all edges from source backend.
-        
+
         Returns:
             List of edge dictionaries
         """
@@ -310,10 +310,10 @@ class MigrationTool:
 
     def _node_to_dict(self, result: dict[str, Any]) -> dict[str, Any] | None:
         """Convert query result to node dictionary.
-        
+
         Args:
             result: Query result from backend
-            
+
         Returns:
             Node dictionary or None if conversion fails
         """
@@ -353,10 +353,10 @@ class MigrationTool:
 
     def _edge_to_dict(self, result: dict[str, Any]) -> dict[str, Any] | None:
         """Convert query result to edge dictionary.
-        
+
         Args:
             result: Query result from backend
-            
+
         Returns:
             Edge dictionary or None if conversion fails
         """
@@ -403,10 +403,10 @@ class MigrationTool:
 
     def _import_nodes(self, nodes_data: list[dict[str, Any]]) -> int:
         """Import nodes to target backend.
-        
+
         Args:
             nodes_data: List of node dictionaries
-            
+
         Returns:
             Number of nodes imported
         """
@@ -427,10 +427,10 @@ class MigrationTool:
 
     def _import_edges(self, edges_data: list[dict[str, Any]]) -> int:
         """Import edges to target backend.
-        
+
         Args:
             edges_data: List of edge dictionaries
-            
+
         Returns:
             Number of edges imported
         """
@@ -454,10 +454,10 @@ class MigrationTool:
 
     def _dict_to_node(self, data: dict[str, Any]) -> Node:
         """Convert dictionary to Node object.
-        
+
         Args:
             data: Node dictionary
-            
+
         Returns:
             Node object
         """
@@ -470,10 +470,10 @@ class MigrationTool:
 
     def _dict_to_edge(self, data: dict[str, Any]) -> Edge:
         """Convert dictionary to Edge object.
-        
+
         Args:
             data: Edge dictionary
-            
+
         Returns:
             Edge object
         """
@@ -490,11 +490,11 @@ class MigrationTool:
         edges_data: list[dict[str, Any]],
     ) -> None:
         """Validate exported data for consistency.
-        
+
         Args:
             nodes_data: List of exported nodes
             edges_data: List of exported edges
-            
+
         Raises:
             StorageException: If validation fails
         """
@@ -525,11 +525,11 @@ class MigrationTool:
         edges_data: list[dict[str, Any]],
     ) -> str:
         """Validate imported data matches exported data.
-        
+
         Args:
             nodes_data: List of exported nodes
             edges_data: List of exported edges
-            
+
         Returns:
             Validation status string
         """

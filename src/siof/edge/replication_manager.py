@@ -35,7 +35,9 @@ class ReplicationManager:
         resource_id: str,
         payload: dict[str, Any],
     ) -> ReplicationEvent:
-        checksum = str(hash((operation, resource_type, resource_id, tuple(sorted(payload.items())))))
+        checksum = str(
+            hash((operation, resource_type, resource_id, tuple(sorted(payload.items()))))
+        )
         event = ReplicationEvent(
             event_id=str(uuid.uuid4()),
             operation=operation,
@@ -80,7 +82,9 @@ class ReplicationManager:
     def get_replication_status(self) -> dict[str, dict[str, Any]]:
         return dict(self._region_status)
 
-    def replay_events(self, region: str, since_event_id: str | None = None) -> list[ReplicationEvent]:
+    def replay_events(
+        self, region: str, since_event_id: str | None = None
+    ) -> list[ReplicationEvent]:
         if since_event_id is None:
             return self._events[:]
         seen = False

@@ -51,7 +51,9 @@ class HelmChartManager:
             rendered.append(file_path.read_text(encoding="utf-8"))
         return rendered
 
-    def install(self, namespace: str, values_file: str = "values.yaml", release_name: str = "siof") -> DeploymentStatus:
+    def install(
+        self, namespace: str, values_file: str = "values.yaml", release_name: str = "siof"
+    ) -> DeploymentStatus:
         if not self.validate_chart():
             raise RuntimeError("Chart validation failed")
         self.render_templates(values_file)

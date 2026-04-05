@@ -591,6 +591,7 @@ class TestStorageExceptions:
     def test_connection_refused_is_connection_error(self):
         """Test that ConnectionRefused is a ConnectionError."""
         from siof.storage.exceptions import ConnectionError as StorageConnectionError
+
         exc = ConnectionRefused("Connection refused")
         assert isinstance(exc, StorageConnectionError)
 
@@ -608,7 +609,6 @@ class TestStorageExceptions:
         """Test that TransactionFailed is a TransactionError."""
         exc = TransactionFailed("Transaction failed")
         assert isinstance(exc, StorageException)
-
 
 
 # ============================================================================
@@ -1503,7 +1503,6 @@ class TestQueryOptimizer:
         assert len(optimizer.plan_cache) <= 2
 
 
-
 # ============================================================================
 # Transaction Support Tests
 # ============================================================================
@@ -1787,6 +1786,7 @@ class TestMigrationTool:
 
         finally:
             import os
+
             os.unlink(output_file)
 
     def test_import_nodes(self):
@@ -1826,6 +1826,7 @@ class TestMigrationTool:
 
         finally:
             import os
+
             os.unlink(input_file)
 
     def test_validate_export(self):
@@ -1882,7 +1883,12 @@ class TestMigrationTool:
             {"id": "node1", "type": "Symbol", "name": "func1", "metadata": {}},
         ]
         edges = [
-            {"source_id": "node1", "target_id": "node_missing", "edge_type": "CALLS", "metadata": {}},
+            {
+                "source_id": "node1",
+                "target_id": "node_missing",
+                "edge_type": "CALLS",
+                "metadata": {},
+            },
         ]
 
         with pytest.raises(StorageException, match="non-existent"):

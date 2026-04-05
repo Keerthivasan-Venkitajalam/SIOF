@@ -20,6 +20,7 @@ from siof.indexer import PythonIndexer
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_repo(tmp_path: Path, files: dict[str, str]) -> Path:
     """Write *files* dict (relative-path -> content) into *tmp_path*."""
     for rel, content in files.items():
@@ -31,40 +32,38 @@ def _make_repo(tmp_path: Path, files: dict[str, str]) -> Path:
 
 def _sample_repo(tmp_path: Path) -> Path:
     """Create a small but realistic Python repository for comparison tests."""
-    return _make_repo(tmp_path, {
-        "main.py": (
-            "from utils import helper\n"
-            "\n"
-            "def main():\n"
-            "    return helper(42)\n"
-        ),
-        "utils.py": (
-            "def helper(x: int) -> int:\n"
-            "    return x * 2\n"
-        ),
-        "models.py": (
-            "class User:\n"
-            "    def __init__(self, name: str) -> None:\n"
-            "        self.name = name\n"
-            "\n"
-            "    def greet(self) -> str:\n"
-            "        return f'Hello, {self.name}'\n"
-        ),
-        "pkg/__init__.py": "",
-        "pkg/service.py": (
-            "from models import User\n"
-            "\n"
-            "class UserService:\n"
-            "    def create(self, name: str) -> User:\n"
-            "        return User(name)\n"
-        ),
-    })
+    return _make_repo(
+        tmp_path,
+        {
+            "main.py": (
+                "from utils import helper\n" "\n" "def main():\n" "    return helper(42)\n"
+            ),
+            "utils.py": ("def helper(x: int) -> int:\n" "    return x * 2\n"),
+            "models.py": (
+                "class User:\n"
+                "    def __init__(self, name: str) -> None:\n"
+                "        self.name = name\n"
+                "\n"
+                "    def greet(self) -> str:\n"
+                "        return f'Hello, {self.name}'\n"
+            ),
+            "pkg/__init__.py": "",
+            "pkg/service.py": (
+                "from models import User\n"
+                "\n"
+                "class UserService:\n"
+                "    def create(self, name: str) -> User:\n"
+                "        return User(name)\n"
+            ),
+        },
+    )
 
 
 # ---------------------------------------------------------------------------
 # Task 19.1 – Verify FreeThreadedIndexer produces same results as PythonIndexer
 # Requirements: 7.4, 7.5
 # ---------------------------------------------------------------------------
+
 
 class TestIndexerEquivalence:
     """Verify FreeThreadedIndexer (workers=1) produces same results as PythonIndexer."""
@@ -200,6 +199,7 @@ class TestIndexerEquivalence:
 # Requirements: 12.5
 # ---------------------------------------------------------------------------
 
+
 class TestFallbackMode:
     """Verify FreeThreadedIndexer falls back to single-threaded on Python < 3.14."""
 
@@ -285,6 +285,7 @@ class TestFallbackMode:
 # Task 19.3 – Test parallel mode activation (Python 3.14+ simulation)
 # Requirements: 12.5
 # ---------------------------------------------------------------------------
+
 
 class TestParallelModeActivation:
     """Verify FreeThreadedIndexer activates parallel mode on Python 3.14+ with GIL off."""

@@ -161,7 +161,9 @@ class AuditLogger:
             details={"requested_action": action, "resource": resource},
         )
 
-    def _apply_filters(self, entries: list[AuditLogEntry], filters: dict[str, Any]) -> list[AuditLogEntry]:
+    def _apply_filters(
+        self, entries: list[AuditLogEntry], filters: dict[str, Any]
+    ) -> list[AuditLogEntry]:
         user_id = filters.get("user_id")
         org_id = filters.get("org_id")
         action = filters.get("action")
@@ -221,7 +223,9 @@ class AuditLogger:
 
         filtered = sorted(
             filtered,
-            key=lambda entry: getattr(entry, sort_by) if getattr(entry, sort_by) is not None else "",
+            key=lambda entry: (
+                getattr(entry, sort_by) if getattr(entry, sort_by) is not None else ""
+            ),
             reverse=reverse,
         )
 
@@ -282,7 +286,9 @@ class AuditLogger:
             logger.info("Removed %s expired audit entries", removed)
         return removed
 
-    def detect_suspicious_failed_logins(self, *, window_seconds: int = 300, threshold: int = 5) -> list[str]:
+    def detect_suspicious_failed_logins(
+        self, *, window_seconds: int = 300, threshold: int = 5
+    ) -> list[str]:
         """Return organization or user identifiers with repeated failed logins."""
         now = self._now()
         failed = [

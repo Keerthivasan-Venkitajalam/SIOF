@@ -39,9 +39,7 @@ class ConnectionPool:
             ValueError: If min_size > max_size or invalid sizes
         """
         if min_size < 0 or max_size < 1 or min_size > max_size:
-            raise ValueError(
-                f"Invalid pool sizes: min_size={min_size}, max_size={max_size}"
-            )
+            raise ValueError(f"Invalid pool sizes: min_size={min_size}, max_size={max_size}")
 
         self.factory = factory
         self.min_size = min_size
@@ -72,9 +70,7 @@ class ConnectionPool:
                     conn = self.factory()
                     self.pool.put_nowait(conn)
                     self.total_created += 1
-                    logger.debug(
-                        f"Created initial connection {self.total_created}/{self.min_size}"
-                    )
+                    logger.debug(f"Created initial connection {self.total_created}/{self.min_size}")
                 except Exception as e:
                     logger.error(f"Failed to create initial connection: {e}")
                     raise
@@ -103,9 +99,7 @@ class ConnectionPool:
                 conn = self.pool.get_nowait()
                 self.total_reused += 1
                 self.active_count += 1
-                logger.debug(
-                    f"Reused connection from pool (active: {self.active_count})"
-                )
+                logger.debug(f"Reused connection from pool (active: {self.active_count})")
                 return conn
             except Empty:
                 pass
@@ -126,9 +120,7 @@ class ConnectionPool:
                     raise
 
             # Wait for connection to be released
-            logger.debug(
-                f"Pool at max capacity ({self.max_size}), waiting for release..."
-            )
+            logger.debug(f"Pool at max capacity ({self.max_size}), waiting for release...")
             if not self.condition.wait(timeout=timeout):
                 raise TimeoutError(
                     f"No connection available within {timeout} seconds "
@@ -140,9 +132,7 @@ class ConnectionPool:
                 conn = self.pool.get_nowait()
                 self.total_reused += 1
                 self.active_count += 1
-                logger.debug(
-                    f"Acquired released connection (active: {self.active_count})"
-                )
+                logger.debug(f"Acquired released connection (active: {self.active_count})")
                 return conn
             except Empty as exc:
                 raise TimeoutError(
@@ -166,8 +156,7 @@ class ConnectionPool:
                     self.pool.put_nowait(conn)
                     self.total_validated += 1
                     logger.debug(
-                        f"Released valid connection to pool "
-                        f"(idle: {self.pool.qsize()})"
+                        f"Released valid connection to pool " f"(idle: {self.pool.qsize()})"
                     )
                 else:
                     # Connection is invalid, create replacement

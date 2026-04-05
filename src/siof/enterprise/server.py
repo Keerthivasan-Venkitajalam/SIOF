@@ -118,7 +118,9 @@ class EnterpriseMCPServer:
 
         self.metrics = MetricsCollector()
         self.health = HealthChecker()
-        self.health.register_check("config", lambda: {"healthy": bool(not self.tls_manager.validate())})
+        self.health.register_check(
+            "config", lambda: {"healthy": bool(not self.tls_manager.validate())}
+        )
         self.health.register_check("secrets", self._health_secrets)
 
         self._reset_tokens: dict[str, tuple[str, int]] = {}
@@ -197,7 +199,9 @@ class EnterpriseMCPServer:
             payload.exp,
         )
 
-    def _record_access_metric(self, *, status_code: int, start_ts: float, auth_failure: bool = False) -> None:
+    def _record_access_metric(
+        self, *, status_code: int, start_ts: float, auth_failure: bool = False
+    ) -> None:
         latency_ms = (time.time() - start_ts) * 1000
         self.metrics.record_request(
             latency_ms=latency_ms,
@@ -219,7 +223,9 @@ class EnterpriseMCPServer:
         try:
             self.tls_manager.assert_https(is_https_request)
 
-            user = self.user_manager.get_user_by_email(identifier) or self.user_manager.get_user_by_id(identifier)
+            user = self.user_manager.get_user_by_email(
+                identifier
+            ) or self.user_manager.get_user_by_id(identifier)
             lockout_key = user.user_id if user else identifier
 
             is_locked, _ = self.login_handler.check_account_lockout(lockout_key)
@@ -561,7 +567,9 @@ class EnterpriseMCPServer:
             org_id = payload.org_id
             roles = payload.roles
 
-        rate = self.enforce_rate_limits(org_id=org_id, user_id=user_id, role=roles[0] if roles else "viewer")
+        rate = self.enforce_rate_limits(
+            org_id=org_id, user_id=user_id, role=roles[0] if roles else "viewer"
+        )
         if not rate["allowed"]:
             raise EnterpriseError(
                 code="rate_limit_exceeded",
@@ -604,7 +612,9 @@ class EnterpriseMCPServer:
             "latency_ms": response.latency_ms,
         }
 
-    def get_audit_logs(self, *, filters: dict[str, Any] | None = None, page: int = 1, page_size: int = 100) -> dict[str, Any]:
+    def get_audit_logs(
+        self, *, filters: dict[str, Any] | None = None, page: int = 1, page_size: int = 100
+    ) -> dict[str, Any]:
         return self.audit_logger.query_logs(filters=filters, page=page, page_size=page_size)
 
     def export_audit_logs(self, *, format_name: str, filters: dict[str, Any] | None = None) -> str:
@@ -620,10 +630,14 @@ class EnterpriseMCPServer:
         return self.health.liveness()
 
     def get_prometheus_metrics(self) -> str:
-        self.metrics.set_gauge("active_sessions", float(len(self.session_manager.list_active_sessions())))
+        self.metrics.set_gauge(
+            "active_sessions", float(len(self.session_manager.list_active_sessions()))
+        )
         self.metrics.set_gauge("api_keys_active", float(len(self.api_key_manager.list_api_keys())))
         for violator in self.rate_limiter.get_repeated_violators():
-            self.metrics.increment_counter("rate_limit_violations_total", labels={"bucket": violator})
+            self.metrics.increment_counter(
+                "rate_limit_violations_total", labels={"bucket": violator}
+            )
         return self.metrics.export_prometheus()
 
     def safe_call(self, fn: Any, *args: Any, **kwargs: Any) -> tuple[int, dict[str, Any]]:

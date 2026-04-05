@@ -250,7 +250,9 @@ class TestEnterpriseServer:
         )
         assert logout_result["invalidated_sessions"] == 1
 
-    def test_login_failure_returns_generic_auth_error(self, enterprise_server: EnterpriseMCPServer) -> None:
+    def test_login_failure_returns_generic_auth_error(
+        self, enterprise_server: EnterpriseMCPServer
+    ) -> None:
         org = enterprise_server.create_organization(name="OrgX", description="Org")
         enterprise_server.create_user(
             email="user@orgx.com",
@@ -281,10 +283,13 @@ class TestEnterpriseServer:
         )
 
         token = enterprise_server.create_password_reset_token(user["user_id"], ttl_seconds=60)
-        assert enterprise_server.reset_password(
-            reset_token=token,
-            new_password="NewStrong123!@",
-        ) is True
+        assert (
+            enterprise_server.reset_password(
+                reset_token=token,
+                new_password="NewStrong123!@",
+            )
+            is True
+        )
 
         # Old password should fail, new one should work
         with pytest.raises(EnterpriseError):
@@ -320,7 +325,9 @@ class TestEnterpriseServer:
         assert principal["service_account_id"] == service["service_account_id"]
         assert principal["org_id"] == org["org_id"]
 
-    def test_rate_limit_and_permission_on_tool_execution(self, enterprise_server: EnterpriseMCPServer) -> None:
+    def test_rate_limit_and_permission_on_tool_execution(
+        self, enterprise_server: EnterpriseMCPServer
+    ) -> None:
         org = enterprise_server.create_organization(name="ToolOrg")
         user = enterprise_server.create_user(
             email="analyst@tool.org",
@@ -335,7 +342,9 @@ class TestEnterpriseServer:
             is_https_request=True,
         )
 
-        enterprise_server.rate_limiter.set_org_limit(org["org_id"], requests_per_minute=1, burst_allowance=0.0)
+        enterprise_server.rate_limiter.set_org_limit(
+            org["org_id"], requests_per_minute=1, burst_allowance=0.0
+        )
 
         first = enterprise_server.execute_tool(
             tool="find_data_lineage",
@@ -378,7 +387,9 @@ class TestEnterpriseServer:
 
 
 class TestConfigManager:
-    def test_yaml_env_load_and_hot_reload(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    def test_yaml_env_load_and_hot_reload(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
         config_file = tmp_path / "enterprise.yaml"
         config_file.write_text(
             """

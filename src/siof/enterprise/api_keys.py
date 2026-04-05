@@ -141,7 +141,11 @@ class APIKeyManager:
         if record.expires_at is not None and now > record.expires_at:
             return True, "expired"
 
-        if record.deprecated_until is not None and record.replaced_by and now > record.deprecated_until:
+        if (
+            record.deprecated_until is not None
+            and record.replaced_by
+            and now > record.deprecated_until
+        ):
             return True, "deprecated"
 
         return False, None
@@ -271,7 +275,9 @@ class APIKeyManager:
         for record in self._records.values():
             if record.service_account_id != service_account_id:
                 continue
-            if self.revoke_api_key(record.api_key_id, reason=reason, notify_callback=notify_callback):
+            if self.revoke_api_key(
+                record.api_key_id, reason=reason, notify_callback=notify_callback
+            ):
                 revoked += 1
         return revoked
 

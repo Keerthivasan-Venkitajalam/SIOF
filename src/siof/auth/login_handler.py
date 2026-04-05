@@ -129,8 +129,7 @@ class LoginHandler:
         attempt_data = self._login_attempts[user_id]
         now = int(time.time())
         is_locked = (
-            attempt_data.get("locked_until") is not None
-            and attempt_data["locked_until"] > now
+            attempt_data.get("locked_until") is not None and attempt_data["locked_until"] > now
         )
 
         return {

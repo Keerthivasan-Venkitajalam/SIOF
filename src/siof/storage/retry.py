@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class ErrorCategory(Enum):
     """Classification of errors for retry logic.
-    
+
     Attributes:
         TRANSIENT: Error is temporary and should be retried
         PERMANENT: Error is permanent and should fail immediately
@@ -24,11 +24,11 @@ class ErrorCategory(Enum):
 
 class RetryPolicy:
     """Exponential backoff retry policy for transient failures.
-    
+
     This policy automatically retries operations that fail with transient
     errors (network timeouts, connection refused, etc.) using exponential
     backoff with jitter to prevent thundering herd.
-    
+
     Attributes:
         base_delay_ms: Base delay in milliseconds for first retry
         max_retries: Maximum number of retry attempts
@@ -61,12 +61,12 @@ class RetryPolicy:
         jitter: bool = True,
     ) -> None:
         """Initialize retry policy.
-        
+
         Args:
             base_delay_ms: Base delay in milliseconds (default: 100)
             max_retries: Maximum retry attempts (default: 3)
             jitter: Add random jitter to delays (default: True)
-            
+
         Raises:
             ValueError: If parameters are invalid
         """
@@ -81,10 +81,10 @@ class RetryPolicy:
 
     def classify_error(self, error: Exception) -> ErrorCategory:
         """Classify an error as transient or permanent.
-        
+
         Args:
             error: The exception to classify
-            
+
         Returns:
             ErrorCategory.TRANSIENT or ErrorCategory.PERMANENT
         """
@@ -106,18 +106,18 @@ class RetryPolicy:
         **kwargs: Any,
     ) -> Any:
         """Execute a function with retry logic.
-        
+
         This method will retry the function if it raises a transient error,
         using exponential backoff with optional jitter.
-        
+
         Args:
             func: Callable to execute
             *args: Positional arguments to pass to func
             **kwargs: Keyword arguments to pass to func
-            
+
         Returns:
             Return value of func
-            
+
         Raises:
             The original exception if all retries are exhausted or
             a permanent error occurs
@@ -128,9 +128,7 @@ class RetryPolicy:
         for attempt in range(self.max_retries + 1):
             try:
                 if attempt > 0:
-                    logger.debug(
-                        f"Retry attempt {attempt}/{self.max_retries} for {func_name}"
-                    )
+                    logger.debug(f"Retry attempt {attempt}/{self.max_retries} for {func_name}")
                 return func(*args, **kwargs)
 
             except Exception as e:
@@ -167,19 +165,19 @@ class RetryPolicy:
 
     def _calculate_delay(self, attempt: int) -> float:
         """Calculate delay with exponential backoff and optional jitter.
-        
+
         The delay grows exponentially: base_delay * 2^attempt
         With jitter enabled, adds random variation (±25%) to prevent
         thundering herd when multiple clients retry simultaneously.
-        
+
         Args:
             attempt: The retry attempt number (0-indexed)
-            
+
         Returns:
             Delay in milliseconds
         """
         # Exponential backoff: base_delay * 2^attempt
-        delay = self.base_delay_ms * (2 ** attempt)
+        delay = self.base_delay_ms * (2**attempt)
 
         if self.jitter:
             # Add random jitter: ±25% of delay

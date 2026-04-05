@@ -42,9 +42,7 @@ class AuthProvider:
         self._public_keys: dict[str, PublicKey] = {}
         self._current_key_id: str | None = None
 
-    def generate_tokens(
-        self, user_id: str, org_id: str, roles: list[str]
-    ) -> TokenPair:
+    def generate_tokens(self, user_id: str, org_id: str, roles: list[str]) -> TokenPair:
         """Generate JWT access and refresh tokens.
 
         Args:
@@ -78,9 +76,7 @@ class AuthProvider:
         }
 
         # Generate access token
-        access_token = jwt.encode(
-            access_payload, self.private_key_pem, algorithm="RS256"
-        )
+        access_token = jwt.encode(access_payload, self.private_key_pem, algorithm="RS256")
 
         # Create refresh token payload with longer expiry
         refresh_jti = f"{jti}_refresh"
@@ -96,9 +92,7 @@ class AuthProvider:
             "kid": self._current_key_id,
             "token_type": "refresh",
         }
-        refresh_token = jwt.encode(
-            refresh_payload, self.private_key_pem, algorithm="RS256"
-        )
+        refresh_token = jwt.encode(refresh_payload, self.private_key_pem, algorithm="RS256")
 
         logger.info(
             f"Generated tokens for user {user_id} in org {org_id}",

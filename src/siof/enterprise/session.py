@@ -57,7 +57,9 @@ class SessionManager:
     def _now(self) -> int:
         return int(time.time())
 
-    def _record_activity(self, session_id: str, event: str, metadata: dict[str, Any] | None = None) -> None:
+    def _record_activity(
+        self, session_id: str, event: str, metadata: dict[str, Any] | None = None
+    ) -> None:
         history = self._activity_history.setdefault(session_id, [])
         history.append(
             {
@@ -186,7 +188,9 @@ class SessionManager:
 
         self._sessions[session_id] = session
         self._user_index.setdefault(user_id, []).append(session_id)
-        self._record_activity(session_id, "created", {"ip_address": ip_address, "user_agent": user_agent})
+        self._record_activity(
+            session_id, "created", {"ip_address": ip_address, "user_agent": user_agent}
+        )
         self._persist_backend(session)
 
         self.enforce_concurrent_limit(
@@ -251,7 +255,9 @@ class SessionManager:
     def get_activity_history(self, session_id: str) -> list[dict[str, Any]]:
         return list(self._activity_history.get(session_id, []))
 
-    def detect_suspicious_activity(self, user_id: str, *, window_seconds: int = 120, max_events: int = 50) -> bool:
+    def detect_suspicious_activity(
+        self, user_id: str, *, window_seconds: int = 120, max_events: int = 50
+    ) -> bool:
         """Detect unusual request volume for active user sessions."""
         now = self._now()
         session_ids = self._user_index.get(user_id, [])

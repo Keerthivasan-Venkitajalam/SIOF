@@ -88,10 +88,14 @@ class MilvusBackend(VectorStore):
             inserted_ids: list[str] = []
             for vec, meta in zip(vectors, metadata):
                 vector_id = str(meta.get("vector_id") or uuid.uuid4())
-                rows[vector_id] = _VectorRow(vector_id=vector_id, vector=list(vec), metadata=dict(meta))
+                rows[vector_id] = _VectorRow(
+                    vector_id=vector_id, vector=list(vec), metadata=dict(meta)
+                )
                 inserted_ids.append(vector_id)
             self._inserts += len(inserted_ids)
-            return InsertResult(inserted_ids=inserted_ids, count=len(inserted_ids), collection=collection)
+            return InsertResult(
+                inserted_ids=inserted_ids, count=len(inserted_ids), collection=collection
+            )
 
     @staticmethod
     def _cosine_similarity(a: list[float], b: list[float]) -> float:

@@ -13,7 +13,9 @@ from .vector_store import VectorStore
 class SemanticSearch:
     """Searches vectors by semantic similarity."""
 
-    def __init__(self, *, embedder: CodeEmbedder, vector_store: VectorStore, collection: str = "code_symbols"):
+    def __init__(
+        self, *, embedder: CodeEmbedder, vector_store: VectorStore, collection: str = "code_symbols"
+    ):
         self.embedder = embedder
         self.vector_store = vector_store
         self.collection = collection

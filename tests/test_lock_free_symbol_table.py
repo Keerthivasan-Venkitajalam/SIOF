@@ -8,15 +8,11 @@ from siof.free_threaded_indexer import LockFreeSymbolTable
 from siof.indexer import SymbolInfo
 
 
-def create_symbol(name: str, kind: str, module: str = "test", location: str = "test.py:10", **kwargs):
+def create_symbol(
+    name: str, kind: str, module: str = "test", location: str = "test.py:10", **kwargs
+):
     """Helper to create SymbolInfo with minimal required fields."""
-    return SymbolInfo(
-        name=name,
-        kind=kind,
-        module=module,
-        location=location,
-        **kwargs
-    )
+    return SymbolInfo(name=name, kind=kind, module=module, location=location, **kwargs)
 
 
 class TestLockFreeSymbolTable:
@@ -38,7 +34,7 @@ class TestLockFreeSymbolTable:
             name="test_func",
             kind="function",
             signature="def test_func():",
-            docstring="Test function"
+            docstring="Test function",
         )
 
         table.add_symbol("test.test_func", symbol)
@@ -71,17 +67,11 @@ class TestLockFreeSymbolTable:
         table = LockFreeSymbolTable()
 
         symbol1 = create_symbol(
-            name="func",
-            kind="function",
-            location="test.py:10",
-            docstring="First version"
+            name="func", kind="function", location="test.py:10", docstring="First version"
         )
 
         symbol2 = create_symbol(
-            name="func",
-            kind="function",
-            location="test.py:20",
-            docstring="Second version"
+            name="func", kind="function", location="test.py:20", docstring="Second version"
         )
 
         table.add_symbol("test.func", symbol1)
@@ -123,7 +113,7 @@ class TestLockFreeSymbolTable:
                     name=f"func_{thread_id}_{i}",
                     kind="function",
                     module=f"test{thread_id}",
-                    location=f"test{thread_id}.py:{i}"
+                    location=f"test{thread_id}.py:{i}",
                 )
                 table.add_symbol(f"test{thread_id}.func_{thread_id}_{i}", symbol)
 
@@ -141,17 +131,15 @@ class TestLockFreeSymbolTable:
         # Verify all symbols were added
         symbols = table.get_all_symbols()
         expected_count = num_threads * symbols_per_thread
-        assert len(symbols) == expected_count, (
-            f"Expected {expected_count} symbols, got {len(symbols)}"
-        )
+        assert (
+            len(symbols) == expected_count
+        ), f"Expected {expected_count} symbols, got {len(symbols)}"
 
         # Verify all expected symbols are present
         for thread_id in range(num_threads):
             for i in range(symbols_per_thread):
                 qualified_name = f"test{thread_id}.func_{thread_id}_{i}"
-                assert qualified_name in symbols, (
-                    f"Missing symbol: {qualified_name}"
-                )
+                assert qualified_name in symbols, f"Missing symbol: {qualified_name}"
 
     def test_add_symbol_concurrent_duplicates(self):
         """Test concurrent addition of duplicate symbols keeps first occurrence."""
@@ -165,7 +153,7 @@ class TestLockFreeSymbolTable:
                 kind="function",
                 module="test",
                 location=f"test{thread_id}.py:10",
-                docstring=f"Version from thread {thread_id}"
+                docstring=f"Version from thread {thread_id}",
             )
             table.add_symbol("test.shared_func", symbol)
 
@@ -197,16 +185,10 @@ class TestLockFreeSymbolTable:
         function_symbol = create_symbol(name="my_function", kind="function")
         class_symbol = create_symbol(name="MyClass", kind="class", location="test.py:20")
         method_symbol = create_symbol(
-            name="my_method",
-            kind="method",
-            location="test.py:30",
-            parameters=["self"]
+            name="my_method", kind="method", location="test.py:30", parameters=["self"]
         )
         variable_symbol = create_symbol(
-            name="my_var",
-            kind="variable",
-            location="test.py:40",
-            type_hints={"inferred": "int"}
+            name="my_var", kind="variable", location="test.py:40", type_hints={"inferred": "int"}
         )
 
         table.add_symbol("test.my_function", function_symbol)
@@ -235,10 +217,7 @@ class TestLockFreeSymbolTable:
 
         # Module-level function
         symbol1 = create_symbol(
-            name="func",
-            kind="function",
-            module="mypackage.module",
-            location="module.py:10"
+            name="func", kind="function", module="mypackage.module", location="module.py:10"
         )
 
         # Nested class method
@@ -247,7 +226,7 @@ class TestLockFreeSymbolTable:
             kind="method",
             module="mypackage.module",
             location="module.py:20",
-            parameters=["self"]
+            parameters=["self"],
         )
 
         table.add_symbol("mypackage.module.func", symbol1)

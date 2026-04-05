@@ -20,8 +20,12 @@ class RegionalEndpointRegistry:
     def __init__(self):
         self._records: dict[str, EndpointRecord] = {}
 
-    def register_endpoint(self, region: str, endpoint: str, metadata: dict[str, Any] | None = None) -> None:
-        self._records[region] = EndpointRecord(region=region, endpoint=endpoint, metadata=metadata or {})
+    def register_endpoint(
+        self, region: str, endpoint: str, metadata: dict[str, Any] | None = None
+    ) -> None:
+        self._records[region] = EndpointRecord(
+            region=region, endpoint=endpoint, metadata=metadata or {}
+        )
 
     def get_nearest_endpoint(self, preferred_regions: list[str] | None = None) -> str | None:
         preferred_regions = preferred_regions or []

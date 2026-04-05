@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 class ExecutionStrategy(Enum):
     """Query execution strategy for distributed queries.
-    
+
     Attributes:
         SINGLE_SHARD: Execute on a single shard (best for filtered queries)
         MULTI_SHARD: Execute across multiple shards with coordination
@@ -24,10 +24,10 @@ class ExecutionStrategy(Enum):
 
 class QueryOptimizer:
     """Optimize queries for distributed execution.
-    
+
     This class analyzes query patterns and chooses optimal execution strategies
     to minimize latency and resource usage in distributed graph scenarios.
-    
+
     Attributes:
         plan_cache: Cache of optimized query plans
         plan_cache_size: Maximum number of cached plans
@@ -35,10 +35,10 @@ class QueryOptimizer:
 
     def __init__(self, plan_cache_size: int = 100) -> None:
         """Initialize QueryOptimizer.
-        
+
         Args:
             plan_cache_size: Maximum number of cached plans (default: 100)
-            
+
         Raises:
             ValueError: If plan_cache_size is invalid
         """
@@ -50,14 +50,14 @@ class QueryOptimizer:
 
     def optimize(self, query: str, params: dict[str, Any]) -> dict[str, Any]:
         """Analyze query and choose optimal execution strategy.
-        
+
         This method analyzes the query structure and parameters to determine
         the best execution strategy for distributed execution.
-        
+
         Args:
             query: Query string (Cypher or similar)
             params: Query parameters
-            
+
         Returns:
             Dictionary containing:
             - strategy: ExecutionStrategy enum value
@@ -98,15 +98,15 @@ class QueryOptimizer:
 
     def _analyze_query(self, query: str) -> ExecutionStrategy:
         """Determine optimal execution strategy for query.
-        
+
         Uses heuristics to classify queries:
         - Queries with specific node IDs in MATCH clause -> SINGLE_SHARD
         - Queries with WHERE clauses -> MULTI_SHARD
         - Full graph scans -> BROADCAST
-        
+
         Args:
             query: Query string
-            
+
         Returns:
             ExecutionStrategy enum value
         """
@@ -129,13 +129,13 @@ class QueryOptimizer:
 
     def _extract_filters(self, query: str) -> list[str]:
         """Extract filter conditions that can be pushed to backend.
-        
+
         Identifies WHERE clause conditions that can be executed at the
         backend level rather than in the application.
-        
+
         Args:
             query: Query string
-            
+
         Returns:
             List of filter strings
         """
@@ -150,7 +150,7 @@ class QueryOptimizer:
                 return filters
 
             # Extract WHERE clause content
-            where_clause = query[where_idx + 5:].strip()
+            where_clause = query[where_idx + 5 :].strip()
 
             # Split by AND/OR
             conditions = []
@@ -169,16 +169,16 @@ class QueryOptimizer:
 
     def _estimate_cost(self, query: str, strategy: ExecutionStrategy) -> float:
         """Estimate query cost for different strategies.
-        
+
         Cost estimation is based on:
         - Strategy type (single shard is cheapest)
         - Query complexity (number of joins, aggregations)
         - Result set size (estimated)
-        
+
         Args:
             query: Query string
             strategy: ExecutionStrategy to estimate cost for
-            
+
         Returns:
             Estimated cost (lower is better)
         """
@@ -200,7 +200,7 @@ class QueryOptimizer:
         # Count joins (MATCH clauses) - only add cost if more than 1
         match_count = query_upper.count("MATCH")
         if match_count > 1:
-            complexity_multiplier *= (1.0 + (match_count - 1) * 0.5)
+            complexity_multiplier *= 1.0 + (match_count - 1) * 0.5
 
         # Check for aggregations
         if "AGGREGATE" in query_upper or "COUNT" in query_upper:
@@ -225,12 +225,12 @@ class QueryOptimizer:
 
     def _make_cache_key(self, query: str) -> str:
         """Create cache key from query string.
-        
+
         Uses SHA256 hash of query to create a unique, fixed-size key.
-        
+
         Args:
             query: Query string
-            
+
         Returns:
             Cache key (hex string)
         """
@@ -250,14 +250,14 @@ class QueryOptimizer:
 
     def get_cache_stats(self) -> dict[str, Any]:
         """Get cache statistics.
-        
+
         Returns:
             Dictionary containing cache statistics
         """
         return {
             "cached_plans": len(self.plan_cache),
             "max_cache_size": self.plan_cache_size,
-            "cache_utilization": len(self.plan_cache) / self.plan_cache_size
-            if self.plan_cache_size > 0
-            else 0.0,
+            "cache_utilization": (
+                len(self.plan_cache) / self.plan_cache_size if self.plan_cache_size > 0 else 0.0
+            ),
         }

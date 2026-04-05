@@ -67,9 +67,7 @@ class KeyManager:
         logger.info(f"Generated RSA key pair with {key_size}-bit key")
         return private_pem, public_pem
 
-    def register_key_pair(
-        self, private_key_pem: str, public_key_pem: str
-    ) -> str:
+    def register_key_pair(self, private_key_pem: str, public_key_pem: str) -> str:
         """Register a key pair for use in token signing.
 
         Args:
@@ -89,9 +87,7 @@ class KeyManager:
             serialization.load_pem_private_key(
                 private_key_pem.encode(), password=None, backend=default_backend()
             )
-            serialization.load_pem_public_key(
-                public_key_pem.encode(), backend=default_backend()
-            )
+            serialization.load_pem_public_key(public_key_pem.encode(), backend=default_backend())
         except Exception as e:
             raise ValueError(f"Invalid key format: {e}")
 

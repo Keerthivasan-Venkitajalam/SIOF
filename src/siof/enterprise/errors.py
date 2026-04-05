@@ -86,7 +86,9 @@ def internal_error(
     )
 
 
-def to_error_response(error: Exception, *, include_validation_details: bool = True) -> tuple[int, dict[str, Any]]:
+def to_error_response(
+    error: Exception, *, include_validation_details: bool = True
+) -> tuple[int, dict[str, Any]]:
     """Convert internal exception to client-safe response payload."""
     if isinstance(error, EnterpriseError):
         payload = {

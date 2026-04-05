@@ -23,11 +23,11 @@ logger = logging.getLogger(__name__)
 
 class FalkorDBBackend(StorageBackend):
     """FalkorDB (Redis-based) graph database backend implementation.
-    
+
     This backend uses the official falkordb Python client to connect to FalkorDB
     and execute graph queries. FalkorDB is a Redis module that provides fast
     graph operations with identical semantics to Neo4j.
-    
+
     Attributes:
         connection_string: FalkorDB connection string (redis://host:port)
         graph_name: Name of the graph to use
@@ -42,7 +42,7 @@ class FalkorDBBackend(StorageBackend):
         graph_name: str = "siof",
     ) -> None:
         """Initialize FalkorDB backend.
-        
+
         Args:
             connection_string: Connection string (e.g., redis://localhost:6379)
             graph_name: Name of the graph (default: siof)
@@ -58,7 +58,7 @@ class FalkorDBBackend(StorageBackend):
 
     def connect(self) -> None:
         """Establish connection to FalkorDB.
-        
+
         Raises:
             ConnectionRefused: If FalkorDB refuses the connection
             ConnectionTimeout: If connection attempt times out
@@ -71,9 +71,7 @@ class FalkorDBBackend(StorageBackend):
             try:
                 from falkordb import FalkorDB
             except ImportError:
-                raise ImportError(
-                    "falkordb driver is required. Install with: pip install falkordb"
-                )
+                raise ImportError("falkordb driver is required. Install with: pip install falkordb")
 
             # Parse connection string
             # Format: redis://host:port or redis://host:port/db
@@ -123,7 +121,7 @@ class FalkorDBBackend(StorageBackend):
 
     def disconnect(self) -> None:
         """Close connection to FalkorDB.
-        
+
         Raises:
             StorageException: If disconnection fails
         """
@@ -146,7 +144,7 @@ class FalkorDBBackend(StorageBackend):
 
     def get_connection_status(self) -> bool:
         """Check if connected to FalkorDB and backend is healthy.
-        
+
         Returns:
             True if connected and healthy, False otherwise
         """
@@ -164,7 +162,7 @@ class FalkorDBBackend(StorageBackend):
 
     def get_backend_name(self) -> str:
         """Get backend name.
-        
+
         Returns:
             "FalkorDB"
         """
@@ -172,7 +170,7 @@ class FalkorDBBackend(StorageBackend):
 
     def get_backend_version(self) -> str:
         """Get FalkorDB server version.
-        
+
         Returns:
             Version string (e.g., "1.0.0")
         """
@@ -190,10 +188,10 @@ class FalkorDBBackend(StorageBackend):
 
     def create_node(self, node: Node) -> None:
         """Create a new node in FalkorDB.
-        
+
         Args:
             node: Node object with id, type, name, metadata
-            
+
         Raises:
             DuplicateNode: If node with same id already exists
             StorageException: For other creation errors
@@ -248,13 +246,13 @@ class FalkorDBBackend(StorageBackend):
 
     def read_node(self, node_id: str) -> Node | None:
         """Read a node from FalkorDB.
-        
+
         Args:
             node_id: The node ID to read
-            
+
         Returns:
             Node object if found, None otherwise
-            
+
         Raises:
             StorageException: For read errors
         """
@@ -297,10 +295,10 @@ class FalkorDBBackend(StorageBackend):
 
     def update_node(self, node: Node) -> None:
         """Update an existing node in FalkorDB.
-        
+
         Args:
             node: Node object with updated properties
-            
+
         Raises:
             StorageException: If node not found or update fails
         """
@@ -348,13 +346,13 @@ class FalkorDBBackend(StorageBackend):
 
     def delete_node(self, node_id: str) -> None:
         """Delete a node from FalkorDB.
-        
+
         This operation fails if the node has incoming or outgoing edges
         (referential integrity constraint).
-        
+
         Args:
             node_id: The node ID to delete
-            
+
         Raises:
             ReferentialIntegrityError: If node has edges
             StorageException: For deletion errors
@@ -398,18 +396,17 @@ class FalkorDBBackend(StorageBackend):
 
     def create_edge(self, edge: Edge) -> None:
         """Create a new edge between two nodes in FalkorDB.
-        
+
         Args:
             edge: Edge object with source_id, target_id, edge_type, metadata
-            
+
         Raises:
             ReferentialIntegrityError: If source or target node doesn't exist
             StorageException: For creation errors
         """
         try:
             logger.debug(
-                f"Creating edge: {edge.source_id} -> {edge.target_id} "
-                f"({edge.edge_type})"
+                f"Creating edge: {edge.source_id} -> {edge.target_id} " f"({edge.edge_type})"
             )
 
             query = """
@@ -449,9 +446,7 @@ class FalkorDBBackend(StorageBackend):
         except Exception as e:
             error_msg = str(e)
             self._error_count += 1
-            logger.error(
-                f"Failed to create edge {edge.source_id} -> {edge.target_id}: {error_msg}"
-            )
+            logger.error(f"Failed to create edge {edge.source_id} -> {edge.target_id}: {error_msg}")
 
             raise StorageException(
                 f"Failed to create edge: {error_msg}",
@@ -463,14 +458,14 @@ class FalkorDBBackend(StorageBackend):
 
     def read_edge(self, source_id: str, target_id: str) -> Edge | None:
         """Read an edge between two nodes from FalkorDB.
-        
+
         Args:
             source_id: ID of the source node
             target_id: ID of the target node
-            
+
         Returns:
             Edge object if found, None otherwise
-            
+
         Raises:
             StorageException: For read errors
         """
@@ -519,11 +514,11 @@ class FalkorDBBackend(StorageBackend):
 
     def delete_edge(self, source_id: str, target_id: str) -> None:
         """Delete an edge between two nodes from FalkorDB.
-        
+
         Args:
             source_id: ID of the source node
             target_id: ID of the target node
-            
+
         Raises:
             StorageException: For deletion errors
         """
@@ -555,14 +550,14 @@ class FalkorDBBackend(StorageBackend):
 
     def query(self, query_str: str, params: dict[str, Any]) -> list[dict[str, Any]]:
         """Execute a query against FalkorDB.
-        
+
         Args:
             query_str: Query string
             params: Query parameters
-            
+
         Returns:
             List of result dictionaries
-            
+
         Raises:
             InvalidQuery: If query syntax is invalid
             QueryTimeout: If query execution times out
@@ -610,7 +605,7 @@ class FalkorDBBackend(StorageBackend):
 
     def begin_transaction(self) -> None:
         """Begin a new transaction.
-        
+
         Raises:
             TransactionFailed: If transaction cannot be started
         """
@@ -638,7 +633,7 @@ class FalkorDBBackend(StorageBackend):
 
     def commit_transaction(self) -> None:
         """Commit the current transaction.
-        
+
         Raises:
             TransactionFailed: If commit fails
             TransactionTimeout: If commit times out
@@ -674,7 +669,7 @@ class FalkorDBBackend(StorageBackend):
 
     def rollback_transaction(self) -> None:
         """Rollback the current transaction.
-        
+
         Raises:
             TransactionFailed: If rollback fails
         """
@@ -703,7 +698,7 @@ class FalkorDBBackend(StorageBackend):
 
     def get_metrics(self) -> dict[str, Any]:
         """Get performance metrics from the backend.
-        
+
         Returns:
             Dictionary containing:
             - operation_count: Total operations performed
@@ -713,9 +708,7 @@ class FalkorDBBackend(StorageBackend):
             - backend_version: Backend version
         """
         error_rate = (
-            (self._error_count / self._operation_count * 100)
-            if self._operation_count > 0
-            else 0.0
+            (self._error_count / self._operation_count * 100) if self._operation_count > 0 else 0.0
         )
 
         return {

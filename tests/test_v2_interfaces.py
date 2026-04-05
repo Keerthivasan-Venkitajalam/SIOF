@@ -217,9 +217,7 @@ class TestMockVectorStore:
     def test_add_and_search(self):
         store = MockVectorStore()
 
-        embedding = CodeEmbedding(
-            symbol="test.function", vector=[0.1, 0.2, 0.3], metadata={}
-        )
+        embedding = CodeEmbedding(symbol="test.function", vector=[0.1, 0.2, 0.3], metadata={})
 
         store.add_embedding(embedding)
 
@@ -230,9 +228,7 @@ class TestMockVectorStore:
     def test_delete_embedding(self):
         store = MockVectorStore()
 
-        embedding = CodeEmbedding(
-            symbol="test.function", vector=[0.1, 0.2, 0.3], metadata={}
-        )
+        embedding = CodeEmbedding(symbol="test.function", vector=[0.1, 0.2, 0.3], metadata={})
 
         store.add_embedding(embedding)
         store.delete_embedding("test.function")
@@ -244,9 +240,7 @@ class TestMockVectorStore:
         store = MockVectorStore()
 
         for i in range(10):
-            embedding = CodeEmbedding(
-                symbol=f"func{i}", vector=[float(i)] * 384, metadata={}
-            )
+            embedding = CodeEmbedding(symbol=f"func{i}", vector=[float(i)] * 384, metadata={})
             store.add_embedding(embedding)
 
         store.clear()

@@ -12,21 +12,21 @@ logger = logging.getLogger(__name__)
 
 class RepositoryAdapter:
     """Adapter providing v1.0 Repository API compatibility.
-    
+
     This class wraps DistributedRepository and provides the same public API
     as the v1.0 Repository, allowing existing code to work with v2.0 backends
     without modification.
-    
+
     Attributes:
         _repository: Underlying DistributedRepository instance
     """
 
     def __init__(self, repository: DistributedRepository) -> None:
         """Initialize RepositoryAdapter.
-        
+
         Args:
             repository: DistributedRepository instance to wrap
-            
+
         Raises:
             ValueError: If repository is None
         """
@@ -48,15 +48,15 @@ class RepositoryAdapter:
         metadata: dict[str, Any] | None = None,
     ) -> None:
         """Add a node to the repository (v1.0 API).
-        
+
         This method provides backward compatibility with v1.0 Repository.add_node().
-        
+
         Args:
             node_id: Unique identifier for the node
             node_type: Type/label of the node
             name: Human-readable name
             metadata: Optional metadata dictionary
-            
+
         Raises:
             ValueError: If parameters are invalid
         """
@@ -75,12 +75,12 @@ class RepositoryAdapter:
 
     def get_node(self, node_id: str) -> dict[str, Any] | None:
         """Get a node from the repository (v1.0 API).
-        
+
         This method provides backward compatibility with v1.0 Repository.get_node().
-        
+
         Args:
             node_id: The node ID to retrieve
-            
+
         Returns:
             Dictionary with node properties or None if not found
         """
@@ -102,13 +102,13 @@ class RepositoryAdapter:
         metadata: dict[str, Any] | None = None,
     ) -> None:
         """Update a node in the repository (v1.0 API).
-        
+
         This method provides backward compatibility with v1.0 Repository.update_node().
-        
+
         Args:
             node_id: The node ID to update
             metadata: Updated metadata dictionary
-            
+
         Raises:
             ValueError: If node not found
         """
@@ -126,12 +126,12 @@ class RepositoryAdapter:
 
     def delete_node(self, node_id: str) -> None:
         """Delete a node from the repository (v1.0 API).
-        
+
         This method provides backward compatibility with v1.0 Repository.delete_node().
-        
+
         Args:
             node_id: The node ID to delete
-            
+
         Raises:
             ValueError: If node not found
         """
@@ -145,9 +145,9 @@ class RepositoryAdapter:
 
     def get_all_nodes(self) -> list[dict[str, Any]]:
         """Get all nodes from the repository (v1.0 API).
-        
+
         This method provides backward compatibility with v1.0 Repository.get_all_nodes().
-        
+
         Returns:
             List of node dictionaries
         """
@@ -175,15 +175,15 @@ class RepositoryAdapter:
         metadata: dict[str, Any] | None = None,
     ) -> None:
         """Add an edge to the repository (v1.0 API).
-        
+
         This method provides backward compatibility with v1.0 Repository.add_edge().
-        
+
         Args:
             source_id: ID of the source node
             target_id: ID of the target node
             edge_type: Type/label of the edge
             metadata: Optional metadata dictionary
-            
+
         Raises:
             ValueError: If parameters are invalid
         """
@@ -206,13 +206,13 @@ class RepositoryAdapter:
         target_id: str,
     ) -> dict[str, Any] | None:
         """Get an edge from the repository (v1.0 API).
-        
+
         This method provides backward compatibility with v1.0 Repository.get_edge().
-        
+
         Args:
             source_id: ID of the source node
             target_id: ID of the target node
-            
+
         Returns:
             Dictionary with edge properties or None if not found
         """
@@ -230,13 +230,13 @@ class RepositoryAdapter:
 
     def delete_edge(self, source_id: str, target_id: str) -> None:
         """Delete an edge from the repository (v1.0 API).
-        
+
         This method provides backward compatibility with v1.0 Repository.delete_edge().
-        
+
         Args:
             source_id: ID of the source node
             target_id: ID of the target node
-            
+
         Raises:
             ValueError: If edge not found
         """
@@ -250,9 +250,9 @@ class RepositoryAdapter:
 
     def get_all_edges(self) -> list[dict[str, Any]]:
         """Get all edges from the repository (v1.0 API).
-        
+
         This method provides backward compatibility with v1.0 Repository.get_all_edges().
-        
+
         Returns:
             List of edge dictionaries
         """
@@ -274,12 +274,12 @@ class RepositoryAdapter:
 
     def get_lineage(self, node_id: str) -> list[dict[str, Any]]:
         """Get lineage for a node (v1.0 API).
-        
+
         This method provides backward compatibility with v1.0 Repository.get_lineage().
-        
+
         Args:
             node_id: The node ID to get lineage for
-            
+
         Returns:
             List of upstream node dictionaries
         """
@@ -297,12 +297,12 @@ class RepositoryAdapter:
 
     def get_dependents(self, node_id: str) -> list[dict[str, Any]]:
         """Get dependents for a node (v1.0 API).
-        
+
         This method provides backward compatibility with v1.0 Repository.get_dependents().
-        
+
         Args:
             node_id: The node ID to get dependents for
-            
+
         Returns:
             List of downstream node dictionaries
         """
@@ -320,13 +320,13 @@ class RepositoryAdapter:
 
     def find_path(self, source_id: str, target_id: str) -> list[dict[str, Any]] | None:
         """Find path between two nodes (v1.0 API).
-        
+
         This method provides backward compatibility with v1.0 Repository.find_path().
-        
+
         Args:
             source_id: ID of the source node
             target_id: ID of the target node
-            
+
         Returns:
             List of node dictionaries representing the path, or None if no path exists
         """
@@ -347,9 +347,9 @@ class RepositoryAdapter:
 
     def find_cycles(self) -> list[list[dict[str, Any]]]:
         """Find cycles in the graph (v1.0 API).
-        
+
         This method provides backward compatibility with v1.0 Repository.find_cycles().
-        
+
         Returns:
             List of cycles, where each cycle is a list of node dictionaries
         """
@@ -374,13 +374,13 @@ class RepositoryAdapter:
 
     def query(self, query_str: str, params: dict[str, Any] | None = None) -> list[dict[str, Any]]:
         """Execute a query (v1.0 API - DEPRECATED).
-        
+
         This method is deprecated. Use find_lineage, find_dependents, or find_path instead.
-        
+
         Args:
             query_str: Query string
             params: Query parameters
-            
+
         Returns:
             List of result dictionaries
         """
@@ -397,9 +397,9 @@ class RepositoryAdapter:
 
     def get_node_count(self) -> int:
         """Get total number of nodes (v1.0 API - DEPRECATED).
-        
+
         This method is deprecated. Use get_all_nodes() and check length instead.
-        
+
         Returns:
             Total number of nodes
         """
@@ -416,9 +416,9 @@ class RepositoryAdapter:
 
     def get_edge_count(self) -> int:
         """Get total number of edges (v1.0 API - DEPRECATED).
-        
+
         This method is deprecated. Use get_all_edges() and check length instead.
-        
+
         Returns:
             Total number of edges
         """
@@ -439,9 +439,9 @@ class RepositoryAdapter:
 
     def get_backend_info(self) -> dict[str, Any]:
         """Get information about the underlying backend.
-        
+
         Args:
-            
+
         Returns:
             Dictionary with backend information
         """
@@ -449,9 +449,9 @@ class RepositoryAdapter:
 
     def get_cache_metrics(self) -> dict[str, Any]:
         """Get cache performance metrics.
-        
+
         Args:
-            
+
         Returns:
             Dictionary with cache metrics
         """
@@ -459,9 +459,9 @@ class RepositoryAdapter:
 
     def get_transaction_metrics(self) -> dict[str, Any]:
         """Get transaction metrics.
-        
+
         Args:
-            
+
         Returns:
             Dictionary with transaction metrics
         """
@@ -473,9 +473,9 @@ class RepositoryAdapter:
 
     def begin_transaction(self) -> None:
         """Begin a transaction.
-        
+
         Args:
-            
+
         Raises:
             StorageException: If transaction cannot be started
         """
@@ -483,9 +483,9 @@ class RepositoryAdapter:
 
     def commit_transaction(self) -> None:
         """Commit the current transaction.
-        
+
         Args:
-            
+
         Raises:
             StorageException: If commit fails
         """
@@ -493,9 +493,9 @@ class RepositoryAdapter:
 
     def rollback_transaction(self) -> None:
         """Rollback the current transaction.
-        
+
         Args:
-            
+
         Raises:
             StorageException: If rollback fails
         """
@@ -503,10 +503,10 @@ class RepositoryAdapter:
 
     def transaction(self, isolation_level: str = "read_committed"):
         """Context manager for transactions.
-        
+
         Args:
             isolation_level: Transaction isolation level
-            
+
         Returns:
             Context manager
         """
